@@ -29,13 +29,14 @@ function HashMap() {
         return this.mapTable(key).indexOf(value);
     }
 
-    collection.put = function(index, obj) {
-        this[index] = obj;
+    collection.put = function(obj, index) {
+        var i = index || this.length;
+        this[i] = obj;
     }
 
     collection.putRange = function(arr) {
         for (var i = 0; i < arr.length; i++) {
-            this.put(i, arr[i]);
+            this.put(arr[i], i);
         }
     }
     
