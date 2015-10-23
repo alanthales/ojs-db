@@ -17,6 +17,8 @@ function HashMap() {
 
     collection = (Array.apply( collection, arguments ) || collection);
 
+    collection.__proto__ = HashMap.prototype;
+    
     collection.mapTable = function(key) {
         return this.map(function(item) {
             return item[key];
@@ -25,11 +27,11 @@ function HashMap() {
 
     collection.indexOfKey = function(key, value) {
         return this.mapTable(key).indexOf(value);
-    },
+    }
 
     collection.put = function(index, obj) {
         this[index] = obj;
-    },
+    }
 
     collection.putRange = function(arr) {
         for (var i = 0; i < arr.length; i++) {
@@ -40,6 +42,7 @@ function HashMap() {
     return collection;
 }
 
+HashMap.prototype = new Array;
 
 /*
     DbProxy Parent Class
@@ -391,12 +394,16 @@ DataSet.prototype.open = function(callback) {
     });
 }
 
-DataSet.prototype.close = function() {
-    this.active = false;
-    this.data.length = 0;
+DataSet.prototype._cleanCache = function() {
     this._inserteds.length = 0;
     this._updateds.length = 0;
     this._deleteds.length = 0;
+}
+
+DataSet.prototype.close = function() {
+    this.active = false;
+    this.data.length = 0;
+    this._cleanCache();
 }
 
 DataSet.prototype.getById = function(id) {
@@ -446,9 +453,20 @@ DataSet.prototype.post = function(callback) {
     if (!this.active) {
         throw "Invalid operation on closed dataset";
     }
+    
+    var self = this,
+        callback = callback;
+    
+    function cb() {
+        self._cleanCache();
+        if (typeof callback === "function") {
+            callback();
+        }
+    }
+    
     this.getProxy().commit(
         this.getTable(), this._inserteds, this._updateds,
-        this._deleteds, callback
+        this._deleteds, cb
     );
 }
 
