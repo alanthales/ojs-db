@@ -58,10 +58,10 @@ function DbProxy() {
     LocalStorage Proxy Class
     Autor: Alan Thales, 09/2015
 */
+function LocalStorageProxy() {}
+
 LocalStorageProxy.prototype = new DbProxy();
 LocalStorageProxy.prototype.constructor = LocalStorageProxy;
-
-function LocalStorageProxy() {}
 
 LocalStorageProxy.prototype._get = function(key) {
     var table = window.localStorage[key],
@@ -410,6 +410,18 @@ DataSet.prototype.close = function() {
 DataSet.prototype.getById = function(id) {
     var index = this.data.indexOfKey('id', parseInt(id));
     return this.data[index];
+}
+
+DataSet.prototype.refresh = function() {
+    var self = this;
+    
+    if (self.sortBy === "") {
+        return;
+    }
+    
+    this.data.sort(function(a,b) {
+        return (a[self.sortBy] > b[self.sortBy]) - (a[self.sortBy] < b[self.sortBy]);
+    });
 }
 
 DataSet.prototype.insert = function(record) {
