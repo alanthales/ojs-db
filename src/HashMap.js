@@ -3,12 +3,12 @@
     Autor: Alan Thales, 10/2015
 */
 var HashMap = (function() {
-    function HashMap() {
+    function Collection() {
         var collection = [];
 
         collection = (Array.apply( collection, arguments ) || collection);
 
-        collection.__proto__ = HashMap.prototype;
+        collection.__proto__ = Collection.prototype;
 
         collection.mapTable = function(key) {
             return this.map(function(item) {
@@ -34,7 +34,7 @@ var HashMap = (function() {
         return collection;
     }
     
-    HashMap.prototype = new Array;
+    Collection.prototype = Object.create(Array.prototype);
     
-    return HashMap;
+    return Collection;
 })();
