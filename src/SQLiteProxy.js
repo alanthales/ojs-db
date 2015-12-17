@@ -64,35 +64,41 @@ var SQLiteProxy = (function() {
         });
     }
 
+    var _select = function(options, transaction, callback) {
+        var sql = ["SELECT * FROM", options.key, options.sort, "LIMIT", options.limit].join(" "),
+            fields = self.getFields(options.key),
+            hashtable = fields.map(function(field) {
+                return field.name;
+            }),
+            table = new HashMap(),
+            i, record, field, index;
+
+        transaction.executeSql(sql, options.params, function(tx, results) {
+            for (i = 0; i < results.rows.length; i++) {
+                record = results.rows.item(i);
+                for (field in record) {
+                    index = hashtable.indexOf(field);
+                    if (fields[index].serialize) {
+                        record[field] = JSON.parse(record[field]);
+                    }
+                }
+                table.push(record);
+            }
+            if (typeof callback === "function") {
+                callback( table );
+            }
+        });
+    };
+    
     CreateProxy.prototype.getRecords = function(options, callback) {
         var opts = typeof options === "object" ? options : { key: options, limit: 1000 },
-            sortBy = opts.sort && opts.sort !== "" ? "ORDER BY " + opts.sort : "",
-            self = this;
+            sortBy = opts.sort && opts.sort !== "" ? "ORDER BY " + opts.sort : "";
+        
+        opts.sort = sortBy;
+        opts.params = opts.params || [];
 
-        self.getDb().transaction(function(tx) {
-            var sql = ["SELECT * FROM", opts.key, sortBy, "LIMIT", opts.limit].join(" "),
-                fields = self.getFields(opts.key),
-                hashtable = fields.map(function(field) {
-                    return field.name;
-                }),
-                table = new HashMap(),
-                i, record, field, index;
-
-            tx.executeSql(sql, [], function(tx, results) {
-                for (i = 0; i < results.rows.length; i++) {
-                    record = results.rows.item(i);
-                    for (field in record) {
-                        index = hashtable.indexOf(field);
-                        if (fields[index].serialize) {
-                            record[field] = JSON.parse(record[field]);
-                        }
-                    }
-                    table.push(record);
-                }
-                if (typeof callback === "function") {
-                    callback( table );
-                }
-            })
+        this.getDb().transaction(function(tx) {
+            _select(opts, tx, callback);
         });
     }
 
