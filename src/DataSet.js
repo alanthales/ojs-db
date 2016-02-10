@@ -104,6 +104,14 @@ var DataSet = (function() {
         this.data.splice(index, 1, record);
     }
 
+    CreateDataSet.prototype.save = function(record) {
+        if (record && !record.id) {
+            this.insert(record);
+        } else {
+            this.update(record);
+        }
+    }
+    
     CreateDataSet.prototype.delete = function(record) {
         if (!this.active) {
             throw "Invalid operation on closed dataset";
@@ -150,6 +158,24 @@ var DataSet = (function() {
             }
             return finded;
         });
+    }
+    
+    CreateDataSet.prototype.cloneObject = function(obj) {
+        if (Object.prototype.toString.call(obj) === '[object Array]') {
+            var out = [], i = 0, len = obj.length;
+            for ( ; i < len; i++ ) {
+                out[i] = arguments.callee(obj[i]);
+            }
+            return out;
+        }
+        if (obj && !(obj instanceof Date) && (typeof obj === 'object')) {
+            var out = {}, i;
+            for ( i in obj ) {
+                out[i] = arguments.callee(obj[i]);
+            }
+            return out;
+        }
+        return obj;
     }
     
     return CreateDataSet;
