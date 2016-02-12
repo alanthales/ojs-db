@@ -65,7 +65,7 @@ var SQLiteProxy = (function() {
     }
 
     var _select = function(options, transaction, callback) {
-        var sql = ["SELECT * FROM", options.key, options.sort, "LIMIT", options.limit].join(" "),
+        var sql = options.key ? ["SELECT * FROM", options.key, options.sort, "LIMIT", options.limit].join(" ") : options.sql,
             fields = self.getFields(options.key),
             hashtable = fields.map(function(field) {
                 return field.name;
@@ -187,6 +187,14 @@ var SQLiteProxy = (function() {
             for (i = 0; i < toDelete.length; i++) {
                 self.delete(key, toDelete[i], tx, progress);
             }
+        });
+    }
+    
+    CreateProxy.prototype.select = function(key, opts, callback) {
+        var options = { sql: key, params: opts };
+
+        this.getDb().transaction(function(tx) {
+            _select(options, tx, callback);
         });
     }
     

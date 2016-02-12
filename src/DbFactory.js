@@ -10,6 +10,11 @@ var DbFactory = (function() {
     function CreateFactory(opts, proxyType) {
         _opts = opts;
         
+        if (proxyType && typeof proxyType === "object") {
+            _proxy = proxyType;
+            return;
+        }
+        
         switch(proxyType) {
             case 0:
                 _proxy = new LocalStorageProxy();
@@ -30,13 +35,13 @@ var DbFactory = (function() {
         this.getProxy().createDatabase(maps, callback);
     }
 
+    CreateFactory.prototype.select = function(key, opts, callback) {
+        this.getProxy().select(key, opts, callback);
+    }
+    
     CreateFactory.prototype.createDataSet = function(table) {
         return new DataSet(this.getProxy(), table);
     }
 
-    CreateFactory.prototype.select = function(sql, params, callback) {
-        this.getProxy().select(sql, params, callback);
-    }
-    
     return CreateFactory;
 })();

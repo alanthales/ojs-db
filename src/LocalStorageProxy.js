@@ -44,27 +44,87 @@ var LocalStorageProxy = (function() {
     CreateProxy.prototype.select = function(key, opts, callback) {
         var table = _get(key),
             opts = opts && typeof opts === "object" ? opts : { },
-            result = [],
-            finded, record, i, props;
-
-        for (i = 0; i < table.length; i++) {
-            finded = true,
-            record = table[i];
-
-            for (props in opts) {
-                if (record[props] != opts[props]) {
-                    finded = false;
+            field, prop, matched, str,
+            results;
+        
+        results = table.filter(function(record) {
+            matched = true;
+            
+            for (field in opts) {
+                if (!matched) {
                     break;
                 }
+                
+                if (typeof opts[field] !== "object") {
+                    matched = record[field] == opts[field];
+                    continue;
+                }
+                
+                str = record[field].toString();
+                
+                for (prop in opts[field]) {
+                    switch(prop) {
+                        case "$gt":
+                            matched = record[field] > opts[field][prop];
+                            break;
+                        case "$gte":
+                            matched = record[field] >= opts[field][prop];
+                            break;
+                        case "$lt":
+                            matched = record[field] < opts[field][prop];
+                            break;
+                        case "$lte":
+                            matched = record[field] <= opts[field][prop];
+                            break;
+                        case "$start":
+                            matched = str.lastIndexOf(opts[field][prop], 0) === 0;
+                            break;
+                        case "$end":
+                            matched = str.indexOf(opts[field][prop], str.length - opts[field][prop].length) !== -1;
+                            break;
+                        case "$like":
+                            matched = str.indexOf(opts[field][prop]) > -1;
+                            break;
+                        default:
+                            matched = false;
+                    }
+                    
+                    if (!matched) {
+                        break;
+                    }
+                }
             }
-
-            if (finded) {
-                result.push(record);
-            }
-        }
-
-        callback( result );
+            
+            return matched;
+        });
+        
+        callback( results );
     }
+    
+//    CreateProxy.prototype.select = function(key, opts, callback) {
+//        var table = _get(key),
+//            opts = opts && typeof opts === "object" ? opts : { },
+//            result = [],
+//            finded, record, i, props;
+//
+//        for (i = 0; i < table.length; i++) {
+//            finded = true,
+//            record = table[i];
+//
+//            for (props in opts) {
+//                if (record[props] != opts[props]) {
+//                    finded = false;
+//                    break;
+//                }
+//            }
+//
+//            if (finded) {
+//                result.push(record);
+//            }
+//        }
+//
+//        callback( result );
+//    }
 
     CreateProxy.prototype.save = function(key, record, callback) {
         var table = _get(key),
