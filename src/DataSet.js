@@ -66,15 +66,13 @@ var DataSet = (function() {
     }
 
     CreateDataSet.prototype.refresh = function() {
-        var self = this;
+        var self = this,
+            sorters;
 
-        if (self.sortBy === "") {
-            return;
+        if (self.sortBy !== "") {
+            sorters = self.sortBy.split(" ");
+            self.data.orderBy({ field: sorters[0], order: sorters[1] });
         }
-
-        self.data.sort(function(a,b) {
-            return (a[self.sortBy] > b[self.sortBy]) - (a[self.sortBy] < b[self.sortBy]);
-        });
     }
 
     CreateDataSet.prototype.insert = function(record) {

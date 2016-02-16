@@ -138,6 +138,19 @@ var HashMap = (function() {
             return results;
         }
         
+        collection.orderBy = function(sorters) {
+            var opts = sorters && typeof sorters === "object" ? sorters : { },
+                sortFn;
+            
+            if (sorters.order === "desc") {
+                sortFn = function(a,b) { return (b[opts.field] > a[opts.field]) - (b[opts.field] < a[opts.field]) };
+            } else {
+                sortFn = function(a,b) { return (a[opts.field] > b[opts.field]) - (a[opts.field] < b[opts.field]) };
+            }
+            
+            this.sort(sortFn);
+        }
+        
         collection.groupBy = function(options, groups) {
             var results = new Collection(),
                 grouped = [],

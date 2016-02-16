@@ -28,12 +28,12 @@ var LocalStorageProxy = (function() {
 
     CreateProxy.prototype.getRecords = function(options, callback) {
         var opts = typeof options === "object" ? options : { key: options },
-            table = _get(opts.key);
+            table = _get(opts.key),
+            sorters;
 
         if (opts.sort && opts.sort !== "") {
-            table.sort(function(a,b) {
-                return (a[opts.sort] > b[opts.sort]) - (a[opts.sort] < b[opts.sort]);
-            });
+            sorters = opts.sort.split(" ");
+            table.orderBy({ field: sorters[0], order: sorters[1] });
         }
 
         if (typeof callback === "function") {
