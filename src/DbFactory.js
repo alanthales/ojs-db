@@ -35,8 +35,12 @@ var DbFactory = (function() {
         this.getProxy().createDatabase(maps, callback);
     }
 
-    CreateFactory.prototype.select = function(key, opts, callback) {
-        this.getProxy().select(key, opts, callback);
+    CreateFactory.prototype.query = function(key, filters, callback) {
+        this.getProxy().query(key, filters, callback);
+    }
+    
+    CreateFactory.prototype.groupBy = function(key, filters, options, groups, callback) {
+        this.getProxy().groupBy(key, filters, options, groups, callback);
     }
     
     CreateFactory.prototype.createDataSet = function(table) {

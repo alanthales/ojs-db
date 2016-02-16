@@ -3,6 +3,100 @@
     Autor: Alan Thales, 10/2015
 */
 var HashMap = (function() {
+    var _recordMatch = function(record, opts) {
+        var matched = true,
+            field, prop, str;
+
+        for (field in opts) {
+            if (!matched) {
+                break;
+            }
+
+            if (typeof opts[field] !== "object") {
+                matched = record[field] == opts[field];
+                continue;
+            }
+
+            str = record[field].toString();
+
+            for (prop in opts[field]) {
+                switch(prop) {
+                    case "$gt":
+                        matched = record[field] > opts[field][prop];
+                        break;
+                    case "$gte":
+                        matched = record[field] >= opts[field][prop];
+                        break;
+                    case "$lt":
+                        matched = record[field] < opts[field][prop];
+                        break;
+                    case "$lte":
+                        matched = record[field] <= opts[field][prop];
+                        break;
+                    case "$start":
+                        matched = str.lastIndexOf(opts[field][prop], 0) === 0;
+                        break;
+                    case "$end":
+                        matched = str.indexOf(opts[field][prop], str.length - opts[field][prop].length) !== -1;
+                        break;
+                    case "$contain":
+                        matched = str.indexOf(opts[field][prop]) > -1;
+                        break;
+                    case "$in":
+                        matched = opts[field][prop].indexOf(record[field]) > -1;
+                        break;
+                    default:
+                        matched = false;
+                }
+
+                if (!matched) {
+                    break;
+                }
+            }
+        }
+
+        return matched;
+    }
+
+    var _aggregate = function(array, options, value) {
+        var opts = options && typeof options === "object" ? options : {},
+            value = value || {},
+            field, prop;
+
+        for (prop in opts) {
+            field = opts[prop];
+
+            switch(prop) {
+                case "$max":
+                    array.sort(function(a, b){return b[field] - a[field]});
+                    value[field] = array[0][field];
+                    break;
+                case "$min":
+                    array.sort(function(a, b){return a[field] - b[field]});
+                    value[field] = array[0][field];
+                    break;
+                case "$sum":
+                    value[field] = array.map(function(item) {return item[field]}).reduce(function(previous, current) {
+                        return parseFloat(previous) + parseFloat(current);
+                    }, 0);
+                    break;
+                case "$avg":
+                    value[field] = array.map(function(item) {return item[field]}).reduce(function(previous, current) {
+                        return parseFloat(previous) + parseFloat(current);
+                    }, 0);
+                    value[field] /= array.length;
+                    break;
+                case "$count":
+                    value[field] = array.length;
+                    break;
+                default:
+                    value[field] = null;
+            }
+        }
+
+        return value;
+    }
+    
     function Collection() {
         var collection = [];
 
@@ -31,6 +125,44 @@ var HashMap = (function() {
             }
         }
 
+        collection.query = function(filters) {
+            var opts = filters && typeof filters === "object" ? filters : { },
+                results = new Collection();
+
+            results.putRange(
+                this.filter(function(record) {
+                    return _recordMatch(record, opts);
+                })
+            );
+
+            return results;
+        }
+        
+        collection.groupBy = function(options, groups) {
+            var results = new Collection(),
+                grouped = [],
+                group, g, i;
+
+            this.forEach(function(item) {
+                g = {};
+                for (i = 0; i < groups.length; i++) {
+                    g[groups[i]] = item[groups[i]];
+                }
+                group = JSON.stringify( g );
+                grouped[group] = grouped[group] || [];
+                grouped[group].push( item );
+            });
+
+            results.putRange(
+                Object.keys(grouped).map(function(item) {
+                    g = JSON.parse( item );
+                    return _aggregate(grouped[item], options, g);
+                })
+            );
+            
+            return results;
+        }
+        
         return collection;
     }
     

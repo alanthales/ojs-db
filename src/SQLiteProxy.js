@@ -5,6 +5,7 @@
 */
 var SQLiteProxy = (function() {
     var _maps = new HashMap();
+    var _selectFrom = "SELECT * FROM";
     
     function CreateProxy(dbName) {
         var db;
@@ -64,16 +65,15 @@ var SQLiteProxy = (function() {
         });
     }
 
-    var _select = function(options, transaction, callback) {
-        var sql = options.key ? ["SELECT * FROM", options.key, options.sort, "LIMIT", options.limit].join(" ") : options.sql,
-            fields = self.getFields(options.key),
+    var _select = function(key, sql, params, transaction, callback) {
+        var fields = self.getFields(key),
             hashtable = fields.map(function(field) {
                 return field.name;
             }),
             table = new HashMap(),
             i, record, field, index;
 
-        transaction.executeSql(sql, options.params, function(tx, results) {
+        transaction.executeSql(sql, params, function(tx, results) {
             for (i = 0; i < results.rows.length; i++) {
                 record = results.rows.item(i);
                 for (field in record) {
@@ -91,17 +91,71 @@ var SQLiteProxy = (function() {
     };
     
     CreateProxy.prototype.getRecords = function(options, callback) {
-        var opts = typeof options === "object" ? options : { key: options, limit: 1000 },
-            sortBy = opts.sort && opts.sort !== "" ? "ORDER BY " + opts.sort : "";
-        
-        opts.sort = sortBy;
-        opts.params = opts.params || [];
+        var key = options && options.key ? options.key : options,
+            sortBy = options && options.sort && options.sort !== "" ? "ORDER BY " + options.sort : "",
+            sql = typeof options === "object" ?
+                [_selectFrom, options.key, sortBy, "LIMIT", options.limit].join(" ") :
+                [_selectFrom, options].join(" ");
+//        var opts = typeof options === "object" ? options : { key: options, limit: 1000 },
+//            sortBy = opts.sort && opts.sort !== "" ? "ORDER BY " + opts.sort : "";
+//        
+//        opts.sort = sortBy;
+//        opts.params = opts.params || [];
 
         this.getDb().transaction(function(tx) {
-            _select(opts, tx, callback);
+            _select(key, sql, [], tx, callback);
         });
     }
 
+    var _formatSql = function(sqlNoWhere, filters) {
+        var where = "";
+        
+        for (field in filters) {
+            for (prop in filters[field]) {
+                switch(prop) {
+                    case "$gt":
+                        where += [field, ">", filters[field][prop]].join(" ");
+                        break;
+                    case "$gte":
+                        where += [field, ">=", filters[field][prop]].join(" ");
+                        break;
+                    case "$lt":
+                        where += [field, "<", filters[field][prop]].join(" ");
+                        break;
+                    case "$lte":
+                        where += [field, "<=", filters[field][prop]].join(" ");
+                        break;
+                    case "$start":
+                        where += [field, " LIKE '", filters[field][prop], "%'"].join("");
+                        break;
+                    case "$end":
+                        where += [field, " LIKE '%", filters[field][prop], "'"].join("");
+                        break;
+                    case "$contain":
+                        where += [field, " LIKE '%", filters[field][prop], "%'"].join("");
+                        break;
+                    case "$in":
+                        where += [field, " IN (", filters[field][prop].join(","), ")"].join("");
+                        break;
+                    default:
+                        where += "";
+                }
+            }
+        }
+        
+        return where === "" ? sqlNoWhere : [sqlNoWhere, "WHERE", where].join(" ");
+    };
+    
+    CreateProxy.prototype.query = function(key, filters, callback) {
+        var opts = filters && typeof filters === "object" ? filters : { },
+            select = [_selectFrom, key].join(" "),
+            sql = _formatSql(select, opts);
+        
+        this.getDb().transaction(function(tx) {
+            _select(key, sql, [], tx, callback);
+        });
+    }
+    
     CreateProxy.prototype.insert = function(key, record, transaction, callback) {
         var params = [],
             fields = "",
@@ -187,14 +241,6 @@ var SQLiteProxy = (function() {
             for (i = 0; i < toDelete.length; i++) {
                 self.delete(key, toDelete[i], tx, progress);
             }
-        });
-    }
-    
-    CreateProxy.prototype.select = function(key, opts, callback) {
-        var options = { sql: key, params: opts };
-
-        this.getDb().transaction(function(tx) {
-            _select(options, tx, callback);
         });
     }
     
