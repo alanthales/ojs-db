@@ -137,6 +137,9 @@ var SQLiteProxy = (function() {
                     case "$in":
                         where += [field, " IN (", filters[field][prop].join(","), ")"].join("");
                         break;
+                    case "$custom":
+                        where += filters[field][prop].call(field);
+                        break;
                     default:
                         where += "";
                 }

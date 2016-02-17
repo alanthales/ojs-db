@@ -45,6 +45,9 @@ var HashMap = (function() {
                     case "$in":
                         matched = opts[field][prop].indexOf(record[field]) > -1;
                         break;
+                    case "$custom":
+                        matched = opts[field][prop].call(record[field]);
+                        break;
                     default:
                         matched = false;
                 }
@@ -149,6 +152,8 @@ var HashMap = (function() {
             }
             
             this.sort(sortFn);
+            
+            return this;
         }
         
         collection.groupBy = function(options, groups) {
