@@ -60,40 +60,52 @@ var HashMap = (function() {
 
         return matched;
     }
-
+    
+    var _classify = function(array, prop, field) {
+        var value = null;
+        
+        switch(prop) {
+            case "$max":
+                array.sort(function(a, b){return b[field] - a[field]});
+                value = array[0][field];
+                break;
+            case "$min":
+                array.sort(function(a, b){return a[field] - b[field]});
+                value = array[0][field];
+                break;
+            case "$sum":
+                value = array.map(function(item) {return item[field]}).reduce(function(previous, current) {
+                    return parseFloat(previous) + parseFloat(current);
+                }, 0);
+                break;
+            case "$avg":
+                value = array.map(function(item) {return item[field]}).reduce(function(previous, current) {
+                    return parseFloat(previous) + parseFloat(current);
+                }, 0);
+                value /= array.length;
+                break;
+            case "$count":
+                value = array.length;
+                break;
+        }        
+        
+        return value;
+    }
+    
     var _aggregate = function(array, options, value) {
-        var opts = options && typeof options === "object" ? options : {},
+        var opts = options && typeof options === "object" ? options : [],
             value = value || {},
-            field, prop;
+            fields, prop;
 
         for (prop in opts) {
-            field = opts[prop];
-
-            switch(prop) {
-                case "$max":
-                    array.sort(function(a, b){return b[field] - a[field]});
-                    value[field] = array[0][field];
-                    break;
-                case "$min":
-                    array.sort(function(a, b){return a[field] - b[field]});
-                    value[field] = array[0][field];
-                    break;
-                case "$sum":
-                    value[field] = array.map(function(item) {return item[field]}).reduce(function(previous, current) {
-                        return parseFloat(previous) + parseFloat(current);
-                    }, 0);
-                    break;
-                case "$avg":
-                    value[field] = array.map(function(item) {return item[field]}).reduce(function(previous, current) {
-                        return parseFloat(previous) + parseFloat(current);
-                    }, 0);
-                    value[field] /= array.length;
-                    break;
-                case "$count":
-                    value[field] = array.length;
-                    break;
-                default:
-                    value[field] = null;
+            fields = opts[prop];
+            
+            if (typeof fields === "object") {
+                fields.forEach(function(field) {                    
+                    value[field] = _classify(array, prop, field); 
+                });                    
+            } else {
+                value[fields] = _classify(array, prop, fields);
             }
         }
 
@@ -122,9 +134,12 @@ var HashMap = (function() {
             this[i] = obj;
         }
 
-        collection.putRange = function(arr) {
-            for (var i = 0; i < arr.length; i++) {
-                this.put(arr[i], i);
+        collection.putRange = function(arr, tail) {
+            var pos = tail && typeof tail === "boolean" ? this.length : 0,
+                l = arr.length;
+            
+            for (var i = 0; i < l; i++) {
+                this.put(arr[i], pos+i);
             }
         }
 
@@ -156,14 +171,19 @@ var HashMap = (function() {
             return this;
         }
         
-        collection.groupBy = function(options, groups) {
+        collection.groupBy = function(options, groups, filters) {
             var results = new Collection(),
-                grouped = [],
+                flts = filters && typeof filters === "object" ? filters : { },
+                l = groups.length,
+                grouped = {},
                 group, g, i;
 
             this.forEach(function(item) {
+                if (!_recordMatch(item, flts))
+                    return;
+                    
                 g = {};
-                for (i = 0; i < groups.length; i++) {
+                for (i = 0; i < l; i++) {
                     g[groups[i]] = item[groups[i]];
                 }
                 group = JSON.stringify( g );
@@ -179,6 +199,11 @@ var HashMap = (function() {
             );
             
             return results;
+        }
+        
+        collection.compute = function(options) {
+            
+            return _aggregate(this, options);
         }
         
         return collection;
