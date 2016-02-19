@@ -28,12 +28,10 @@ var LocalStorageProxy = (function() {
 
     CreateProxy.prototype.getRecords = function(options, callback) {
         var opts = typeof options === "object" ? options : { key: options },
-            table = _get(opts.key),
-            sorters;
+            table = _get(opts.key);
 
-        if (opts.sort && opts.sort !== "") {
-            sorters = opts.sort.split(" ");
-            table.orderBy({ field: sorters[0], order: sorters[1] });
+        if (opts.sort) {
+            table.orderBy(opts.sort);
         }
 
         if (typeof callback === "function") {

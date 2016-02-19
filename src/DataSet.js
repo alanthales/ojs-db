@@ -20,7 +20,7 @@ var DataSet = (function() {
 
         this.active = false;
         this.limit = 1000;
-        this.sortBy = "";
+        this.sort = null;
         this.data = new HashMap();
 
         this.getProxy = function() {
@@ -34,7 +34,7 @@ var DataSet = (function() {
 
     CreateDataSet.prototype.open = function(callback) {
         var self = this,
-            opts = { key: self.getTable(), limit: self.limit, sort: self.sortBy };
+            opts = { key: self.getTable(), limit: self.limit, sort: self.sort };
 
         function fn(results, cb) {
             if (typeof cb === "function") {
@@ -66,12 +66,9 @@ var DataSet = (function() {
     }
 
     CreateDataSet.prototype.refresh = function() {
-        var self = this,
-            sorters;
-
-        if (self.sortBy !== "") {
-            sorters = self.sortBy.split(" ");
-            self.data.orderBy({ field: sorters[0], order: sorters[1] });
+        var self = this;
+        if (self.sort) {
+            self.data.orderBy(self.sort);
         }
     }
 
@@ -156,24 +153,6 @@ var DataSet = (function() {
             }
             return finded;
         });
-    }
-    
-    CreateDataSet.prototype.cloneObject = function(obj) {
-        if (Object.prototype.toString.call(obj) === '[object Array]') {
-            var out = [], i = 0, len = obj.length;
-            for ( ; i < len; i++ ) {
-                out[i] = arguments.callee(obj[i]);
-            }
-            return out;
-        }
-        if (obj && !(obj instanceof Date) && (typeof obj === 'object')) {
-            var out = {}, i;
-            for ( i in obj ) {
-                out[i] = arguments.callee(obj[i]);
-            }
-            return out;
-        }
-        return obj;
     }
     
     return CreateDataSet;

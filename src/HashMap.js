@@ -143,15 +143,26 @@ var HashMap = (function() {
         
         collection.orderBy = function(sorters) {
             var opts = sorters && typeof sorters === "object" ? sorters : { },
-                sortFn;
+                field;
             
-            if (sorters.order === "desc") {
-                sortFn = function(a,b) { return (b[opts.field] > a[opts.field]) - (b[opts.field] < a[opts.field]) };
-            } else {
-                sortFn = function(a,b) { return (a[opts.field] > b[opts.field]) - (a[opts.field] < b[opts.field]) };
-            }
-            
-            this.sort(sortFn);
+            this.sort(function(a,b) {
+                var result = 0;
+                
+                for (field in opts) {
+                    if (a[field] == b[field]) {
+                        result = 0;
+                        continue;
+                    }
+                    if (opts[field] === 'desc') {
+                        result = (b[field] > a[field]) - (b[field] < a[field]);
+                    } else {
+                        result = (a[field] > b[field]) - (a[field] < b[field]);
+                    }
+                    break;
+                }
+                
+                return result;
+            });
             
             return this;
         }
@@ -186,5 +197,23 @@ var HashMap = (function() {
     
     Collection.prototype = Object.create(Array.prototype);
     
+    Collection.cloneObject = function(obj) {
+        if (Object.prototype.toString.call(obj) === '[object Array]') {
+            var out = [], i = 0, len = obj.length;
+            for ( ; i < len; i++ ) {
+                out[i] = arguments.callee(obj[i]);
+            }
+            return out;
+        }
+        if (obj && !(obj instanceof Date) && (typeof obj === 'object')) {
+            var out = {}, i;
+            for ( i in obj ) {
+                out[i] = arguments.callee(obj[i]);
+            }
+            return out;
+        }
+        return obj;
+    }
+
     return Collection;
 })();

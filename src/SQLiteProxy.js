@@ -90,9 +90,18 @@ var SQLiteProxy = (function() {
         });
     };
     
+    var _orderBy = function(sorters) {
+        var result = [],
+            field;
+        for (field in sorters) {
+            result.push(field + sorters[field]);
+        }
+        return "ORDER BY " + result.join(",");
+    };
+    
     CreateProxy.prototype.getRecords = function(options, callback) {
         var key = options && options.key ? options.key : options,
-            sortBy = options && options.sort && options.sort !== "" ? "ORDER BY " + options.sort : "",
+            sortBy = options && options.sort ? _orderBy(options.sort) : "",
             sql = typeof options === "object" ?
                 [_selectFrom, options.key, sortBy, "LIMIT", options.limit].join(" ") :
                 [_selectFrom, options].join(" ");
