@@ -61,53 +61,44 @@ var HashMap = (function() {
         return matched;
     }
     
-    var _classify = function(array, prop, field) {
-        var value = null;
-        
-        switch(prop) {
-            case "$max":
-                array.sort(function(a, b){return b[field] - a[field]});
-                value = array[0][field];
-                break;
-            case "$min":
-                array.sort(function(a, b){return a[field] - b[field]});
-                value = array[0][field];
-                break;
-            case "$sum":
-                value = array.map(function(item) {return item[field]}).reduce(function(previous, current) {
-                    return parseFloat(previous) + parseFloat(current);
-                }, 0);
-                break;
-            case "$avg":
-                value = array.map(function(item) {return item[field]}).reduce(function(previous, current) {
-                    return parseFloat(previous) + parseFloat(current);
-                }, 0);
-                value /= array.length;
-                break;
-            case "$count":
-                value = array.length;
-                break;
-        }        
-        
-        return value;
-    }
-    
     var _aggregate = function(array, options, value) {
         var opts = options && typeof options === "object" ? options : [],
             value = value || {},
-            fields, prop;
-
-        for (prop in opts) {
-            fields = opts[prop];
+            prop, field, alias;
+    
+        opts.forEach(function(opt) { 
             
-            if (typeof fields === "object") {
-                fields.forEach(function(field) {                    
-                    value[field] = _classify(array, prop, field); 
-                });                    
-            } else {
-                value[fields] = _classify(array, prop, fields);
+            for (prop in opt) break;
+            
+            field = opt[prop];
+            alias = opt["alias"];
+            alias = alias ? alias : field;
+            
+            switch(prop) {
+                case "$max":
+                    array.sort(function(a, b){return b[field] - a[field]});
+                    value[alias] = array[0][field];
+                    break;
+                case "$min":
+                    array.sort(function(a, b){return a[field] - b[field]});
+                    value[alias] = array[0][field];
+                    break;
+                case "$sum":
+                    value[alias] = array.map(function(item) {return item[field]}).reduce(function(previous, current) {
+                        return parseFloat(previous) + parseFloat(current);
+                    }, 0);
+                    break;
+                case "$avg":
+                    value[alias] = array.map(function(item) {return item[field]}).reduce(function(previous, current) {
+                        return parseFloat(previous) + parseFloat(current);
+                    }, 0);
+                    value[alias] /= array.length;
+                    break;
+                case "$count":
+                    value[alias] = array.length;
+                    break;
             }
-        }
+        });
 
         return value;
     }
@@ -202,7 +193,6 @@ var HashMap = (function() {
         }
         
         collection.compute = function(options) {
-            
             return _aggregate(this, options);
         }
         
