@@ -71,8 +71,7 @@ var HashMap = (function() {
             for (prop in opt) break;
             
             field = opt[prop];
-            alias = opt["alias"];
-            alias = alias ? alias : field;
+            alias = opt["alias"] || field;
             
             switch(prop) {
                 case "$max":
