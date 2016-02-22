@@ -46,7 +46,7 @@ var HashMap = (function() {
                         matched = opts[field][prop].indexOf(record[field]) > -1;
                         break;
                     case "$custom":
-                        matched = opts[field][prop].call(record[field]);
+                        matched = opts[field][prop].call(opts[field][prop], record);
                         break;
                     default:
                         matched = false;
@@ -62,12 +62,11 @@ var HashMap = (function() {
     }
     
     var _aggregate = function(array, options, value) {
-        var opts = options && typeof options === "object" ? options : [],
+        var opts = options && options instanceof Array ? options : [options],
             value = value || {},
             prop, field, alias;
     
         opts.forEach(function(opt) { 
-            
             for (prop in opt) break;
             
             field = opt[prop];
@@ -126,9 +125,10 @@ var HashMap = (function() {
 
         collection.putRange = function(arr, tail) {
             var pos = tail && typeof tail === "boolean" ? this.length : 0,
-                l = arr.length;
+                l = arr.length,
+                i;
             
-            for (var i = 0; i < l; i++) {
+            for (i = 0; i < l; i++) {
                 this.put(arr[i], pos+i);
             }
         }
@@ -180,9 +180,9 @@ var HashMap = (function() {
                 group, g, i;
 
             this.forEach(function(item) {
-                if (!_recordMatch(item, flts))
+                if (!_recordMatch(item, flts)) {
                     return;
-                    
+                }
                 g = {};
                 for (i = 0; i < l; i++) {
                     g[groups[i]] = item[groups[i]];

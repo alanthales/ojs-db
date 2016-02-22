@@ -142,17 +142,7 @@ var DataSet = (function() {
         if (options && typeof options === 'function') {
             return this.data.filter(options);
         }
-        return this.data.filter(function(record) {
-            var finded = true,
-                prop;
-            for (prop in options) {
-                if (record[prop] != options[prop]) {
-                    finded = false;
-                    break;
-                }
-            }
-            return finded;
-        });
+        return this.data.query(options);
     }
     
     return CreateDataSet;
