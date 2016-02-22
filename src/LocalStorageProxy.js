@@ -47,10 +47,9 @@ var LocalStorageProxy = (function() {
     }
     
     CreateProxy.prototype.groupBy = function(key, filters, options, groups, callback) {
-        var table = _get(key),
-            results = table.query(filters);
+        var table = _get(key);
         
-        callback( results.groupBy(options, groups) );
+        callback( table.groupBy(options, groups, filters) );
     }
     
     CreateProxy.prototype.save = function(key, record, callback) {
