@@ -150,6 +150,20 @@ var HashMap = (function() {
             var opts = sorters && typeof sorters === "object" ? sorters : { },
                 field;
             
+            var ascSort = function(fieldA, fieldB) {
+                if (typeof fieldA === "string") {
+                    return fieldA.localeCompare(fieldB);
+                }
+                return (fieldA > fieldB) - (fieldA < fieldB);
+            };
+            
+            var descSort = function(fieldA, fieldB) {
+                if (typeof fieldB === "string") {
+                    return fieldB.localeCompare(fieldA);
+                }
+                return (fieldB > fieldA) - (fieldB < fieldA);
+            };
+            
             this.sort(function(a,b) {
                 var result = 0;
                 
@@ -158,11 +172,13 @@ var HashMap = (function() {
                         result = 0;
                         continue;
                     }
+                    
                     if (opts[field] === 'desc') {
-                        result = (b[field] > a[field]) - (b[field] < a[field]);
+                        result = descSort(a[field], b[field]);
                     } else {
-                        result = (a[field] > b[field]) - (a[field] < b[field]);
+                        result = ascSort(a[field], b[field]);
                     }
+                    
                     break;
                 }
                 
