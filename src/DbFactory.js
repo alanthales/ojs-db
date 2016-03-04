@@ -4,11 +4,18 @@
     Requires: LocalStorageProxy.js, SQLiteProxy.js, DataSet.js
 */
 var DbFactory = (function() {
-    var _proxy,
-        _opts;
     
-    function CreateFactory(opts, proxyType) {
-        _opts = opts;
+    function CreateFactory(opts, proxyType, syncronizer) {
+        var _syncronizer = syncronizer,
+            _proxy;
+        
+        this.getProxy = function() {
+            return _proxy;
+        }
+        
+        this.getSyncronizer = function() {
+            return _syncronizer;
+        }
         
         if (proxyType && typeof proxyType === "object") {
             _proxy = proxyType;
@@ -27,10 +34,6 @@ var DbFactory = (function() {
         }
     }
 
-    CreateFactory.prototype.getProxy = function() {
-        return _proxy;
-    }
-    
     CreateFactory.prototype.createDatabase = function(maps, callback) {
         this.getProxy().createDatabase(maps, callback);
     }
@@ -44,7 +47,7 @@ var DbFactory = (function() {
     }
     
     CreateFactory.prototype.createDataSet = function(table) {
-        return new DataSet(this.getProxy(), table);
+        return new DataSet(this.getProxy(), table, this.getSyncronizer());
     }
 
     return CreateFactory;

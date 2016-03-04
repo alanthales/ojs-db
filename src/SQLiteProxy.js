@@ -4,8 +4,8 @@
     Requires: HashMap.js, DbProxy.js
 */
 var SQLiteProxy = (function() {
-    var _maps = new HashMap();
-    var _selectFrom = "SELECT * FROM";
+    var _maps = new HashMap(),
+        _selectFrom = "SELECT * FROM";
     
     function CreateProxy(dbName) {
         var db;
@@ -147,7 +147,7 @@ var SQLiteProxy = (function() {
                         where += [field, " IN (", filters[field][prop].join(","), ")"].join("");
                         break;
                     case "$custom":
-                        where += filters[field][prop].call(field);
+                        where += filters[field][prop].call(filters[field][prop], field);
                         break;
                     default:
                         where += "";

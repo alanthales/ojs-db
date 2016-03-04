@@ -1,34 +1,53 @@
 /*
     DataSet Class
     Autor: Alan Thales, 09/2015
-    Requires: HashMap.js
+    Requires: HashMap.js, SyncTable.js
 */
 var DataSet = (function() {
-    var _inserteds = [],
-        _deleteds = [],
-        _updateds = [];
-    
-    var _cleanCache = function() {
+    var _cleanCache = function(dts) {
+        var _inserteds = dts.getInserteds(),
+            _updateds = dts.getUpdateds(),
+            _deleteds = dts.getDeleteds();
         _inserteds.length = 0;
         _updateds.length = 0;
         _deleteds.length = 0;
     };
     
-    function CreateDataSet(proxy, table) {
-        var prx = proxy,
-            tbl = table;
-
+    function CreateDataSet(proxy, table, syncronizer) {
+        var _inserteds = [],
+            _updateds = [],
+            _deleteds = [],
+            _proxy = proxy,
+            _table = table,
+            _syncronizer = syncronizer;
+        
         this.active = false;
         this.limit = 1000;
         this.sort = null;
         this.data = new HashMap();
-
+        
+        this.getInserteds = function() {
+            return _inserteds;
+        }
+        
+        this.getUpdateds = function() {
+            return _updateds;
+        }
+        
+        this.getDeleteds = function() {
+            return _deleteds;
+        }
+        
         this.getProxy = function() {
-            return prx;
+            return _proxy;
         }
 
         this.getTable = function() {
-            return tbl;
+            return _table;
+        }
+        
+        this.getSyncronizer = function() {
+            return _syncronizer;
         }
     }
 
@@ -47,17 +66,18 @@ var DataSet = (function() {
             return;
         }
 
-        self.getProxy().getRecords(opts, function(table) {
-            self.data = table;
+        self.getProxy().getRecords(opts, function(records) {
+            self.data = records;
             self.active = true;
-            fn(table, callback);
+            fn(records, callback);
         });
     }
 
     CreateDataSet.prototype.close = function() {
-        this.active = false;
-        this.data.length = 0;
-        _cleanCache();
+        var self = this;
+        self.active = false;
+        self.data.length = 0;
+        _cleanCache(self);
     }
 
     CreateDataSet.prototype.getById = function(id) {
@@ -76,10 +96,14 @@ var DataSet = (function() {
         if (!this.active) {
             throw "Invalid operation on closed dataset";
         }
+        
         if (record && !record.id) {
             record.id = (new Date()).getTime();
         }
-        var index = this.data.indexOfKey('id', record.id);
+        
+        var _inserteds = this.getInserteds(),
+            index = this.data.indexOfKey('id', record.id);
+        
         if (index === -1) {
             _inserteds.push(record);
             this.data.push(record);
@@ -90,12 +114,16 @@ var DataSet = (function() {
         if (!this.active) {
             throw "Invalid operation on closed dataset";
         }
-        var index = this.data.indexOfKey('id', record.id);
+        
+        var _updateds = this.getUpdateds(),
+            index = this.data.indexOfKey('id', record.id);
+        
         if (!_updateds[index]) {
             _updateds.push(record);
         } else {
             _updateds.splice(index, 1, record);
         }
+        
         this.data.splice(index, 1, record);
     }
 
@@ -111,10 +139,14 @@ var DataSet = (function() {
         if (!this.active) {
             throw "Invalid operation on closed dataset";
         }
-        var index = this.data.indexOfKey('id', record.id);
+        
+        var _deleteds = this.getDeleteds(),
+            index = this.data.indexOfKey('id', record.id);
+        
         if (!_deleteds[index]) {
             _deleteds.push(record);
         }
+        
         this.data.splice(index, 1);
     }
 
@@ -124,20 +156,58 @@ var DataSet = (function() {
         }
 
         var self = this,
-            callback = callback;
+            callback = callback,
+            sync = this.getSyncronizer(),
+            _inserteds = this.getInserteds(),
+            _updateds = this.getUpdateds(),
+            _deleteds = this.getDeleteds();
 
         function cb() {
-            _cleanCache();
+            if (sync) {
+                sync.writeData(self.getTable(), _inserteds, _updateds, _deleteds);
+            }
+            _cleanCache(self);
             if (typeof callback === "function") {
                 callback();
             }
         }
 
+        if (!_inserteds.length && !_updateds.length && !_deleteds.length) {
+            if (typeof callback === "function") {
+                callback();
+            }
+            return;
+        }
+        
         self.getProxy().commit(
             this.getTable(), _inserteds, _updateds, _deleteds, cb
         );
     }
 
+    CreateDataSet.prototype.sync = function(callback) {
+        var self = this,
+            sync = this.getSyncronizer();
+        
+        if (!sync) {
+            return;
+        }
+        
+        sync.exec(self.getTable(), function(allData) {
+            allData.forEach(function(item) {
+                if (self.data.indexOfKey('id', item.id) < 0) {
+                    self.insert(item);
+                };
+            });
+            
+            self.data.post();
+            self.refresh();
+            
+            if (typeof callback === 'function') {
+                callback();
+            }
+        });
+    }
+    
     CreateDataSet.prototype.filter = function(options) {
         if (options && typeof options === 'function') {
             return this.data.filter(options);

@@ -124,10 +124,12 @@ var HashMap = (function() {
         }
 
         collection.putRange = function(arr, tail) {
+            if (!arr || !(arr instanceof Array)) {
+                return;
+            }
             var pos = tail && typeof tail === "boolean" ? this.length : 0,
                 l = arr.length,
                 i;
-            
             for (i = 0; i < l; i++) {
                 this.put(arr[i], pos+i);
             }
