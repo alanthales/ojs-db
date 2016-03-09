@@ -5,38 +5,23 @@
 */
 var DataSet = (function() {
     var _cleanCache = function(dts) {
-        var _inserteds = dts.getInserteds(),
-            _updateds = dts.getUpdateds(),
-            _deleteds = dts.getDeleteds();
-        _inserteds.length = 0;
-        _updateds.length = 0;
-        _deleteds.length = 0;
+        this._inserteds.length = 0;
+        this._updateds.length = 0;
+        this._deleteds.length = 0;
     };
     
     function CreateDataSet(proxy, table, syncronizer) {
-        var _inserteds = [],
-            _updateds = [],
-            _deleteds = [],
-            _proxy = proxy,
+        var _proxy = proxy,
             _table = table,
             _syncronizer = syncronizer;
         
+        this._inserteds = [];
+        this._updateds = [];
+        this._deleteds = [];
         this.active = false;
         this.limit = 1000;
         this.sort = null;
         this.data = new HashMap();
-        
-        this.getInserteds = function() {
-            return _inserteds;
-        }
-        
-        this.getUpdateds = function() {
-            return _updateds;
-        }
-        
-        this.getDeleteds = function() {
-            return _deleteds;
-        }
         
         this.getProxy = function() {
             return _proxy;
@@ -101,11 +86,10 @@ var DataSet = (function() {
             record.id = (new Date()).getTime();
         }
         
-        var _inserteds = this.getInserteds(),
-            index = this.data.indexOfKey('id', record.id);
+        var index = this.data.indexOfKey('id', record.id);
         
         if (index === -1) {
-            _inserteds.push(record);
+            this._inserteds.push(record);
             this.data.push(record);
         }
     }
@@ -115,13 +99,12 @@ var DataSet = (function() {
             throw "Invalid operation on closed dataset";
         }
         
-        var _updateds = this.getUpdateds(),
-            index = this.data.indexOfKey('id', record.id);
+        var index = this.data.indexOfKey('id', record.id);
         
-        if (!_updateds[index]) {
-            _updateds.push(record);
+        if (!this._updateds[index]) {
+            this._updateds.push(record);
         } else {
-            _updateds.splice(index, 1, record);
+            this._updateds.splice(index, 1, record);
         }
         
         this.data.splice(index, 1, record);
@@ -140,11 +123,10 @@ var DataSet = (function() {
             throw "Invalid operation on closed dataset";
         }
         
-        var _deleteds = this.getDeleteds(),
-            index = this.data.indexOfKey('id', record.id);
+        var index = this.data.indexOfKey('id', record.id);
         
-        if (!_deleteds[index]) {
-            _deleteds.push(record);
+        if (!this._deleteds[index]) {
+            this._deleteds.push(record);
         }
         
         this.data.splice(index, 1);
@@ -157,14 +139,11 @@ var DataSet = (function() {
 
         var self = this,
             callback = callback,
-            sync = this.getSyncronizer(),
-            _inserteds = this.getInserteds(),
-            _updateds = this.getUpdateds(),
-            _deleteds = this.getDeleteds();
+            sync = this.getSyncronizer();
 
         function cb() {
             if (sync) {
-                sync.writeData(self.getTable(), _inserteds, _updateds, _deleteds);
+                sync.writeData(self.getTable(), self._inserteds, self._updateds, self._deleteds);
             }
             _cleanCache(self);
             if (typeof callback === "function") {
@@ -172,7 +151,7 @@ var DataSet = (function() {
             }
         }
 
-        if (!_inserteds.length && !_updateds.length && !_deleteds.length) {
+        if (!self._inserteds.length && !self._updateds.length && !self._deleteds.length) {
             if (typeof callback === "function") {
                 callback();
             }
@@ -180,7 +159,7 @@ var DataSet = (function() {
         }
         
         self.getProxy().commit(
-            this.getTable(), _inserteds, _updateds, _deleteds, cb
+            this.getTable(), self._inserteds, self._updateds, self._deleteds, cb
         );
     }
 
