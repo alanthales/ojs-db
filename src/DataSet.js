@@ -5,9 +5,9 @@
 */
 var DataSet = (function() {
     var _cleanCache = function(dts) {
-        this._inserteds.length = 0;
-        this._updateds.length = 0;
-        this._deleteds.length = 0;
+        dts._inserteds.length = 0;
+        dts._updateds.length = 0;
+        dts._deleteds.length = 0;
     };
     
     function CreateDataSet(proxy, table, syncronizer) {
@@ -159,7 +159,7 @@ var DataSet = (function() {
         }
         
         self.getProxy().commit(
-            this.getTable(), self._inserteds, self._updateds, self._deleteds, cb
+            self.getTable(), self._inserteds, self._updateds, self._deleteds, cb
         );
     }
 
