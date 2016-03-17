@@ -26,7 +26,7 @@ var SyncDb = (function() {
             table = window.localStorage[key],
             result = new HashMap();
         if (table) {
-            result.putRange( JSON.parse(table) );
+            result.putRange( JSON.parse(table, DbProxy.dateParser) );
         }
         return result;
     }

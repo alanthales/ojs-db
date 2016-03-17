@@ -8,7 +8,7 @@ var LocalStorageProxy = (function() {
         var table = window.localStorage[key],
             results = new HashMap();
         if (table) {
-            results.putRange( JSON.parse(table) );
+            results.putRange( JSON.parse(table, DbProxy.dateParser) );
         }
         return results;
     };

@@ -79,7 +79,7 @@ var SQLiteProxy = (function() {
                 for (field in record) {
                     index = hashtable.indexOf(field);
                     if (fields[index].serialize) {
-                        record[field] = JSON.parse(record[field]);
+                        record[field] = JSON.parse(record[field], DbProxy.dateParser);
                     }
                 }
                 table.push(record);
