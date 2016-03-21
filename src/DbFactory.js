@@ -1,7 +1,7 @@
 /*
     Database Factory Utility Class
     Alan Thales, 09/2015
-    Requires: LocalStorageProxy.js, SQLiteProxy.js, DataSet.js
+    Requires: LocalStorageProxy.js, SQLiteProxy.js, RestProxy.js, DataSet.js
 */
 var DbFactory = (function() {
     
@@ -28,6 +28,9 @@ var DbFactory = (function() {
                 break;
             case 1:
                 _proxy = new SQLiteProxy(opts);
+                break;
+            case 2:
+                _proxy = new RestProxy(opts);
                 break;
             default:
                 throw "Proxy not implemented";

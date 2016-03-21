@@ -5,7 +5,8 @@
 var DbProxies = (function() {
     return {
         LOCALSTORAGE: 0,
-        SQLITE: 1
+        SQLITE: 1,
+        RESTFUL: 2
     }
 })();
 
@@ -16,6 +17,8 @@ var DbProxies = (function() {
 */
 var DbProxy = (function() {
     function CreateProxy() {}
+    
+    CreateProxy.prototype.createDatabase = function() {}
     
     CreateProxy.dateParser = function (key, value) {
         var reISO = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*))(?:Z|(\+|-)([\d|:]*))?$/,
