@@ -8,7 +8,7 @@ var SyncDb = (function() {
         Insert: '_inserted',
         Update: '_updated',
         Delete: '_deleted'
-    }
+    };
     
     function CreateSync() { }
     
@@ -29,16 +29,28 @@ var SyncDb = (function() {
             result.putRange( JSON.parse(table, DbProxy.dateParser) );
         }
         return result;
-    }
+    };
+    
+    var _merge = function(arr1, arr2) {
+        var result = new HashMap(),
+            concated = arr1.concat(arr2),
+            i;
+        for (i = 0; i < concated.length; i++) {
+            if (result.indexOfKey('id', parseInt(concated[i].id)) < 0) {
+                result.put(concated[i]);
+            }
+        }
+        return result;
+    };
     
     CreateSync.prototype.writeData = function(table, toInsert, toUpdate, toDelete) {
         var insTable = _getData(Operations.Insert, table),
             updTable = _getData(Operations.Update, table),
             delTable = _getData(Operations.Delete, table);
 
-        insTable.putRange(toInsert, true);
-        updTable.putRange(toUpdate, true);
-        delTable.putRange(toDelete, true);
+        insTable = _merge(insTable, toInsert);
+        updTable = _merge(updTable, toUpdate);
+        delTable = _merge(delTable, toDelete);
         
         _saveTable(Operations.Insert, table, insTable);
         _saveTable(Operations.Update, table, updTable);

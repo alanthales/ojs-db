@@ -40,16 +40,14 @@ var RestProxy = (function() {
             }
         }
         
-        http.open("POST", url, true);
-        
         if (typeof config === "object") {
             params = config.data;
-            
             for (prop in config.headers) {
                 http.setRequestHeader(prop, config.headers[prop]);
             }
         }
         
+        http.open("POST", url, true);
         http.send(params);
     };
     

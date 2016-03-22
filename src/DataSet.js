@@ -173,7 +173,7 @@ var DataSet = (function() {
         
         sync.exec(self.getTable(), function(allData) {
             allData.forEach(function(item) {
-                if (self.data.indexOfKey('id', item.id) < 0) {
+                if (self.data.indexOfKey('id', parseInt(item.id)) < 0) {
                     self.insert(item);
                 };
             });

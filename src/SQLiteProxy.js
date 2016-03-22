@@ -26,7 +26,7 @@ var SQLiteProxy = (function() {
     CreateProxy.prototype = Object.create(DbProxy.prototype);
     
     CreateProxy.prototype.getFields = function(table) {
-        var index = _maps.indexOfKey('table', table);
+        var index = _maps.indexOfKey("table", table);
         return _maps[index].fields;
     }
     
