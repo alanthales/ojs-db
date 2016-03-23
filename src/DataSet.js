@@ -132,7 +132,7 @@ var DataSet = (function() {
         this.data.splice(index, 1);
     }
 
-    CreateDataSet.prototype.post = function(callback) {
+    CreateDataSet.prototype.post = function(callback, ignoreSync) {
         if (!this.active) {
             throw "Invalid operation on closed dataset";
         }
@@ -142,10 +142,13 @@ var DataSet = (function() {
             sync = this.getSyncronizer();
 
         function cb() {
-            if (sync) {
+            if (sync && !ignoreSync) {
                 sync.writeData(self.getTable(), self._inserteds, self._updateds, self._deleteds);
             }
+            
             _cleanCache(self);
+            self.refresh();
+            
             if (typeof callback === "function") {
                 callback();
             }
@@ -178,12 +181,7 @@ var DataSet = (function() {
                 };
             });
             
-            self.data.post();
-            self.refresh();
-            
-            if (typeof callback === 'function') {
-                callback();
-            }
+            self.post(callback, true);
         });
     }
     
