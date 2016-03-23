@@ -82,8 +82,10 @@ var DataSet = (function() {
             throw "Invalid operation on closed dataset";
         }
         
-        if (record && !record.id) {
+        if (!record.id) {
             record.id = (new Date()).getTime();
+        } else {
+            record.id = parseInt(record.id);
         }
         
         var index = this.data.indexOfKey('id', record.id);
@@ -98,6 +100,12 @@ var DataSet = (function() {
         if (!this.active) {
             throw "Invalid operation on closed dataset";
         }
+        
+        if (!record.id) {
+            return;
+        }
+        
+        record.id = parseInt(record.id);
         
         var index = this.data.indexOfKey('id', record.id);
         
@@ -122,6 +130,12 @@ var DataSet = (function() {
         if (!this.active) {
             throw "Invalid operation on closed dataset";
         }
+        
+        if (!record.id) {
+            return;
+        }
+        
+        record.id = parseInt(record.id);
         
         var index = this.data.indexOfKey('id', record.id);
         
