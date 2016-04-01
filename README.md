@@ -7,12 +7,17 @@ The installation is simple, you can download and linking js files directily in y
 * Clone the project.
 * Install uglifyjs to minify and compact the code.
 * Go to project directory and compile.
+* Link the minified file generated in your page.
 
 ```
 git clone https://github.com/alanthales/ojs-db.git
 npm install -g uglify-js
 cd ojs-db
 make
+```
+
+```javascript
+<script src="ojs-db.min.js"></script>
 ```
 
 ## API
