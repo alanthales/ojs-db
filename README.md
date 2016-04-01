@@ -7,6 +7,7 @@ The installation is simple, you can download and linking js files directily in y
 * Clone the project.
 * Install uglifyjs to minify and compact the code.
 * Go to project directory and compile.
+* Link the minified file generated in your page.
 
 ```
 git clone https://github.com/alanthales/ojs-db.git
@@ -15,8 +16,13 @@ cd ojs-db
 make
 ```
 
+```javascript
+<script src="ojs-db.min.js"></script>
+```
+
 ## API
 It is simple and intuitive to use.
+Note: The array objects returned by methods and the property `data` of DataSet is not an standard `Array`, see [ArrayMap](src/ArrayMap.js).
 
 * <a href="#creating-a-factory-and-a-dataSet">Creating a Factory and a DataSet</a>
 * <a href="#open-a-dataset-to-work-with">Open a DataSet to work with</a>
@@ -44,11 +50,9 @@ The constructor is used as follows `new DbFactory(proxy, options, synchronizer)`
 // Type 1: LocalStorageProxy enum.
 var db = new DbFactory(DbProxy.LOCALSTORAGE);
 
-
 // Type 2: SQLiteProxy enum with config object
 var db = new DbFactory(DbProxy.SQLITE, "DatabaseName");
 db.createDatabase(maps);
-
 
 // Type 3: Your own proxy
 var proxy = new MyProxy(config)
@@ -72,6 +76,7 @@ The DataSet's contains the properties below:
 
 * `limit` (default 1000): control the quantity of records returned from proxy.
 * `sort` (default null): gets the records sorting them by properties in a sort object. See:
+* `data` (default []): contains all records returned after call `open`. See:
 
 ```javascript
 products.limit = 50;
