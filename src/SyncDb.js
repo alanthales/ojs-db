@@ -1,7 +1,7 @@
 /*
     SyncDb Abstract Class
     Autor: Alan Thales, 03/2016
-    Requires: HashMap.js
+    Requires: ArrayMap.js
 */
 var SyncDb = (function() {
     var Operations = {
@@ -24,7 +24,7 @@ var SyncDb = (function() {
     var _getData = function(operation, tableName) {
         var key = _getTableName(operation, tableName),
             table = window.localStorage[key],
-            result = new HashMap();
+            result = new ArrayMap();
         if (table) {
             result.putRange( JSON.parse(table, DbProxy.dateParser) );
         }
@@ -32,7 +32,7 @@ var SyncDb = (function() {
     };
     
     var _merge = function(arr1, arr2) {
-        var result = new HashMap(),
+        var result = new ArrayMap(),
             concated = arr1.concat(arr2),
             i;
         for (i = 0; i < concated.length; i++) {

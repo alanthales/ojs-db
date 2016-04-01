@@ -1,7 +1,7 @@
 /*
     Restful Proxy Class
     Autor: Alan Thales, 09/2015
-    Requires: HashMap.js, DbProxy.js
+    Requires: ArrayMap.js, DbProxy.js
 */
 var RestProxy = (function() {
     var _defSerialize = function(obj) {
@@ -54,7 +54,7 @@ var RestProxy = (function() {
     var _get = function(options, success, error) {
         var opts = typeof options === "object" ? options : { key: options },
             url = this.config.url + "/" + opts.key + "/" + this.config.getEP,
-            table = new HashMap();
+            table = new ArrayMap();
         
         _httpGet(url, this.config, function(xhr) {
             table.putRange( JSON.parse(xhr.responseText, DbProxy.dateParser) );

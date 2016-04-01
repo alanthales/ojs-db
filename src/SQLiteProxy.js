@@ -1,10 +1,10 @@
 /*
     SQLite Proxy Class
     Autor: Alan Thales, 09/2015
-    Requires: HashMap.js, DbProxy.js
+    Requires: ArrayMap.js, DbProxy.js
 */
 var SQLiteProxy = (function() {
-    var _maps = new HashMap(),
+    var _maps = new ArrayMap(),
         _selectFrom = "SELECT * FROM";
     
     function CreateProxy(dbName) {
@@ -70,7 +70,7 @@ var SQLiteProxy = (function() {
             hashtable = fields.map(function(field) {
                 return field.name;
             }),
-            table = new HashMap(),
+            table = new ArrayMap(),
             i, record, field, index;
 
         transaction.executeSql(sql, params, function(tx, results) {
