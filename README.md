@@ -1,22 +1,17 @@
 ## ojs-db
-**A JavaScript database to persist data in browser, mobile phone, cloud or anywhere. You define where to write the data through proxies. 100% JavaScript, no binary dependency**. API is simple and easy to use.
+A JavaScript database to persist data in browser, mobile phone, cloud or anywhere. You define where to write the data through proxies. **100% JavaScript, no binary dependency**. API is simple and easy to use.
 
 ## Installation, tests
-Clone or download the project.
+The installation is simple, you can download and linking js files directily in your page using `script` tag or do that:
+
+* Clone the project.
+* Install uglifyjs to minify and compact the code.
+* Go to project directory and compile.
 
 ```
 git clone https://github.com/alanthales/ojs-db.git
-```
-
-Install uglifyjs to minify and compact the code.
-
-```
 npm install -g uglify-js
-```
-
-Go to project directory and compile.
-
-```
+cd ojs-db
 make
 ```
 
@@ -40,7 +35,7 @@ You can use **ojs-db** as an in-memory only database or as a persistent database
 * `RestProxy`: To persist data in a webservice.
 
 The constructor is used as follows `new DbFactory(proxy, options, synchronizer)` where:
-* `proxy` (required): is a proxy instance, or an enum representing the proxy that will be instantiated (DbProxy.LOCALSTORAGE, DbProxy.SQLITE, DbProxy.RESTFUL).
+* `proxy` (required): is a proxy instance, or an enum representing the proxy that will be instantiated (`DbProxy.LOCALSTORAGE`, `DbProxy.SQLITE`, `DbProxy.RESTFUL`).
 * `options` (optional): is an object with the settings for the proxy, case use an enum to instantiate.
 * `synchronizer` (optional): is a SyncDb instance to synchronizing local data with cloud or another place.
 
