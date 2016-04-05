@@ -1,5 +1,5 @@
 ## ojs-db
-A JavaScript database to persist data in browser, mobile phone, cloud or anywhere. You define where to write the data through proxies. **100% JavaScript, no binary dependency**. API is simple and easy to use.
+A JavaScript library to persist data in browser, mobile phone, cloud or anywhere. You define where to write the data through proxies. **100% JavaScript, no binary dependency**. API is simple and easy to use.
 
 ## Installation, tests
 The installation is simple, you can download and linking js files directily in your page using `script` tag or do that:
@@ -16,7 +16,8 @@ cd ojs-db
 make
 ```
 
-```javascript
+```html
+<!-- linking js file generated on page -->
 <script src="ojs-db.min.js"></script>
 ```
 
@@ -247,7 +248,7 @@ array.putRange(elements);
 
 // Query, group and order by
 var q = array.query({ key: 'key1' }) // 'q' contains { key: 'key1' }
-  , g = q.groupBy({ $max: 'key' }, []); // 'g' contains { key: 'key3' }
+  , g = array.groupBy({ $max: 'key' }, []); // 'g' contains { key: 'key3' }
   
 array.orderBy({ key: 'desc' }); // array have now reverse order
 ```
