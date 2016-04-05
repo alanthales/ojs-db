@@ -16,10 +16,10 @@
  */
 
 /*
-    HashMap Class
+    ArrayMap Class
     Autor: Alan Thales, 09/2015
 */
-var HashMap = (function() {
+var ArrayMap = (function() {
     var _recordMatch = function(record, opts) {
         var matched = true,
             field, prop, str;

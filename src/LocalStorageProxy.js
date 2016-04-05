@@ -1,12 +1,12 @@
 /*
     LocalStorage Proxy Class
     Autor: Alan Thales, 09/2015
-    Requires: HashMap.js, DbProxy.js
+    Requires: ArrayMap.js, DbProxy.js
 */
 var LocalStorageProxy = (function() {
     var _get = function(key) {
         var table = window.localStorage[key],
-            results = new HashMap();
+            results = new ArrayMap();
         if (table) {
             results.putRange( JSON.parse(table, DbProxy.dateParser) );
         }
@@ -46,7 +46,7 @@ var LocalStorageProxy = (function() {
         callback( results );
     }
     
-    CreateProxy.prototype.groupBy = function(key, filters, options, groups, callback) {
+    CreateProxy.prototype.groupBy = function(key, options, groups, filters, callback) {
         var table = _get(key);
         
         callback( table.groupBy(options, groups, filters) );

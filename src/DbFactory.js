@@ -5,16 +5,16 @@
 */
 var DbFactory = (function() {
     
-    function CreateFactory(opts, proxyType, syncronizer) {
-        var _syncronizer = syncronizer,
+    function CreateFactory(proxyType, opts, synchronizer) {
+        var _synchronizer = synchronizer,
             _proxy;
         
         this.getProxy = function() {
             return _proxy;
         }
         
-        this.getSyncronizer = function() {
-            return _syncronizer;
+        this.getSynchronizer = function() {
+            return _synchronizer;
         }
         
         if (proxyType && typeof proxyType === "object") {
@@ -45,12 +45,12 @@ var DbFactory = (function() {
         this.getProxy().query(key, filters, callback);
     }
     
-    CreateFactory.prototype.groupBy = function(key, filters, options, groups, callback) {
-        this.getProxy().groupBy(key, filters, options, groups, callback);
+    CreateFactory.prototype.groupBy = function(key, options, groups, filters, callback) {
+        this.getProxy().groupBy(key, options, groups, filters, callback);
     }
     
     CreateFactory.prototype.createDataSet = function(table) {
-        return new DataSet(this.getProxy(), table, this.getSyncronizer());
+        return new DataSet(this.getProxy(), table, this.getSynchronizer());
     }
 
     return CreateFactory;

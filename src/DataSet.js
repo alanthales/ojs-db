@@ -1,7 +1,7 @@
 /*
     DataSet Class
     Autor: Alan Thales, 09/2015
-    Requires: HashMap.js, SyncTable.js
+    Requires: ArrayMap.js, SyncTable.js
 */
 var DataSet = (function() {
     var _cleanCache = function(dts) {
@@ -21,7 +21,7 @@ var DataSet = (function() {
         this.active = false;
         this.limit = 1000;
         this.sort = null;
-        this.data = new HashMap();
+        this.data = new ArrayMap();
         
         this.getProxy = function() {
             return _proxy;
