@@ -77,7 +77,7 @@ var products = db.createDataSet("products")
 The DataSet's contains the properties below:
 
 * `limit` (default `1000`): control the quantity of records returned from proxy.
-* `sort` (default `null`): gets the records sorting them by properties in a sort object. See:
+* `sort` (default `null`): gets the records sorting them by properties in a sort object.
 * `data` (default `[]`): contains all records returned after call `open`. Note: `data` is type of [ArrayMap](src/ArrayMap) and you can use any of your methods.
 
 See examples below:
@@ -93,7 +93,7 @@ clients.open(); // open and gets the records sorted by name and age of high to l
 ### Saving records
 The types of data are based on proxy, then the proxy is responsible for serialize and de-serialize the data.
 
-If the record does not contain an `id` field, **ojs-db** will automatically generated one for you. The `id` of a document, once set, can be modified at your own risk.
+If the record does not contain an `id` field, **ojs-db** will automatically generated one for you. The `id` of a record, once set, can be modified at your own risk.
 
 ```javascript
 var products = db.createDataSet("products")
