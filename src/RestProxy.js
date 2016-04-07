@@ -53,8 +53,17 @@ var RestProxy = (function() {
     
     var _get = function(options, success, error) {
         var opts = typeof options === "object" ? options : { key: options },
-            url = this.config.url + "/" + opts.key + "/" + this.config.getEP,
-            table = new ArrayMap();
+            url = this.config.url + "/" + opts.key,
+            table = new ArrayMap(),
+            p;
+        
+        if (opts.params) {
+            for (p in opts.params) {
+                url += "/" p + "/" + opts.params[p];
+            }
+        } else {
+            url += "/" + this.config.getEP;
+        }
         
         _httpGet(url, this.config, function(xhr) {
             table.putRange( JSON.parse(xhr.responseText, DbProxy.dateParser) );

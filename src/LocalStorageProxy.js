@@ -4,11 +4,15 @@
     Requires: ArrayMap.js, DbProxy.js
 */
 var LocalStorageProxy = (function() {
-    var _get = function(key) {
-        var table = window.localStorage[key],
+    var _get = function(opts) {
+        var key = typeof options === "object" ? opts.key : opts,
+            table = window.localStorage[key],
             results = new ArrayMap();
         if (table) {
             results.putRange( JSON.parse(table, DbProxy.dateParser) );
+        }
+        if (results.length && opts.params) {
+            return results.query(opts.params);
         }
         return results;
     };
@@ -27,11 +31,10 @@ var LocalStorageProxy = (function() {
     CreateProxy.prototype = Object.create(DbProxy.prototype);
 
     CreateProxy.prototype.getRecords = function(options, callback) {
-        var opts = typeof options === "object" ? options : { key: options },
-            table = _get(opts.key);
+        var table = _get(options);
 
-        if (opts.sort) {
-            table.orderBy(opts.sort);
+        if (options.sort) {
+            table.orderBy(options.sort);
         }
 
         if (typeof callback === "function") {

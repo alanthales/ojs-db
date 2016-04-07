@@ -102,17 +102,24 @@ var SQLiteProxy = (function() {
     CreateProxy.prototype.getRecords = function(options, callback) {
         var key = options && options.key ? options.key : options,
             sortBy = options && options.sort ? _orderBy(options.sort) : "",
-            sql = typeof options === "object" ?
-                [_selectFrom, options.key, sortBy, "LIMIT", options.limit].join(" ") :
-                [_selectFrom, options].join(" ");
-//        var opts = typeof options === "object" ? options : { key: options, limit: 1000 },
-//            sortBy = opts.sort && opts.sort !== "" ? "ORDER BY " + opts.sort : "";
-//        
-//        opts.sort = sortBy;
-//        opts.params = opts.params || [];
-
+            where = "WHERE ",
+            sql = [], p;
+        
+        if (typeof options === "object") {
+            sql = [_selectFrom, options.key];
+            if (options.params) {
+                for (p in options.params) {
+                    where += p + " = " + options.params[p];
+                }
+                sql.push(where);
+            }
+            sql = sql.concat([sortBy, "LIMIT", options.limit]);
+        } else {
+            sql = [_selectFrom, options];
+        }
+        
         this.getDb().transaction(function(tx) {
-            _select(key, sql, [], tx, callback);
+            _select(key, sql.join(" "), [], tx, callback);
         });
     }
 
