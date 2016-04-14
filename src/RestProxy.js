@@ -59,7 +59,7 @@ var RestProxy = (function() {
         
         if (opts.params) {
             for (p in opts.params) {
-                url += "/" p + "/" + opts.params[p];
+                url += "/" + p + "/" + opts.params[p];
             }
         } else {
             url += "/" + this.config.getEP;
