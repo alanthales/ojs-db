@@ -21,6 +21,7 @@ var DataSet = (function() {
         this.active = false;
         this.limit = 1000;
         this.sort = null;
+        this.params = null;
         this.data = new ArrayMap();
         
         this.getProxy = function() {
@@ -38,7 +39,7 @@ var DataSet = (function() {
 
     CreateDataSet.prototype.open = function(callback) {
         var self = this,
-            opts = { key: self.getTable(), limit: self.limit, sort: self.sort };
+            opts = { key: self.getTable(), limit: self.limit, sort: self.sort, params: self.params };
 
         function fn(results, cb) {
             if (typeof cb === "function") {
