@@ -43,17 +43,17 @@ You can use **ojs-db** as an in-memory only database or as a persistent database
 * `RestProxy`: To persist data in a webservice.
 
 The constructor is used as follows `new DbFactory(proxy, options, synchronizer)` where:
-* `proxy` (required): is a proxy instance, or an enum representing the proxy that will be instantiated (`DbProxy.LOCALSTORAGE`, `DbProxy.SQLITE`, `DbProxy.RESTFUL`).
+* `proxy` (required): is a proxy instance, or an enum representing the proxy that will be instantiated (`DbProxies.LOCALSTORAGE`, `DbProxies.SQLITE`, `DbProxies.RESTFUL`).
 * `options` (optional): is an object with the settings for the proxy, case use an enum to instantiate.
 * `synchronizer` (optional): is a SyncDb instance to synchronizing local data with cloud or another place.
 
 
 ```javascript
 // Type 1: LocalStorageProxy enum.
-var db = new DbFactory(DbProxy.LOCALSTORAGE);
+var db = new DbFactory(DbProxies.LOCALSTORAGE);
 
 // Type 2: SQLiteProxy enum with config object
-var db = new DbFactory(DbProxy.SQLITE, "DatabaseName");
+var db = new DbFactory(DbProxies.SQLITE, "DatabaseName");
 db.createDatabase(maps);
 
 // Type 3: Your own proxy
@@ -65,7 +65,7 @@ The dataset is the class that search , insert, remove and change records. In gen
 
 ```javascript
 // Creating a Factory.
-var db = new DbFactory(DbProxy.LOCALSTORAGE);
+var db = new DbFactory(DbProxies.LOCALSTORAGE);
 
 // Creating DataSet's.
 var products = db.createDataSet("products")
