@@ -190,7 +190,7 @@ var DataSet = (function() {
         }
         
         sync.exec(self.getTable(), function(allData) {
-            var serverData = new ArrayMap(),
+            var serverData = new ArrayMap();
             
             serverData.putRange(allData);
             
