@@ -190,10 +190,22 @@ var DataSet = (function() {
         }
         
         sync.exec(self.getTable(), function(allData) {
-            allData.forEach(function(item) {
+            var serverData = new ArrayMap(),
+            
+            serverData.putRange(allData);
+            
+            self.data.forEach(function(item) {
+                if (serverData.indexOfKey('id', item.id) < 0) {
+                    self.delete(item);
+                }
+            });
+            
+            serverData.forEach(function(item) {
                 if (self.data.indexOfKey('id', parseInt(item.id)) < 0) {
                     self.insert(item);
-                };
+                } else {
+                    self.update(item);
+                }
             });
             
             self.post(callback, true);
