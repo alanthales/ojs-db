@@ -5,7 +5,7 @@
 */
 var LocalStorageProxy = (function() {
     var _get = function(opts) {
-        var key = typeof options === "object" ? opts.key : opts,
+        var key = typeof opts === "object" ? opts.key : opts,
             table = window.localStorage[key],
             results = new ArrayMap();
         if (table) {
