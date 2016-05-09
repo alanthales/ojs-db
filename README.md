@@ -1,5 +1,5 @@
 ## ojs-db
-A JavaScript database to persist data in browser, mobile phone, cloud or anywhere. You define where to write the data through proxies. **100% JavaScript, no binary dependency**. API is simple and easy to use.
+A JavaScript library to persist data in browser, mobile phone, cloud or anywhere. You define where to write the data through proxies. **100% JavaScript, no binary dependency**. API is simple and easy to use.
 
 ## Installation, tests
 The installation is simple, you can download and linking js files directily in your page using `script` tag or do that:
@@ -16,13 +16,13 @@ cd ojs-db
 make
 ```
 
-```javascript
+```html
+<!-- linking js file generated on page -->
 <script src="ojs-db.min.js"></script>
 ```
 
 ## API
 It is simple and intuitive to use.
-Note: The array objects returned by methods and the property `data` of DataSet is not an standard `Array`, see [ArrayMap](src/ArrayMap.js).
 
 * <a href="#creating-a-factory-and-a-dataSet">Creating a Factory and a DataSet</a>
 * <a href="#open-a-dataset-to-work-with">Open a DataSet to work with</a>
@@ -32,6 +32,8 @@ Note: The array objects returned by methods and the property `data` of DataSet i
   * <a href="#operators">Operators</a>
   * <a href="#group-by">Group By</a>
 * <a href="#removing-records">Removing records</a>
+* <a href="#filtering-in-memory-records">Filtering in memory records</a>
+* <a href="#using-arraymap-for-your-needs">Using ArrayMap for your needs</a>
 
 ### Creating a Factory and a DataSet
 You can use **ojs-db** as an in-memory only database or as a persistent database. The factory is a class to create dataset's, the dataset's persist data through proxies. Each proxy may persist data according to your needs. There are 3 proxies already implemented and you can implement your own proxy. Are they:
@@ -41,17 +43,17 @@ You can use **ojs-db** as an in-memory only database or as a persistent database
 * `RestProxy`: To persist data in a webservice.
 
 The constructor is used as follows `new DbFactory(proxy, options, synchronizer)` where:
-* `proxy` (required): is a proxy instance, or an enum representing the proxy that will be instantiated (`DbProxy.LOCALSTORAGE`, `DbProxy.SQLITE`, `DbProxy.RESTFUL`).
+* `proxy` (required): is a proxy instance, or an enum representing the proxy that will be instantiated (`DbProxies.LOCALSTORAGE`, `DbProxies.SQLITE`, `DbProxies.RESTFUL`).
 * `options` (optional): is an object with the settings for the proxy, case use an enum to instantiate.
 * `synchronizer` (optional): is a SyncDb instance to synchronizing local data with cloud or another place.
 
 
 ```javascript
 // Type 1: LocalStorageProxy enum.
-var db = new DbFactory(DbProxy.LOCALSTORAGE);
+var db = new DbFactory(DbProxies.LOCALSTORAGE);
 
 // Type 2: SQLiteProxy enum with config object
-var db = new DbFactory(DbProxy.SQLITE, "DatabaseName");
+var db = new DbFactory(DbProxies.SQLITE, "DatabaseName");
 db.createDatabase(maps);
 
 // Type 3: Your own proxy
@@ -63,7 +65,7 @@ The dataset is the class that search , insert, remove and change records. In gen
 
 ```javascript
 // Creating a Factory.
-var db = new DbFactory(DbProxy.LOCALSTORAGE);
+var db = new DbFactory(DbProxies.LOCALSTORAGE);
 
 // Creating DataSet's.
 var products = db.createDataSet("products")
@@ -74,9 +76,11 @@ var products = db.createDataSet("products")
 ### Open a DataSet to work with
 The DataSet's contains the properties below:
 
-* `limit` (default 1000): control the quantity of records returned from proxy.
-* `sort` (default null): gets the records sorting them by properties in a sort object. See:
-* `data` (default []): contains all records returned after call `open`. See:
+* `limit` (default `1000`): control the quantity of records returned from proxy.
+* `sort` (default `null`): gets the records sorting them by properties in a sort object.
+* `data` (default `[]`): contains all records returned after call `open`. Note: `data` is type of [ArrayMap](src/ArrayMap) and you can use any of your methods.
+
+See examples below:
 
 ```javascript
 products.limit = 50;
@@ -89,7 +93,7 @@ clients.open(); // open and gets the records sorted by name and age of high to l
 ### Saving records
 The types of data are based on proxy, then the proxy is responsible for serialize and de-serialize the data.
 
-If the record does not contain an `id` field, **ojs-db** will automatically generated one for you. The `id` of a document, once set, can be modified at your own risk.
+If the record does not contain an `id` field, **ojs-db** will automatically generated one for you. The `id` of a record, once set, can be modified at your own risk.
 
 ```javascript
 var products = db.createDataSet("products")
@@ -112,7 +116,7 @@ Use `query` to find for multiple records that matching you search, or `getById` 
 Basic querying means are searching for records whose fields match the ones you specify.
 
 ```javascript
-// Let's say our database contains the following collection
+// Let's say our database contains the following collection named 'persons'
 // { id: '1', name: 'Joe', age: 17  }
 // { id: '2', name: 'Aron', age: 30 }
 // { id: '3', name: 'John', age: 31 }
@@ -120,16 +124,18 @@ Basic querying means are searching for records whose fields match the ones you s
 // { id: '5', name: 'Jonh', age: 25 }
 
 // Finding all persons with age equal 17
-dataset.query({ age: 17 }, function (results) {
+db.query('persons', { age: 17 }, function (results) {
   // 'results' is an array containing records 'Joe' and 'Matt'
   // If no record is found, 'results' is equal to []
 });
 
 // Finding all persons with name equal 'John' and age equal 25
-dataset.query({ name: 'John', age: 25 }, function (results) {
+db.query('persons', { name: 'John', age: 25 }, function (results) {
   // 'results' is an array containing record 5 only
 });
 ```
+
+Note: The array objects returned by methods query and groupBy, is not an standard `Array`, see [ArrayMap](src/ArrayMap.js).
 
 #### Operators
 The syntax is `{ field: { $op: value } }` where `$op` is any comparison operator ($lt, $lte, $gt, $gte, $start, $end, $contain, $in, $custom):
@@ -144,17 +150,17 @@ The syntax is `{ field: { $op: value } }` where `$op` is any comparison operator
 
 ```javascript
 // $lt, $lte, $gt and $gte work on numbers, dates and strings. When used with strings, lexicographical order is used
-dataset.query({ age: { $gt: 17 } }, function (results) {
+db.query('persons', { age: { $gt: 17 } }, function (results) {
   // 'results' contains all records except id's 1 and 4
 });
 
 // Using $start. $end and $contain is used in same way
-dataset.query({ name: { $start: 'Jo' }}, function (results) {
+db.query('persons', { name: { $start: 'Jo' }}, function (results) {
   // 'results' contains Joe, John (3) and John (5)
 });
 
 // Using $in
-dataset.query({ age: { $in: [30,31] }}, function (results) {
+db.query('persons', { age: { $in: [30,31] }}, function (results) {
   // 'results' contains Aron and John (3)
 });
 
@@ -164,7 +170,7 @@ function compareTo(field) {
     return regx.test(field);
 };
 
-dataset.query({ name: { $custom: compareTo }}, function (results) {
+db.query('persons', { name: { $custom: compareTo }}, function (results) {
   // 'results' contains all records, because the regular expression find any name NOT between 0 at 9.
 });
 ```
@@ -180,25 +186,25 @@ The syntax is `{ { $op: field, alias: aliasName }, groups, filters }` where `$op
 
 ```javascript
 // $max and $min work on numbers, dates and strings. When used with strings, lexicographical order is used
-dataset.groupBy({ $max: 'age' }, [], {}, function (results) {
+db.groupBy('persons', { $max: 'age' }, [], {}, function (results) {
   // 'results' contains an array with the following structure:
   // { age: 31 }
 });
 
 // Using $sum. $avg and $count is used in same way
-dataset.groupBy({ $sum: 'age' }, [], {}, function (results) {
+db.groupBy('persons', { $sum: 'age' }, [], {}, function (results) {
   // 'results' contains an array with the following structure:
   // { age: 120 }
 });
 
 // Getting results with alias
-dataset.groupBy([{ $max: 'age', alias: 'max' }, { $min: 'age', alias: 'min' }], [], {}, function (results) {
+db.groupBy('persons', [{ $max: 'age', alias: 'max' }, { $min: 'age', alias: 'min' }], [], {}, function (results) {
   // 'results' contains an array with the following structure:
   // { max: 31, min: 17 }
 });
 
 // Group by one or many columns
-dataset.groupBy({ $sum: 'age', alias: 'sum' }, ['name'], {}, function (results) {
+db.groupBy('persons', { $sum: 'age', alias: 'sum' }, ['name'], {}, function (results) {
   // 'results' contains an array with the following structure:
   // { name: 'Joe', sum: 17  }
   // { name: 'Aron', sum: 30 }
@@ -208,11 +214,43 @@ dataset.groupBy({ $sum: 'age', alias: 'sum' }, ['name'], {}, function (results) 
 ```
 
 ### Removing records
-`dataset.remove(record)` remove the record from memory only, you must call `post` to persist changes to proxy. See:
+`dataset.remove(record)` where `record` is the object to remove. Note: `remove` delete the record from memory only, you must call `post` to persist changes to proxy. See:
 
 ```javascript
-products.remove(p); // memory only.
-products.post(); // persist data.
+persons.remove(record); // memory only.
+persons.post(); // persist data.
+```
+
+### Filtering in memory records
+The DataSet class contains a method `filter` that works in same way of `db.query`, the only difference is that the data are obtained from memory, and not returned directly from the proxy. See:
+
+```javascript
+// The first parameter (key) not is needed.
+persons.filter({ age: { $gt: 21 } }, function(results) {
+  // 'results' contains an array with the following structure:
+  // { id: '2', name: 'Aron', age: 30 }
+  // { id: '3', name: 'John', age: 31 }
+});
+```
+
+### Using ArrayMap for your needs
+`ArrayMap` is a powerfull class to quering data, group data and get index of an object. To use you can only instantiate the class and fill it with data. See:
+
+```javascript
+var array = new ArrayMap();
+
+// Put a object.
+array.put({ key: 'value' });
+
+// Put a array object
+var elements = [{key: 'key1'}, {key: 'key2'}, {key: 'key3'}];
+array.putRange(elements);
+
+// Query, group and order by
+var q = array.query({ key: 'key1' }) // 'q' contains { key: 'key1' }
+  , g = array.groupBy({ $max: 'key' }, []); // 'g' contains { key: 'key3' }
+  
+array.orderBy({ key: 'desc' }); // array have now reverse order
 ```
 
 ## License 
