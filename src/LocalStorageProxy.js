@@ -19,7 +19,7 @@ var LocalStorageProxy = (function() {
 
     var _saveAll = function(key, table, callback) {
         window.localStorage[key] = JSON.stringify(table);
-        if (typeof callback == "function") {
+        if (typeof callback === "function") {
             callback();
         }
     };

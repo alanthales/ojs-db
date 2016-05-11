@@ -190,12 +190,14 @@ var DataSet = (function() {
         }
         
         sync.exec(self.getTable(), function(allData) {
-            var serverData = new ArrayMap();
+            var serverData = new ArrayMap(),
+                localData = new ArrayMap();
             
             serverData.putRange(allData);
+            localData.putRange(self.data);
             
-            self.data.forEach(function(item) {
-                if (serverData.indexOfKey('id', item.id) < 0) {
+            localData.forEach(function(item) {
+                if (serverData.indexOfKey('id', parseInt(item.id)) < 0) {
                     self.delete(item);
                 }
             });
