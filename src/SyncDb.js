@@ -36,7 +36,7 @@ var SyncDb = (function() {
             concated = arr1.concat(arr2),
             i;
         for (i = 0; i < concated.length; i++) {
-            if (result.indexOfKey('id', parseInt(concated[i].id)) < 0) {
+            if (result.indexOfKey('id', concated[i].id) < 0) {
                 result.put(concated[i]);
             }
         }

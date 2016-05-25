@@ -245,24 +245,6 @@ var ArrayMap = (function() {
     }
     
     Collection.prototype = Object.create(Array.prototype);
-    
-    Collection.cloneObject = function(obj) {
-        if (Object.prototype.toString.call(obj) === '[object Array]') {
-            var out = [], i = 0, len = obj.length;
-            for ( ; i < len; i++ ) {
-                out[i] = arguments.callee(obj[i]);
-            }
-            return out;
-        }
-        if (obj && !(obj instanceof Date) && (typeof obj === 'object')) {
-            var out = {}, i;
-            for ( i in obj ) {
-                out[i] = arguments.callee(obj[i]);
-            }
-            return out;
-        }
-        return obj;
-    }
 
     return Collection;
 })();

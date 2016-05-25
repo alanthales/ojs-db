@@ -1,7 +1,7 @@
 /*
     DataSet Class
     Autor: Alan Thales, 09/2015
-    Requires: ArrayMap.js, SyncTable.js
+    Requires: ArrayMap.js, SyncDb.js
 */
 var DataSet = (function() {
     var _cleanCache = function(dts) {
@@ -67,7 +67,7 @@ var DataSet = (function() {
     }
 
     CreateDataSet.prototype.getById = function(id) {
-        var index = this.data.indexOfKey('id', parseInt(id));
+        var index = this.data.indexOfKey('id', id);
         return this.data[index];
     }
 
@@ -85,8 +85,6 @@ var DataSet = (function() {
         
         if (!record.id) {
             record.id = (new Date()).getTime();
-        } else {
-            record.id = parseInt(record.id);
         }
         
         var index = this.data.indexOfKey('id', record.id);
@@ -106,7 +104,7 @@ var DataSet = (function() {
             return;
         }
         
-        record.id = parseInt(record.id);
+//        record.id = parseInt(record.id);
         
         var index = this.data.indexOfKey('id', record.id);
         
@@ -136,7 +134,7 @@ var DataSet = (function() {
             return;
         }
         
-        record.id = parseInt(record.id);
+//        record.id = parseInt(record.id);
         
         var index = this.data.indexOfKey('id', record.id);
         
@@ -197,13 +195,13 @@ var DataSet = (function() {
             localData.putRange(self.data);
             
             localData.forEach(function(item) {
-                if (serverData.indexOfKey('id', parseInt(item.id)) < 0) {
+                if (serverData.indexOfKey('id', item.id) < 0) {
                     self.delete(item);
                 }
             });
             
             serverData.forEach(function(item) {
-                if (self.data.indexOfKey('id', parseInt(item.id)) < 0) {
+                if (self.data.indexOfKey('id', item.id) < 0) {
                     self.insert(item);
                 } else {
                     self.update(item);
