@@ -124,37 +124,38 @@ var SQLiteProxy = (function() {
     }
 
     var _formatSql = function(sqlNoWhere, filters) {
-        var where = "";
+        var where = "",
+            field, prop;
         
         for (field in filters) {
             for (prop in filters[field]) {
                 switch(prop) {
                     case "$gt":
-                        where += [field, ">", filters[field][prop]].join(" ");
+                        where += [field, ">", filters[field][prop]].join(" ") + " AND ";
                         break;
                     case "$gte":
-                        where += [field, ">=", filters[field][prop]].join(" ");
+                        where += [field, ">=", filters[field][prop]].join(" ") + " AND ";
                         break;
                     case "$lt":
-                        where += [field, "<", filters[field][prop]].join(" ");
+                        where += [field, "<", filters[field][prop]].join(" ") + " AND ";
                         break;
                     case "$lte":
-                        where += [field, "<=", filters[field][prop]].join(" ");
+                        where += [field, "<=", filters[field][prop]].join(" ") + " AND ";
                         break;
                     case "$start":
-                        where += [field, " LIKE '", filters[field][prop], "%'"].join("");
+                        where += [field, " LIKE '", filters[field][prop], "%'"].join("") + " AND ";
                         break;
                     case "$end":
-                        where += [field, " LIKE '%", filters[field][prop], "'"].join("");
+                        where += [field, " LIKE '%", filters[field][prop], "'"].join("") + " AND ";
                         break;
                     case "$contain":
-                        where += [field, " LIKE '%", filters[field][prop], "%'"].join("");
+                        where += [field, " LIKE '%", filters[field][prop], "%'"].join("") + " AND ";
                         break;
                     case "$in":
-                        where += [field, " IN (", filters[field][prop].join(","), ")"].join("");
+                        where += [field, " IN (", filters[field][prop].join(","), ")"].join("") + " AND ";
                         break;
                     case "$custom":
-                        where += filters[field][prop].call(filters[field][prop], field);
+                        where += filters[field][prop].call(filters[field][prop], field) + " AND ";
                         break;
                     default:
                         where += "";
@@ -162,9 +163,61 @@ var SQLiteProxy = (function() {
             }
         }
         
-        return where === "" ? sqlNoWhere : [sqlNoWhere, "WHERE", where].join(" ");
+        if (where === "") {
+            return sqlNoWhere;
+        }
+        
+        where = where.trim().slice(0, -3);
+        
+        return [sqlNoWhere, "WHERE", where].join(" ");
     };
     
+    var _formatGroupBy = function(key, options, groups, filters) {
+        var opts = options && options instanceof Array ? options : [options],
+            groupBy = groups.length ? groups.join(",") + ", " : "",
+            where = filters && typeof filters === "object" ? _formatSql("", filters) : "",
+            sql = "",
+            prop, field, alias;
+    
+        opts.forEach(function(opt) { 
+            for (prop in opt) break;
+            
+            field = opt[prop];
+            alias = opt["alias"] || field;
+            
+            switch(prop) {
+                case "$max":
+                    sql += ["MAX(", field, ")", " AS ", alias].join("") + ", ";
+                    break;
+                case "$min":
+                    sql += ["MIN(", field, ")", " AS ", alias].join("") + ", ";
+                    break;
+                case "$sum":
+                    sql += ["SUM(", field, ")", " AS ", alias].join("") + ", ";
+                    break;
+                case "$avg":
+                    sql += ["AVG(", field, ")", " AS ", alias].join("") + ", ";
+                    break;
+                case "$count":
+                    sql += ["COUNT(", field, ")", " AS ", alias].join("") + ", ";
+                    break;
+            }
+        });
+        
+        if (sql === "") {
+            return [_selectFrom, key].join(" ");
+        }
+
+        sql = sql.trim().slice(0, -1);
+        sql = ["SELECT", groupBy, sql, "FROM", key, where].join(" ");
+        
+        if (groupBy === "") {
+            return sql;
+        }
+            
+        return sql + " GROUP BY " + groupBy;
+    };
+
     CreateProxy.prototype.query = function(key, filters, callback) {
         var opts = filters && typeof filters === "object" ? filters : { },
             select = [_selectFrom, key].join(" "),
@@ -175,6 +228,14 @@ var SQLiteProxy = (function() {
         });
     }
     
+    CreateProxy.prototype.groupBy = function(key, options, groups, filters, callback) {
+        var sql = _formatGroupBy(key, options, groups, filters);
+        
+        this.getDb().transaction(function(tx) {
+            _select(key, sql, [], tx, callback);
+        });
+    }
+
     CreateProxy.prototype.insert = function(key, record, transaction, callback) {
         var params = [],
             fields = "",
