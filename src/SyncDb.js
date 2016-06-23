@@ -34,8 +34,8 @@ var SyncDb = (function() {
     var _merge = function(arr1, arr2) {
         var result = new ArrayMap(),
             concated = arr1.concat(arr2),
-            i;
-        for (i = 0; i < concated.length; i++) {
+            i = 0, l = concated.length;
+        for (; i < l; i++) {
             if (result.indexOfKey('id', concated[i].id) < 0) {
                 result.put(concated[i]);
             }

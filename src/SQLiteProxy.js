@@ -71,10 +71,11 @@ var SQLiteProxy = (function() {
                 return field.name;
             }),
             table = new ArrayMap(),
-            i, record, field, index;
+            i, l, record, field, index;
 
         transaction.executeSql(sql, params, function(tx, results) {
-            for (i = 0; i < results.rows.length; i++) {
+            l = results.rows.length;
+            for (i = 0; i < l; i++) {
                 record = results.rows.item(i);
                 for (field in record) {
                     index = hashtable.indexOf(field);

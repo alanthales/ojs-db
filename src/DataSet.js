@@ -10,7 +10,7 @@ var DataSet = (function() {
         dts._deleteds.length = 0;
     };
     
-    function CreateDataSet(proxy, table, syncronizer) {
+    function CreateDataSet(proxy, table, genIdFn, syncronizer) {
         var _proxy = proxy,
             _table = table,
             _syncronizer = syncronizer;
@@ -23,6 +23,7 @@ var DataSet = (function() {
         this.sort = null;
         this.params = null;
         this.data = new ArrayMap();
+        this.genId = genIdFn;
         
         this.getProxy = function() {
             return _proxy;
@@ -84,7 +85,7 @@ var DataSet = (function() {
         }
         
         if (!record.id) {
-            record.id = (new Date()).getTime();
+            record.id = this.genId(30);
         }
         
         var index = this.data.indexOfKey('id', record.id);
