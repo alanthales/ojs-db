@@ -8,28 +8,7 @@ var RestProxy = (function() {
         return JSON.stringify(obj);
     };
     
-    var _httpGet = function(url, config, success, error) {
-        var http = new XMLHttpRequest(),
-            callback, prop;
-        
-        http.onreadystatechange = function() {
-            if (http.readyState == 4) {
-                callback = http.status == 200 ? success : error;
-                callback(http);
-            }
-        }
-        
-        if (typeof config === "object" && config.headers) {
-            for (prop in config.headers) {
-                http.setRequestHeader(prop, config.headers[prop]);
-            }
-        }
-        
-        http.open("GET", url, true);
-        http.send();
-    };
-    
-    var _httpPost = function(url, config, success, error) {
+    var _httpRequest = function(url, method, config, success, error) {
         var http = new XMLHttpRequest(),
             callback, prop, params;
         
@@ -47,10 +26,10 @@ var RestProxy = (function() {
             }
         }
         
-        http.open("POST", url, true);
+        http.open(method, url, true);
         http.send(params);
     };
-    
+
     var _get = function(options, success, error) {
         var opts = typeof options === "object" ? options : { key: options },
             url = this.config.url + "/" + opts.key,
@@ -61,25 +40,30 @@ var RestProxy = (function() {
             for (p in opts.params) {
                 url += "/" + p + "/" + opts.params[p];
             }
-        } else {
-            url += "/" + this.config.getEP;
         }
+//        else {
+//            url += "/" + this.config.getEP;
+//        }
         
-        _httpGet(url, this.config, function(xhr) {
+        _httpRequest(url, "GET", this.config, function(xhr) {
             table.putRange( JSON.parse(xhr.responseText, DbProxy.dateParser) );
             success( table );
         }, error);
     };
     
-    var _save = function(endpoint, record, success, error) {
-        var url = this.config.url + "/" + endpoint,
+    var _save = function(method, key, record, success, error) {
+        var url = this.config.url + "/" + key,
             config = { data: this.serialize(record) };
+        
+        if (method === "PUT") {
+            url += "/" + record.id;
+        }
         
         if (this.config.headers) {
             config.headers = this.config.headers;
         }
         
-        _httpPost(url, config, function(xhr) {
+        _httpRequest(url, method, config, function(xhr) {
             if (typeof callback === "function") {
                 success( xhr );
             }
@@ -127,24 +111,26 @@ var RestProxy = (function() {
     }
     
     CreateProxy.prototype.insert = function(key, record, callback) {
-        var endpoint = key + "/" + this.config.insertEP;
-        _save(endpoint, record, callback, errorHandle);
+        _save("POST", key, record, callback, errorHandle);
     }
 
     CreateProxy.prototype.update = function(key, record, callback) {
-        var endpoint = key + "/" + this.config.updateEP;
-        _save(endpoint, record, callback, errorHandle);
+        _save("PUT", key, record, callback, errorHandle);
     }
     
     CreateProxy.prototype.delete = function(key, record, callback) {
-        var url = this.config.url + "/" + key + "/" + this.config.deleteEP + "/" + record.id,
+        var url = this.config.url + "/" + key + "/" + record.id,
             config = {};
         
         if (this.config.headers) {
             config.headers = this.config.headers;
         }
         
-        _httpGet(url, config, callback, errorHandle);
+        _httpRequest(url, "DELETE", config, function(xhr) {
+            if (typeof callback === "function") {
+                success( xhr );
+            }
+        }, error);
     }
 
     CreateProxy.prototype.commit = function(key, toInsert, toUpdate, toDelete, callback) {
