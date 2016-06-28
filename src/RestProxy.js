@@ -13,8 +13,8 @@ var RestProxy = (function() {
             callback, prop, params;
         
         http.onreadystatechange = function() {
-            if (http.readyState == 4) {
-                callback = http.status == 200 ? success : error;
+            if (http.readyState === 4) {
+                callback = http.status === 200 ? success : error;
                 callback(http);
             }
         }
