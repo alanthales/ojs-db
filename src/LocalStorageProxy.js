@@ -57,7 +57,7 @@ var LocalStorageProxy = (function() {
     
     CreateProxy.prototype.save = function(key, record, callback) {
         var table = _get(key),
-            index = table.indexOfKey('id', record.id);
+            index = table.indexOfKey("id", record.id);
         if (index === -1) {
             table.push(record);
         } else {
@@ -69,7 +69,7 @@ var LocalStorageProxy = (function() {
     CreateProxy.prototype.remove = function(key, record, callback) {
         var id = typeof record === "object" ? record.id : record,
             table = _get(key),
-            index = table.indexOfKey('id', id);
+            index = table.indexOfKey("id", id);
         table.splice(index, 1);
         _saveAll(key, table, callback);
     }

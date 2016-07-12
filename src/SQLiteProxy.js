@@ -1,11 +1,10 @@
 /*
     SQLite Proxy Class
     Autor: Alan Thales, 09/2015
-    Requires: ArrayMap.js, DbProxy.js
+    Requires: ArrayMap.js, DbProxy.js, Utils.js
 */
 var SQLiteProxy = (function() {
-    var _maps = new ArrayMap(),
-        _selectFrom = "SELECT * FROM";
+    var _selectFrom = "SELECT * FROM";
     
     function CreateProxy(dbName) {
         var db;
@@ -25,20 +24,21 @@ var SQLiteProxy = (function() {
     
     CreateProxy.prototype = Object.create(DbProxy.prototype);
     
-    CreateProxy.prototype.getFields = function(table) {
-        var index = _maps.indexOfKey("table", table);
-        return _maps[index].fields;
-    }
+//    CreateProxy.prototype.getFields = function(table) {
+//        var index = _maps.indexOfKey("table", table);
+//        return _maps[index].fields;
+//    }
     
     CreateProxy.prototype.createDatabase = function(maps, callback) {
-        _maps.length = 0;
-        _maps.putRange(maps);
+        var self = this;
+        
+        self.maps = OjsUtils.cloneObject(maps);
 
-        this.getDb().transaction(function(tx) {
+        self.getDb().transaction(function(tx) {
             var cb = callback && typeof callback === "function" ? callback : function() {},
-                total = maps.length,
+                total = self.maps.length,
                 fields = "",
-                field, table, sql, i, j;
+                field, table, sql, type;
 
             function progress() {
                 total--;
@@ -47,13 +47,20 @@ var SQLiteProxy = (function() {
                 }
             }
 
-            for (i = 0; i < maps.length; i++) {
-                table = maps[i].table;
-
-                for (j = 0; j < maps[i].fields.length; j++) {
-                    field = maps[i].fields[j];
+            for (table in self.maps) {
+                for (field in self.maps[table]) {
+                    type = field.type;
+                    
+                    if (type === "oneToMany") {
+                        continue;
+                    }
+                    
+                    if (type === "oneToOne") {
+                        type = self.maps[field.model]["id"].type;
+                    }
+                    
                     fields += [
-                        field.name, field.type, (field.nullable ? "" : "NOT NULL"), (field.primary ? "PRIMARY KEY" : ""), ","
+                        field.name, type, (field.required ? "NOT NULL" : ""), (field.primaryKey ? "PRIMARY KEY" : ""), ","
                     ].join(" ");
                 }
 
@@ -280,7 +287,7 @@ var SQLiteProxy = (function() {
 
         sets = sets.substr(0, sets.length -1);
 
-        sql = ["UPDATE", key, "set", sets, "WHERE", where].join(" ");
+        sql = ["UPDATE", key, "SET", sets, "WHERE", where].join(" ");
 
         transaction.executeSql(sql, params, callback);
     }
