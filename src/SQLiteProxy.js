@@ -30,68 +30,76 @@ var SQLiteProxy = (function() {
 //    }
     
     CreateProxy.prototype.createDatabase = function(maps, callback) {
-        var self = this;
+        var self = this,
+            errorObj = null;
         
         self.maps = OjsUtils.cloneObject(maps);
 
         self.getDb().transaction(function(tx) {
             var cb = callback && typeof callback === "function" ? callback : function() {},
                 total = self.maps.length,
-                fields = "",
-                field, table, sql, type;
+                fields, field, table, prop, sql;
 
             function progress() {
                 total--;
                 if (total === 0) {
-                    cb();
+                    cb(errorObj);
                 }
             }
 
             for (table in self.maps) {
-                for (field in self.maps[table]) {
-                    type = field.type;
+                fields = "";
+                
+                for (prop in self.maps[table]) {
+                    field = self.maps[table][prop];
                     
-                    if (type === "oneToMany") {
+                    if (field.hasMany) {
                         continue;
                     }
                     
-                    if (type === "oneToOne") {
-                        type = self.maps[field.model]["id"].type;
+                    if (field.hasOne) {
+                        field.type = self.maps[field.hasOne]["id"].type;
                     }
                     
                     fields += [
-                        field.name, type, (field.required ? "NOT NULL" : ""), (field.primaryKey ? "PRIMARY KEY" : ""), ","
+                        prop, field.type, (field.required ? "NOT NULL" : ""), (field.primaryKey ? "PRIMARY KEY" : ""), ","
                     ].join(" ");
                 }
 
-                fields = fields.substr(0, fields.length -1);
+                fields = fields.substr(0, fields.length - 1);
                 sql = ["CREATE TABLE IF NOT EXISTS", table, "(", fields, ")"].join(" ");
 
-                tx.executeSql(sql, [], progress);
+                tx.executeSql(sql, [], progress, function(err) {
+                    errorObj = err;
+                    progress();
+                });
             }
         });
     }
 
     var _select = function(key, sql, params, transaction, callback) {
-        var fields = self.getFields(key),
-            hashtable = fields.map(function(field) {
-                return field.name;
-            }),
+        var self = this,
+//            fields = self.getFields(key),
+//            hashtable = fields.map(function(field) {
+//                return field.name;
+//            }),
             table = new ArrayMap(),
-            i, l, record, field, index;
+            i, l, record; //, field, index;
 
         transaction.executeSql(sql, params, function(tx, results) {
             l = results.rows.length;
+            
             for (i = 0; i < l; i++) {
                 record = results.rows.item(i);
-                for (field in record) {
-                    index = hashtable.indexOf(field);
-                    if (fields[index].serialize) {
-                        record[field] = JSON.parse(record[field], DbProxy.dateParser);
-                    }
-                }
+//                for (field in record) {
+//                    index = hashtable.indexOf(field);
+//                    if (fields[index].serialize) {
+//                        record[field] = JSON.parse(record[field], DbProxy.dateParser);
+//                    }
+//                }
                 table.push(record);
             }
+            
             if (typeof callback === "function") {
                 callback( table );
             }
@@ -244,75 +252,215 @@ var SQLiteProxy = (function() {
         });
     }
 
-    CreateProxy.prototype.insert = function(key, record, transaction, callback) {
+    var _getInsertSql = function(key, record, ignore) {
         var params = [],
             fields = "",
             values = "",
-            sql, prop, value;
-
+            prop, sql, value, fdmap;
+        
         for (prop in record) {
-            value = record[prop];
-            if (typeof value === "object") {
-                value = JSON.stringify(value);
+            value = null;
+            
+            if (typeof record[prop] === "object") {
+                fdmap = this.maps[key][prop];
+                if (fdmap.hasOne) {
+                    value = record[prop].id;
+                }
+            } else {
+                value = record[prop];
             }
-            params.push(value);
-            fields += prop + ",";
-            values += "?,";
+
+            if (value) {
+                params.push(value);
+                fields += prop + ",";
+                values += "?,";
+            }
         }
 
-        fields = fields.substr(0, fields.length -1);
-        values = values.substr(0, values.length -1);
+        fields = fields.substr(0, fields.length - 1);
+        values = values.substr(0, values.length - 1);
 
-        sql = ["INSERT INTO", key, "(", fields, ") VALUES (", values, ")"].join(" ");
-
-        transaction.executeSql(sql, params, callback);
+        if (ignore) {
+            sql = ["INSERT OR IGNORE INTO", key, "(", fields, ") VALUES (", values, ")"].join(" ");
+        } else {
+            sql = ["INSERT INTO", key, "(", fields, ") VALUES (", values, ")"].join(" ");
+        }
+        
+        console.log(sql);
+        
+        return {
+            sql: sql,
+            params: params
+        };
+    };
+    
+    var _insert = function(key, record, transaction, callback) {
+        var obj = _getInsertSql(key, record);
+        transaction.executeSql(obj.sql, obj.params, callback, function(err) {
+            console.log(err);
+            console.log(arguments);
+            callback(err);
+        });
+    };
+    
+    CreateProxy.prototype.insert = function(key, record, transaction, callback) {
+        var total = 1,
+            prop, fdmap, i, l;
+        
+        function progress(err) {
+            total--;
+            if (err) {
+                console.log('insert errors:', JSON.stringify(err));
+            }
+            if (total === 0) {
+                _insert(key, record, transaction, callback);
+            }
+        };
+        
+        for (prop in record) {
+            fdmap = this.maps[key][prop];
+            
+            if (fdmap.hasMany) {
+                l = record[prop].length;
+                total += l;
+                
+                for (i = 0; i < l; i++) {
+                    _insert(fdmap.hasMany, record[prop][i], transaction, progress);
+                }
+            }
+        }
+        
+        progress();
     }
 
-    CreateProxy.prototype.update = function(key, record, transaction, callback) {
+    var _getUpdateSql = function(key, record) {
         var params = [],
             where = "id = " + record.id,
             sets = "",
-            sql, prop, value;
+            prop, value, fdmap;
 
         for (prop in record) {
-            if (prop != "id") {
-                value = record[prop];
-                if (typeof value === "object") {
-                    value = JSON.stringify(value);
+            value = null;
+            
+            if (prop == "id") {
+                continue;
+            }
+            
+            if (typeof record[prop] === "object") {
+                fdmap = this.maps[key][prop];
+                if (fdmap.hasOne) {
+                    value = record[prop].id;
                 }
+            } else {
+                value = record[prop];
+            }
+
+            if (value) {
                 params.push(value);
-                sets += prop + " = ?,"
+                sets += prop + " = ?,";
             }
         }
 
-        sets = sets.substr(0, sets.length -1);
+        sets = sets.substr(0, sets.length - 1);
 
-        sql = ["UPDATE", key, "SET", sets, "WHERE", where].join(" ");
-
-        transaction.executeSql(sql, params, callback);
+        return {
+            sql: ["UPDATE", key, "SET", sets, "WHERE", where].join(" "),
+            params: params
+        };
+    };
+    
+    var _update = function(key, record, transaction, callback) {
+        var iobj = _getInsertSql(key, record, true),
+            uobj = _getUpdateSql(key, record);
+        
+        function onerror(err) {
+            callback(err);
+        }
+        
+        transaction.executeSql(iobj.sql, iobj.params, function(tx) {
+            transaction.executeSql(uobj.sql, uobj.params, callback, onerror);
+        }, onerror);
+    };
+    
+    CreateProxy.prototype.update = function(key, record, transaction, callback) {
+        var total = 1,
+            prop, fdmap, i, l;
+        
+        function progress(err) {
+            total--;
+            if (err) {
+                console.log('update errors:', JSON.stringify(err));
+            }
+            if (total === 0) {
+                _update(key, record, transaction, callback);
+            }
+        };
+        
+        for (prop in record) {
+            fdmap = this.maps[key][prop];
+            
+            if (fdmap.hasMany) {
+                l = record[prop].length;
+                total += l;
+                
+                for (i = 0; i < l; i++) {
+                    _update(fdmap.hasMany, record[prop][i], transaction, progress);
+                }
+            }
+        }
+        
+        progress();
     }
 
+    var _delete = function(key, where, transaction, callback) {
+        var sql = ["DELETE FROM", key, "WHERE", where].join(" ");
+        transaction.executeSql(sql, [], callback, function(err) {
+            callback(err);
+        });
+    };
+    
     CreateProxy.prototype.delete = function(key, record, transaction, callback) {
         var id = typeof record === "object" ? record.id : record,
-            where = "id = " + id,
-            sql;
+            total = 1,
+            where, prop, fdmap;
 
-        sql = ["DELETE FROM", key, "WHERE", where].join(" ");
-
-        transaction.executeSql(sql, [], callback);
+        function progress(err) {
+            total--;
+            if (err) {
+                console.log('delete errors:', JSON.stringify(err));
+            }
+            if (total === 0) {
+                where = "id = " + id;
+                _delete(key, where, transaction, callback);
+            }
+        }
+        
+        for (prop in record) {
+            fdmap = this.maps[key][prop];
+            if (fdmap.hasMany) {
+                total++;
+                where = fdmap.foreignKey + " = " + id;
+                _delete(fdmap.hasMany, where, transaction, progress);
+            }
+        }
+        
+        progress();
     }
 
     CreateProxy.prototype.commit = function(key, toInsert, toUpdate, toDelete, callback) {
         var self = this,
             total = toInsert.length + toUpdate.length + toDelete.length,
             cb = callback && typeof callback === "function" ? callback : function() {},
+            errors = [],
             i;
 
-        function progress() {
+        function progress(err) {
             total--;
+            if (err) {
+                errors.push(err);
+            }
             if (total === 0) {
-                cb();
-                return;
+                cb(errors.length ? errors : null);
             }
         }
 
