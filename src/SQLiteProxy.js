@@ -1,10 +1,11 @@
 /*
     SQLite Proxy Class
     Autor: Alan Thales, 09/2015
-    Requires: ArrayMap.js, DbProxy.js, Utils.js
+    Requires: ArrayMap.js, DbProxy.js, Utils.js, SimpleDataSet.js
 */
 var SQLiteProxy = (function() {
-    var _selectFrom = "SELECT * FROM";
+    var _selectFrom = "SELECT * FROM",
+        _maps = {};
     
     function CreateProxy(dbName) {
         var db;
@@ -24,20 +25,15 @@ var SQLiteProxy = (function() {
     
     CreateProxy.prototype = Object.create(DbProxy.prototype);
     
-//    CreateProxy.prototype.getFields = function(table) {
-//        var index = _maps.indexOfKey("table", table);
-//        return _maps[index].fields;
-//    }
-    
     CreateProxy.prototype.createDatabase = function(maps, callback) {
         var self = this,
             errorObj = null;
         
-        self.maps = OjsUtils.cloneObject(maps);
+        _maps = OjsUtils.cloneObject(maps);
 
         self.getDb().transaction(function(tx) {
             var cb = callback && typeof callback === "function" ? callback : function() {},
-                total = self.maps.length,
+                total = Object.keys(_maps).length,
                 fields, field, table, prop, sql;
 
             function progress() {
@@ -47,18 +43,18 @@ var SQLiteProxy = (function() {
                 }
             }
 
-            for (table in self.maps) {
+            for (table in _maps) {
                 fields = "";
                 
-                for (prop in self.maps[table]) {
-                    field = self.maps[table][prop];
+                for (prop in _maps[table]) {
+                    field = _maps[table][prop];
                     
                     if (field.hasMany) {
                         continue;
                     }
                     
                     if (field.hasOne) {
-                        field.type = self.maps[field.hasOne]["id"].type;
+                        field.type = _maps[field.hasOne]["id"].type;
                     }
                     
                     fields += [
@@ -77,26 +73,51 @@ var SQLiteProxy = (function() {
         });
     }
 
+    var _parseItem = function(key, item) {
+        var result = {},
+            prop, value, fdmap;
+
+        for (prop in _maps[key]) {
+            value = item[prop];
+            fdmap = _maps[key][prop];
+            
+            if (fdmap.type === "date" || fdmap.type === "datetime") {
+                value = new Date(value);
+            }
+            
+            result[prop] = value;
+        }
+        
+        return result;
+    };
+
+    var _formatValue = function(table, key, value) {
+        var fdmap = _maps[table][key];
+        
+        if (fdmap && fdmap.hasOne) {
+            value = typeof value === "object" ? value.id : value;
+        }
+        
+        if (fdmap && fdmap.hasMany) {
+            value = null;
+        }
+        
+//        if (typeof value === "date") {
+//            value = value.toString();
+//        }
+        
+        return value;
+    };
+    
     var _select = function(key, sql, params, transaction, callback) {
-        var self = this,
-//            fields = self.getFields(key),
-//            hashtable = fields.map(function(field) {
-//                return field.name;
-//            }),
-            table = new ArrayMap(),
+        var table = new ArrayMap(),
             i, l, record; //, field, index;
 
         transaction.executeSql(sql, params, function(tx, results) {
             l = results.rows.length;
             
             for (i = 0; i < l; i++) {
-                record = results.rows.item(i);
-//                for (field in record) {
-//                    index = hashtable.indexOf(field);
-//                    if (fields[index].serialize) {
-//                        record[field] = JSON.parse(record[field], DbProxy.dateParser);
-//                    }
-//                }
+                record = _parseItem(key, results.rows.item(i));
                 table.push(record);
             }
             
@@ -116,7 +137,9 @@ var SQLiteProxy = (function() {
     };
     
     CreateProxy.prototype.getRecords = function(options, callback) {
-        var key = options && options.key ? options.key : options,
+        console.log(options);
+        var self = this,
+            key = options && options.key ? options.key : options,
             sortBy = options && options.sort ? _orderBy(options.sort) : "",
             where = "WHERE ",
             sql = [], p;
@@ -134,7 +157,7 @@ var SQLiteProxy = (function() {
             sql = [_selectFrom, options];
         }
         
-        this.getDb().transaction(function(tx) {
+        self.getDb().transaction(function(tx) {
             _select(key, sql.join(" "), [], tx, callback);
         });
     }
@@ -235,41 +258,33 @@ var SQLiteProxy = (function() {
     };
 
     CreateProxy.prototype.query = function(key, filters, callback) {
-        var opts = filters && typeof filters === "object" ? filters : { },
+        var self = this,
+            opts = filters && typeof filters === "object" ? filters : { },
             select = [_selectFrom, key].join(" "),
             sql = _formatSql(select, opts);
         
-        this.getDb().transaction(function(tx) {
+        self.getDb().transaction(function(tx) {
             _select(key, sql, [], tx, callback);
         });
     }
     
     CreateProxy.prototype.groupBy = function(key, options, groups, filters, callback) {
-        var sql = _formatGroupBy(key, options, groups, filters);
+        var self = this,
+            sql = _formatGroupBy(key, options, groups, filters);
         
-        this.getDb().transaction(function(tx) {
+        self.getDb().transaction(function(tx) {
             _select(key, sql, [], tx, callback);
         });
     }
 
-    var _getInsertSql = function(key, record, ignore) {
+    var _getInsertSql = function(key, record) {
         var params = [],
             fields = "",
             values = "",
-            prop, sql, value, fdmap;
+            prop, sql, value;
         
         for (prop in record) {
-            value = null;
-            
-            if (typeof record[prop] === "object") {
-                fdmap = this.maps[key][prop];
-                if (fdmap.hasOne) {
-                    value = record[prop].id;
-                }
-            } else {
-                value = record[prop];
-            }
-
+            value = _formatValue(key, prop, record[prop]);
             if (value) {
                 params.push(value);
                 fields += prop + ",";
@@ -280,80 +295,80 @@ var SQLiteProxy = (function() {
         fields = fields.substr(0, fields.length - 1);
         values = values.substr(0, values.length - 1);
 
-        if (ignore) {
-            sql = ["INSERT OR IGNORE INTO", key, "(", fields, ") VALUES (", values, ")"].join(" ");
-        } else {
+//        if (ignore) {
+//            sql = ["INSERT OR IGNORE INTO", key, "(", fields, ") VALUES (", values, ")"].join(" ");
+//        } else {
             sql = ["INSERT INTO", key, "(", fields, ") VALUES (", values, ")"].join(" ");
-        }
+//        }
         
         console.log(sql);
-        
         return {
             sql: sql,
             params: params
         };
     };
     
-    var _insert = function(key, record, transaction, callback) {
-        var obj = _getInsertSql(key, record);
-        transaction.executeSql(obj.sql, obj.params, callback, function(err) {
-            console.log(err);
-            console.log(arguments);
-            callback(err);
-        });
-    };
-    
-    CreateProxy.prototype.insert = function(key, record, transaction, callback) {
-        var total = 1,
-            prop, fdmap, i, l;
+    var _save = function(instance, key, record, transaction, operationFn, callback) {
+        var total = 0,
+            prop, fdmap, items;
+        
+        function onerror(err) {
+            var obj = err || { message: "errors happen on save" };
+            throw obj.message;
+        }
         
         function progress(err) {
-            total--;
             if (err) {
-                console.log('insert errors:', JSON.stringify(err));
+                return onerror(err);
             }
+            total--;
             if (total === 0) {
-                _insert(key, record, transaction, callback);
+                operationFn(key, record, transaction, callback, onerror);
             }
         };
         
         for (prop in record) {
-            fdmap = this.maps[key][prop];
+            fdmap = _maps[key][prop];
             
-            if (fdmap.hasMany) {
-                l = record[prop].length;
-                total += l;
+            if (fdmap && fdmap.hasMany) {
+                items = record[prop];
                 
-                for (i = 0; i < l; i++) {
-                    _insert(fdmap.hasMany, record[prop][i], transaction, progress);
+                if (items instanceof SimpleDataSet) {
+                    total++;
+                    instance.commit(fdmap.hasMany,
+                        items._inserteds, items._updateds, items._deleteds, progress
+                    );
                 }
             }
         }
-        
-        progress();
+
+        if (!items) {
+            total = 1;
+            progress();
+        }
+    };
+    
+    var _insert = function(key, record, transaction, onsuccess, onerror) {
+        var obj = _getInsertSql(key, record);
+        transaction.executeSql(obj.sql, obj.params, onsuccess, onerror);
+    };
+    
+    CreateProxy.prototype.insert = function(key, record, transaction, callback) {
+        _save(this, key, record, transaction, _insert, callback);
     }
 
     var _getUpdateSql = function(key, record) {
         var params = [],
             where = "id = " + record.id,
             sets = "",
-            prop, value, fdmap;
+            sql, prop, value;
 
         for (prop in record) {
-            value = null;
-            
             if (prop == "id") {
                 continue;
             }
             
-            if (typeof record[prop] === "object") {
-                fdmap = this.maps[key][prop];
-                if (fdmap.hasOne) {
-                    value = record[prop].id;
-                }
-            } else {
-                value = record[prop];
-            }
+            value = _formatValue(key, prop, record[prop]);
 
             if (value) {
                 params.push(value);
@@ -362,61 +377,27 @@ var SQLiteProxy = (function() {
         }
 
         sets = sets.substr(0, sets.length - 1);
+        sql = ["UPDATE", key, "SET", sets, "WHERE", where].join(" ");
 
+        console.log(sql);
         return {
-            sql: ["UPDATE", key, "SET", sets, "WHERE", where].join(" "),
+            sql: sql,
             params: params
         };
     };
     
-    var _update = function(key, record, transaction, callback) {
-        var iobj = _getInsertSql(key, record, true),
-            uobj = _getUpdateSql(key, record);
-        
-        function onerror(err) {
-            callback(err);
-        }
-        
-        transaction.executeSql(iobj.sql, iobj.params, function(tx) {
-            transaction.executeSql(uobj.sql, uobj.params, callback, onerror);
-        }, onerror);
+    var _update = function(key, record, transaction, onsuccess, onerror) {
+        var obj = _getUpdateSql(key, record);
+        transaction.executeSql(obj.sql, obj.params, onsuccess, onerror);
     };
     
     CreateProxy.prototype.update = function(key, record, transaction, callback) {
-        var total = 1,
-            prop, fdmap, i, l;
-        
-        function progress(err) {
-            total--;
-            if (err) {
-                console.log('update errors:', JSON.stringify(err));
-            }
-            if (total === 0) {
-                _update(key, record, transaction, callback);
-            }
-        };
-        
-        for (prop in record) {
-            fdmap = this.maps[key][prop];
-            
-            if (fdmap.hasMany) {
-                l = record[prop].length;
-                total += l;
-                
-                for (i = 0; i < l; i++) {
-                    _update(fdmap.hasMany, record[prop][i], transaction, progress);
-                }
-            }
-        }
-        
-        progress();
+        _save(this, key, record, transaction, _update, callback);
     }
 
-    var _delete = function(key, where, transaction, callback) {
+    var _delete = function(key, where, transaction, onsuccess, onerror) {
         var sql = ["DELETE FROM", key, "WHERE", where].join(" ");
-        transaction.executeSql(sql, [], callback, function(err) {
-            callback(err);
-        });
+        transaction.executeSql(sql, [], onsuccess, onerror);
     };
     
     CreateProxy.prototype.delete = function(key, record, transaction, callback) {
@@ -424,23 +405,27 @@ var SQLiteProxy = (function() {
             total = 1,
             where, prop, fdmap;
 
-        function progress(err) {
+        function onerror(err) {
+            throw err.message;
+        }
+        
+        function progress() {
             total--;
-            if (err) {
-                console.log('delete errors:', JSON.stringify(err));
-            }
             if (total === 0) {
                 where = "id = " + id;
-                _delete(key, where, transaction, callback);
+                _delete(key, where, transaction, callback, onerror);
             }
         }
         
         for (prop in record) {
-            fdmap = this.maps[key][prop];
-            if (fdmap.hasMany) {
+            fdmap = _maps[key][prop];
+            if (fdmap && fdmap.hasMany) {
                 total++;
                 where = fdmap.foreignKey + " = " + id;
-                _delete(fdmap.hasMany, where, transaction, progress);
+                _delete(fdmap.hasMany, where, transaction, progress, onerror);
+                if (record[prop] instanceof SimpleDataSet) {
+                    record[prop].clear();
+                }
             }
         }
         
@@ -464,6 +449,10 @@ var SQLiteProxy = (function() {
             }
         }
 
+        if (!toInsert.length && !toUpdate.length && !toDelete.length) {
+            return cb();
+        }
+        
         self.getDb().transaction(function(tx) {
             // to insert
             for (i = 0; i < toInsert.length; i++) {
@@ -477,6 +466,44 @@ var SQLiteProxy = (function() {
             for (i = 0; i < toDelete.length; i++) {
                 self.delete(key, toDelete[i], tx, progress);
             }
+        });
+    }
+    
+    var _fetch = function(key, record, property, callback) {
+        var opts = { params: {} },
+            fdmap;
+        
+        fdmap = _maps[key][property];
+
+        if (fdmap.hasMany) {
+            record[property] = new SimpleDataSet();
+            
+            opts.key = fdmap.hasMany;
+            opts.params[fdmap.foreignKey] = record.id;
+            
+            this.getRecords(opts, function(results) {
+                record[property].data = results;
+                callback();
+            });
+        } else {
+            callback();
+        }
+    };
+    
+    CreateProxy.prototype.fetch = function(key, records, property, callback) {
+        var self = this,
+            cb = typeof callback === "function" ? callback : function() {},
+            total = records.length;
+        
+        function progress() {
+            total--;
+            if (total === 0) {
+                cb();
+            }
+        }
+        
+        records.forEach(function(record) {
+            _fetch.call(self, key, record, property, progress);
         });
     }
     

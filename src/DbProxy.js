@@ -24,6 +24,8 @@ var DbProxy = (function() {
     
     CreateProxy.prototype.commit = function(key, toInsert, toUpdate, toDelete, callback) {}
     
+    CreateProxy.prototype.fetch = function(key, property, callback) {}
+    
     CreateProxy.dateParser = function(key, value) {
         var reISO = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*))(?:Z|(\+|-)([\d|:]*))?$/,
             test;

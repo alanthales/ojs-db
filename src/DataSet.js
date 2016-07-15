@@ -1,28 +1,17 @@
 /*
     DataSet Class
     Autor: Alan Thales, 09/2015
-    Requires: ArrayMap.js, SyncDb.js
+    Requires: SimpleDataSet.js, SyncDb.js
 */
 var DataSet = (function() {
-    var _cleanCache = function(dts) {
-        dts._inserteds.length = 0;
-        dts._updateds.length = 0;
-        dts._deleteds.length = 0;
-    };
-    
     function CreateDataSet(proxy, table, genIdFn, syncronizer) {
         var _proxy = proxy,
             _table = table,
             _syncronizer = syncronizer;
         
-        this._inserteds = [];
-        this._updateds = [];
-        this._deleteds = [];
         this.active = false;
         this.limit = 1000;
-        this.sort = null;
         this.params = null;
-        this.data = new ArrayMap();
         this.genId = genIdFn;
         
         this.getProxy = function() {
@@ -36,8 +25,12 @@ var DataSet = (function() {
         this.getSyncronizer = function() {
             return _syncronizer;
         }
+        
+        SimpleDataSet.apply(this, arguments);
     }
 
+    CreateDataSet.prototype = Object.create(SimpleDataSet.prototype);
+    
     CreateDataSet.prototype.open = function(callback) {
         var self = this,
             opts = { key: self.getTable(), limit: self.limit, sort: self.sort, params: self.params };
@@ -50,7 +43,7 @@ var DataSet = (function() {
 
         if (self.active) {
             fn(self.data, callback);
-            return;
+            return self;
         }
 
         self.getProxy().getRecords(opts, function(records) {
@@ -58,92 +51,35 @@ var DataSet = (function() {
             self.active = true;
             fn(records, callback);
         });
+        
+        return self;
     }
-
+    
     CreateDataSet.prototype.close = function() {
-        var self = this;
-        self.active = false;
-        self.data.length = 0;
-        _cleanCache(self);
-    }
-
-    CreateDataSet.prototype.getById = function(id) {
-        var index = this.data.indexOfKey('id', id);
-        return this.data[index];
-    }
-
-    CreateDataSet.prototype.refresh = function() {
-        var self = this;
-        if (self.sort) {
-            self.data.orderBy(self.sort);
-        }
+        SimpleDataSet.prototype.clear.apply(this, arguments);
+        this.active = false;
+        return this;
     }
 
     CreateDataSet.prototype.insert = function(record) {
         if (!this.active) {
             throw "Invalid operation on closed dataset";
         }
-        
-        if (!record.id) {
-            record.id = this.genId(30);
-        }
-        
-        var index = this.data.indexOfKey('id', record.id);
-        
-        if (index === -1) {
-            this._inserteds.push(record);
-            this.data.push(record);
-        }
+        SimpleDataSet.prototype.insert.apply(this, arguments);
     }
 
     CreateDataSet.prototype.update = function(record) {
         if (!this.active) {
             throw "Invalid operation on closed dataset";
         }
-        
-        if (!record.id) {
-            return;
-        }
-        
-//        record.id = parseInt(record.id);
-        
-        var index = this.data.indexOfKey('id', record.id);
-        
-        if (!this._updateds[index]) {
-            this._updateds.push(record);
-        } else {
-            this._updateds.splice(index, 1, record);
-        }
-        
-        this.data.splice(index, 1, record);
+        SimpleDataSet.prototype.update.apply(this, arguments);
     }
 
-    CreateDataSet.prototype.save = function(record) {
-        if (record && !record.id) {
-            this.insert(record);
-        } else {
-            this.update(record);
-        }
-    }
-    
     CreateDataSet.prototype.delete = function(record) {
         if (!this.active) {
             throw "Invalid operation on closed dataset";
         }
-        
-        if (!record.id) {
-            return;
-        }
-        
-//        record.id = parseInt(record.id);
-        
-        var index = this.data.indexOfKey('id', record.id);
-        
-        if (!this._deleteds[index]) {
-            this._deleteds.push(record);
-        }
-        
-        this.data.splice(index, 1);
+        SimpleDataSet.prototype.delete.apply(this, arguments);
     }
 
     CreateDataSet.prototype.post = function(callback, ignoreSync) {
@@ -152,31 +88,26 @@ var DataSet = (function() {
         }
 
         var self = this,
-            callback = callback,
+            cb = typeof callback === "function" ? callback : function() {},
             sync = this.getSyncronizer();
 
-        function cb() {
+        function done() {
             if (sync && !ignoreSync) {
                 sync.writeData(self.getTable(), self._inserteds, self._updateds, self._deleteds);
             }
             
-            _cleanCache(self);
             self.refresh();
+            self._cleanCache();
             
-            if (typeof callback === "function") {
-                callback();
-            }
+            cb();
         }
 
         if (!self._inserteds.length && !self._updateds.length && !self._deleteds.length) {
-            if (typeof callback === "function") {
-                callback();
-            }
-            return;
+            return cb();
         }
         
         self.getProxy().commit(
-            self.getTable(), self._inserteds, self._updateds, self._deleteds, cb
+            self.getTable(), self._inserteds, self._updateds, self._deleteds, done
         );
     }
 
@@ -213,11 +144,9 @@ var DataSet = (function() {
         });
     }
     
-    CreateDataSet.prototype.filter = function(options) {
-        if (options && typeof options === 'function') {
-            return this.data.filter(options);
-        }
-        return this.data.query(options);
+    CreateDataSet.prototype.fetch = function(property, callback) {
+        this.getProxy().fetch(this.getTable(), this.data, property, callback);
+        return this;
     }
     
     return CreateDataSet;
