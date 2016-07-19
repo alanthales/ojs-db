@@ -16,9 +16,13 @@ var DbProxies = (function() {
     Autor: Alan Thales, 09/2015
 */
 var DbProxy = (function() {
-    function CreateProxy() {}
+    function CreateProxy() {
+        this.mappings = {};
+    }
     
-    CreateProxy.prototype.createDatabase = function() {}
+    CreateProxy.prototype.createDatabase = function(maps, callback) {
+        this.mappings = maps;
+    }
     
     CreateProxy.prototype.getRecords = function(options, callback) {}
     

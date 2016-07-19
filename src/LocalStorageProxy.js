@@ -87,6 +87,10 @@ var LocalStorageProxy = (function() {
                 cb();
             }
         }
+        
+        if (total === 0) {
+            return cb();
+        }
 
         for (i = 0; i < toSave.length; i++) {
             self.save(key, toSave[i], progress);

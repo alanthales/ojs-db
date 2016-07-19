@@ -26,7 +26,7 @@ var DataSet = (function() {
             return _syncronizer;
         }
         
-        SimpleDataSet.apply(this, arguments);
+        SimpleDataSet.apply(this);
     }
 
     CreateDataSet.prototype = Object.create(SimpleDataSet.prototype);
@@ -101,7 +101,7 @@ var DataSet = (function() {
             
             cb();
         }
-
+        
         if (!self._inserteds.length && !self._updateds.length && !self._deleteds.length) {
             return cb();
         }
@@ -145,7 +145,10 @@ var DataSet = (function() {
     }
     
     CreateDataSet.prototype.fetch = function(property, callback) {
-        this.getProxy().fetch(this.getTable(), this.data, property, callback);
+        if (!this.active) {
+            throw "Invalid operation on closed dataset";
+        }
+        this.getProxy().fetch(this.getTable(), this, property, callback);
         return this;
     }
     

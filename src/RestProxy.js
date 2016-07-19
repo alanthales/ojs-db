@@ -147,6 +147,10 @@ var RestProxy = (function() {
             }
         }
 
+        if (total === 0) {
+            return cb();
+        }
+        
         // to insert
         for (i = 0; i < toInsert.length; i++) {
             self.insert(key, toInsert[i], progress);

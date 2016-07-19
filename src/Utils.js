@@ -84,20 +84,33 @@ var OjsUtils = (function() {
         
         cloneObject: function(obj) {
             var out, i, len;
+            
+            if (!obj || obj instanceof Date || obj instanceof SimpleDataSet) {
+                return obj;
+            }
+            
+            if (obj instanceof ArrayMap) {
+                out = new ArrayMap();
+            }
+            
             if (Object.prototype.toString.call(obj) === '[object Array]') {
-                out = []; i = 0; len = obj.length;
+                out = out || []; i = 0; len = obj.length;
                 for ( ; i < len; i++ ) {
-                    out[i] = arguments.callee(obj[i]);
+                    out[i] = this.cloneObject(obj[i]);
                 }
                 return out;
             }
-            if (obj && !(obj instanceof Date) && (typeof obj === 'object')) {
+            
+            if (typeof obj === 'object') {
                 out = {};
                 for ( i in obj ) {
-                    out[i] = arguments.callee(obj[i]);
+                    if (obj.hasOwnProperty(i)) {
+                        out[i] = this.cloneObject(obj[i]);
+                    }
                 }
                 return out;
             }
+            
             return obj;
         }
     }

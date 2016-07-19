@@ -4,19 +4,20 @@
     Requires: ArrayMap.js
 */
 var SimpleDataSet = (function() {
-    function CreateDataSet() {
+    function CreateDataSet(master) {
         this._inserteds = [];
         this._updateds = [];
         this._deleteds = [];
         this.sort = null;
         this.data = new ArrayMap();
+        this.master = master;
     }
 
     CreateDataSet.prototype._cleanCache = function() {
         this._inserteds.length = 0;
         this._updateds.length = 0;
         this._deleteds.length = 0;
-    };
+    }
     
     CreateDataSet.prototype.getById = function(id) {
         var index = this.data.indexOfKey('id', id);
@@ -33,6 +34,12 @@ var SimpleDataSet = (function() {
         if (index === -1) {
             this._inserteds.push(record);
             this.data.push(record);
+        }
+        
+        record.dataset = this;
+        
+        if (this.master) {
+            this.master.dataset.update(this.master);
         }
         
         return this;
@@ -52,6 +59,13 @@ var SimpleDataSet = (function() {
         }
         
         this.data.splice(index, 1, record);
+        
+        record.dataset = this;
+        
+        if (this.master) {
+            this.master.dataset.update(this.master);
+        }
+        
         return this;
     }
 
@@ -75,6 +89,13 @@ var SimpleDataSet = (function() {
         }
         
         this.data.splice(index, 1);
+        
+        record.dataset = this;
+        
+        if (this.master) {
+            this.master.dataset.update(this.master);
+        }
+        
         return this;
     }
 
@@ -101,6 +122,7 @@ var SimpleDataSet = (function() {
     CreateDataSet.prototype.clear = function() {
         this.data.length = 0;
         this._cleanCache();
+        return this;
     }
     
     return CreateDataSet;
