@@ -4,26 +4,30 @@
     Requires: ArrayMap.js
 */
 var SimpleDataSet = (function() {
-    function CreateDataSet(master) {
+    
+    function CreateDataSet() {
         this._inserteds = [];
         this._updateds = [];
         this._deleteds = [];
+        this._copy = null;
+        this._lastOp = null;
         this.sort = null;
         this.data = new ArrayMap();
-        this.master = master;
     }
 
     CreateDataSet.prototype._cleanCache = function() {
         this._inserteds.length = 0;
         this._updateds.length = 0;
         this._deleteds.length = 0;
+        this._copy = null;
+        this._lastOp = null;
     }
     
     CreateDataSet.prototype.getById = function(id) {
         var index = this.data.indexOfKey('id', id);
         return this.data[index];
     }
-
+    
     CreateDataSet.prototype.insert = function(record) {
         if (!record.id) {
             record.id = (new Date()).getTime();
@@ -36,10 +40,11 @@ var SimpleDataSet = (function() {
             this.data.push(record);
         }
         
-        record.dataset = this;
+        this._copy = OjsUtils.cloneObject( record );
+        this._lastOp = 'insert';
         
-        if (this.master) {
-            this.master.dataset.update(this.master);
+        if (record instanceof ChildRecord) {
+            record.notifyMaster();
         }
         
         return this;
@@ -58,12 +63,13 @@ var SimpleDataSet = (function() {
             this._updateds.splice(index, 1, record);
         }
         
+        this._copy = OjsUtils.cloneObject( this.data[index] );
+        this._lastOp = 'update';
+        
         this.data.splice(index, 1, record);
         
-        record.dataset = this;
-        
-        if (this.master) {
-            this.master.dataset.update(this.master);
+        if (record instanceof ChildRecord) {
+            record.notifyMaster();
         }
         
         return this;
@@ -88,12 +94,13 @@ var SimpleDataSet = (function() {
             this._deleteds.push(record);
         }
         
+        this._copy = OjsUtils.cloneObject( this.data[index] );
+        this._lastOp = 'delete';
+        
         this.data.splice(index, 1);
         
-        record.dataset = this;
-        
-        if (this.master) {
-            this.master.dataset.update(this.master);
+        if (record instanceof ChildRecord) {
+            record.notifyMaster();
         }
         
         return this;
@@ -123,6 +130,27 @@ var SimpleDataSet = (function() {
         this.data.length = 0;
         this._cleanCache();
         return this;
+    }
+    
+    CreateDataSet.prototype.cancel = function() {
+        if (!this._copy) return;
+        
+        var index = this.data.indexOfKey('id', this._copy.id);
+        
+        switch (this._lastOp) {
+            case 'insert':
+                this.data.splice(index, 1);
+                this._inserteds.pop();
+                break;
+            case 'update':
+                this.data.splice(index, 1, this._copy);
+                this._updateds.pop();
+                break;
+            case 'delete':
+                this.data.push(this._copy);
+                this._deleteds.pop();
+                break;
+        }
     }
     
     return CreateDataSet;

@@ -112,6 +112,12 @@ var OjsUtils = (function() {
             }
             
             return obj;
+        },
+        
+        cloneProperties: function(source, dest) {
+            for (var prop in source) {
+                dest[prop] = source[prop];
+            }
         }
     }
 })();

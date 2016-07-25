@@ -1,7 +1,7 @@
 /*
     SQLite Proxy Class
     Autor: Alan Thales, 09/2015
-    Requires: ArrayMap.js, DbProxy.js, Utils.js, SimpleDataSet.js
+    Requires: DbProxy.js, ArrayMap.js, Utils.js, SimpleDataSet.js, ChildRecord.js
 */
 var SQLiteProxy = (function() {
     var _selectFrom = "SELECT * FROM",
@@ -101,8 +101,8 @@ var SQLiteProxy = (function() {
             return null;
         }
         
-        if (fdmap.hasOne) {
-            value = record.dataset && record.dataset.master ? record.dataset.master.id : null;
+        if (fdmap.hasOne && record instanceof ChildRecord) {
+            value = record.getRecMaster().id;
         }
         
         return value;
@@ -288,6 +288,9 @@ var SQLiteProxy = (function() {
             }
             total--;
             if (total === 0) {
+                if (items && items instanceof SimpleDataSet) {
+                    items._cleanCache();
+                }
                 operationFn(key, record, transaction, callback);
             }
         };
@@ -300,9 +303,18 @@ var SQLiteProxy = (function() {
                 
                 if (items instanceof SimpleDataSet) {
                     total += items._inserteds.length + items._updateds.length + items._deleteds.length;
-                    this.insert(fdmap.hasMany, items._inserteds, transaction, progress);
-                    this.update(fdmap.hasMany, items._updateds, transaction, progress);
-                    this.delete(fdmap.hasMany, items._deleteds, transaction, progress);
+                    
+                    if (items._inserteds.length) {
+                        this.insert(fdmap.hasMany, items._inserteds, transaction, progress);
+                    }
+                    
+                    if (items._updateds.length) {
+                        this.update(fdmap.hasMany, items._updateds, transaction, progress);
+                    }
+                    
+                    if (items._deleteds.length) {
+                        this.delete(fdmap.hasMany, items._deleteds, transaction, progress);
+                    }
                 }
             }
         }
@@ -344,6 +356,8 @@ var SQLiteProxy = (function() {
     CreateProxy.prototype.insert = function(key, records, transaction, callback) {
         var l = records.length,
             i = 0;
+        
+        if (l === 0) return callback();
         
         for (; i < l; i++) {
             _save.call(this, key, records[i], transaction, _insert, callback);
@@ -387,6 +401,8 @@ var SQLiteProxy = (function() {
         var l = records.length,
             i = 0;
         
+        if (l === 0) return callback();
+        
         for (; i < l; i++) {
             _save.call(this, key, records[i], transaction, _update, callback);
         }
@@ -427,6 +443,8 @@ var SQLiteProxy = (function() {
         var l = records.length,
             i = 0;
         
+        if (l === 0) return callback();
+        
         for (; i < l; i++) {
             _delete.call(this, key, records[i], transaction, callback);
         }
@@ -453,32 +471,41 @@ var SQLiteProxy = (function() {
         }
         
         self.getDb().transaction(function(tx) {
-            // to insert
-            self.insert(key, toInsert, tx, progress);
+            if (toInsert.length) {
+                self.insert(key, toInsert, tx, progress);
+            }
 
-            // to update
-            self.update(key, toUpdate, tx, progress);
+            if (toUpdate.length) {
+                self.update(key, toUpdate, tx, progress);
+            }
 
-            // to delete
-            self.delete(key, toDelete, tx, progress);
+            if (toDelete.length) {
+                self.delete(key, toDelete, tx, progress);
+            }
         });
     }
     
     var _fetch = function(key, master, record, property, callback) {
         var opts = { params: {} },
-            fdmap;
-        
-        fdmap = _maps[key][property];
+            fdmap = _maps[key][property],
+            i = 0,
+            l, child;
 
         if (fdmap && fdmap.hasMany) {
-            record.dataset = master;
-            
             opts.key = fdmap.hasMany;
             opts.params[fdmap.foreignKey] = record.id;
             
             this.getRecords(opts, function(results) {
-                record[property] = new SimpleDataSet(record);
-                record[property].data = results;
+                record[property] = new SimpleDataSet();
+                
+                l = results.length;
+                
+                for (; i < l; i++) {
+                    child = new ChildRecord(master, record);
+                    OjsUtils.cloneProperties(results[i], child);
+                    record[property].data.push(child);
+                }
+                
                 callback();
             });
         } else {
