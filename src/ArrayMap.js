@@ -24,6 +24,10 @@ var ArrayMap = (function() {
         var matched = true,
             field, prop, str;
 
+        if (opts.$custom && typeof opts.$custom === "function") {
+            return opts.$custom.call(this, record);
+        }
+        
         for (field in opts) {
             if (!matched) {
                 break;
@@ -61,9 +65,6 @@ var ArrayMap = (function() {
                         break;
                     case "$in":
                         matched = opts[field][prop].indexOf(record[field]) > -1;
-                        break;
-                    case "$custom":
-                        matched = opts[field][prop].call(opts[field][prop], record);
                         break;
                     default:
                         matched = false;
@@ -153,12 +154,13 @@ var ArrayMap = (function() {
         }
 
         collection.query = function(filters) {
-            var opts = filters && typeof filters === "object" ? filters : { },
+            var self = this,
+                opts = filters && typeof filters === "object" ? filters : { },
                 results = new Collection();
 
             results.putRange(
-                this.filter(function(record) {
-                    return _recordMatch(record, opts);
+                self.filter(function(record) {
+                    return _recordMatch.call(self, record, opts);
                 })
             );
 
@@ -208,14 +210,15 @@ var ArrayMap = (function() {
         }
         
         collection.groupBy = function(options, groups, filters) {
-            var results = new Collection(),
+            var self = this,
+                results = new Collection(),
                 flts = filters && typeof filters === "object" ? filters : { },
                 l = groups.length,
                 grouped = {},
                 group, g, i;
 
-            this.forEach(function(item) {
-                if (!_recordMatch(item, flts)) {
+            self.forEach(function(item) {
+                if (!_recordMatch.call(self, item, flts)) {
                     return;
                 }
                 g = {};

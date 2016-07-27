@@ -138,7 +138,7 @@ db.query('persons', { name: 'John', age: 25 }, function (results) {
 Note: The array objects returned by methods query and groupBy, is not an standard `Array`, see [ArrayMap](src/ArrayMap.js).
 
 #### Operators
-The syntax is `{ field: { $op: value } }` where `$op` is any comparison operator ($lt, $lte, $gt, $gte, $start, $end, $contain, $in, $custom):
+The syntax is `{ field: { $op: value } }` where `$op` is any comparison operator ($lt, $lte, $gt, $gte, $start, $end, $contain, $in):
 
 * `$lt`, `$lte`: less than, less than or equal
 * `$gt`, `$gte`: greater than, greater than or equal
@@ -146,7 +146,6 @@ The syntax is `{ field: { $op: value } }` where `$op` is any comparison operator
 * `$end`: checks the record `field` end's with `value`
 * `$contain`: checks the record `field` contains any of values in `value`. `value` must be an array
 * `$in`: member of. `value` must be an array of values
-* `$custom`: checks the record `field` based in return from function passed in `value`. `value` should be a function which returns true or false (see example below)
 
 ```javascript
 // $lt, $lte, $gt and $gte work on numbers, dates and strings. When used with strings, lexicographical order is used
@@ -165,12 +164,12 @@ db.query('persons', { age: { $in: [30,31] }}, function (results) {
 });
 
 // Using $custom
-function compareTo(field) {
+function compareTo(record) {
     var regx = /[^0-9]/g;
-    return regx.test(field);
+    return regx.test(record.name);
 };
 
-db.query('persons', { name: { $custom: compareTo }}, function (results) {
+db.query('persons', { $custom: compareTo }, function (results) {
   // 'results' contains all records, because the regular expression find any name NOT between 0 at 9.
 });
 ```

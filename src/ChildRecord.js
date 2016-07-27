@@ -17,7 +17,7 @@ var ChildRecord = (function() {
     }
     
     CreateRecord.prototype.notifyMaster = function() {
-        this.getDtsMaster().update(this.getRecMaster());
+        this.getDtsMaster().save(this.getRecMaster());
     }
     
     return CreateRecord;
