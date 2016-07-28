@@ -151,6 +151,9 @@ var SimpleDataSet = (function() {
                 this._deleteds.pop();
                 break;
         }
+        
+        this._copy = null;
+        this._lastOp = null;
     }
     
     return CreateDataSet;
