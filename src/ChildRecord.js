@@ -14,6 +14,11 @@ var ChildRecord = (function() {
         this.getRecMaster = function() {
             return _recMaster;
         }
+        
+        this.setRecMaster = function(recMaster) {
+            if (recMaster)
+                _recMaster = recMaster;
+        }
     }
     
     CreateRecord.prototype.notifyMaster = function() {

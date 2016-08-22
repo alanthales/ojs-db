@@ -93,6 +93,10 @@ var OjsUtils = (function() {
                 out = new ArrayMap();
             }
             
+            if (obj instanceof ChildRecord) {                
+                out = new ChildRecord(obj.getDtsMaster(), obj.getRecMaster());
+            }
+            
             if (Object.prototype.toString.call(obj) === '[object Array]') {
                 out = out || []; i = 0; len = obj.length;
                 for ( ; i < len; i++ ) {
@@ -102,7 +106,7 @@ var OjsUtils = (function() {
             }
             
             if (typeof obj === 'object') {
-                out = {};
+                out = out || {};
                 for ( i in obj ) {
                     if (obj.hasOwnProperty(i)) {
                         out[i] = this.cloneObject(obj[i]);

@@ -518,6 +518,11 @@ var SQLiteProxy = (function() {
             total = dataset.data.length,
             i = 0;
         
+        if (total === 0) {
+            cb();
+            return;
+        }
+        
         function progress() {
             total--;
             if (total === 0) {
