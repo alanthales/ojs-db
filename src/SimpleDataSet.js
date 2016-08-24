@@ -106,6 +106,10 @@ var SimpleDataSet = (function() {
         return this;
     }
 
+    CreateDataSet.prototype.filter = function(options) {
+        return this.data.query(options);
+    }
+    
     CreateDataSet.prototype.refresh = function() {
         var self = this;
         if (self.sort) {
