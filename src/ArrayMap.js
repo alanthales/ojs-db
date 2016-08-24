@@ -54,6 +54,9 @@ var ArrayMap = (function() {
                     case "$lte":
                         matched = record[field] <= opts[field][prop];
                         break;
+                    case "$not":
+                        matched = record[field] != opts[field][prop];
+                        break;
                     case "$start":
                         matched = str.lastIndexOf(opts[field][prop], 0) === 0;
                         break;
