@@ -77,7 +77,7 @@ var OjsUtils = (function() {
             } else if (obj instanceof SimpleDataSet) {
                 out = new SimpleDataSet();
             } else if (obj instanceof ChildRecord) {                
-                out = new ChildRecord(obj.getDtsMaster(), obj.getRecMaster());
+                out = new ChildRecord();
             }
             
             if (Object.prototype.toString.call(obj) === '[object Array]') {
