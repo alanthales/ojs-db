@@ -75,10 +75,10 @@ var RestProxy = (function() {
         throw xhr.responseText;
     }
     
-    function CreateProxy(config, serializeFn) {
+    function CreateProxy(config) {
         this.config = config;
-        if (serializeFn && typeof serializeFn === "function") {
-            this.serialize = serializeFn;
+        if (config.serializeFn && typeof config.serializeFn === "function") {
+            this.serialize = config.serializeFn;
         } else {
             this.serialize = _defSerialize;
         }
