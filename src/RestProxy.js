@@ -12,6 +12,8 @@ var RestProxy = (function() {
         var http = new XMLHttpRequest(),
             callback, prop, params;
         
+        http.open(method, url, true);
+        
         http.onreadystatechange = function() {
             if (http.readyState === 4) {
                 callback = http.status === 200 ? success : error;
@@ -26,7 +28,6 @@ var RestProxy = (function() {
             }
         }
         
-        http.open(method, url, true);
         http.send(params);
     };
 
@@ -88,7 +89,7 @@ var RestProxy = (function() {
     CreateProxy.prototype = Object.create(DbProxy.prototype);
 
     CreateProxy.prototype.getRecords = function(options, callback) {
-        _get(options, function(data) {
+        _get.call(this, options, function(data) {
             if (typeof options === "object" && options.sort) {
                 data.orderBy(options.sort);
             }
@@ -97,25 +98,25 @@ var RestProxy = (function() {
     }
     
     CreateProxy.prototype.query = function(key, filters, callback) {
-        _get(key, function(data) {
+        _get.call(this, key, function(data) {
             var results = data.query(filters);
             callback( results );
         }, errorHandle);
     }
     
     CreateProxy.prototype.groupBy = function(key, filters, options, groups, callback) {
-        _get(key, function(data) {
+        _get.call(this, key, function(data) {
             var results = data.groupBy(options, groups, filters);
             callback( results );
         }, errorHandle);
     }
     
     CreateProxy.prototype.insert = function(key, record, callback) {
-        _save("POST", key, record, callback, errorHandle);
+        _save.call(this, "POST", key, record, callback, errorHandle);
     }
 
     CreateProxy.prototype.update = function(key, record, callback) {
-        _save("PUT", key, record, callback, errorHandle);
+        _save.call(this, "PUT", key, record, callback, errorHandle);
     }
     
     CreateProxy.prototype.delete = function(key, record, callback) {
