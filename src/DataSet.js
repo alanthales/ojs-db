@@ -37,13 +37,13 @@ var DataSet = (function() {
             opts = { key: self.getTable(), limit: self.limit, sort: self.sort, params: self.params };
 
         if (self.active) {
-            fn(self.data, callback);
+            cb(null, self.data);
             return self;
         }
 
         self.getProxy().getRecords(opts, function(err, records) {
             self.data = records;
-            self.active = true;
+            self.active = err ? false : true;
             cb(err, records);
         });
         

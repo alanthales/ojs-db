@@ -16,7 +16,7 @@ var RestProxy = (function() {
         
         http.onreadystatechange = function() {
             if (http.readyState === 4) {
-                callback = http.status === 200 ? success : error;
+                callback = [200,201].indexOf(http.status) > -1 ? success : error;
                 callback(http);
             }
         }
@@ -61,13 +61,16 @@ var RestProxy = (function() {
             config.headers = this.config.headers;
         }
         
-        _httpRequest(url, method, config, function(xhr) {
-            if (typeof callback === "function") {
-                success( xhr );
-            }
-        }, error);
+        _httpRequest(url, method, config, success, error);
     };
 
+    function ProxyError(xhr) {
+        var res = JSON.parse(xhr.responseText);
+        this.code = xhr.status;
+        this.status = xhr.statusText;
+        this.error = res.error || {};
+    }
+    
     function CreateProxy(config) {
         this.config = config;
         if (config.serializeFn && typeof config.serializeFn === "function") {
@@ -87,8 +90,7 @@ var RestProxy = (function() {
             }
             callback( null, data );
         }, function(xhr) {
-            console.error( JSON.stringify(xhr) );
-            callback( xhr.responseText );
+            callback( new ProxyError(xhr), [] );
         });
     }
     
@@ -97,8 +99,7 @@ var RestProxy = (function() {
             var results = data.query(filters);
             callback( null, results );
         }, function(xhr) {
-            console.error( JSON.stringify(xhr) );
-            callback( xhr.responseText );
+            callback( new ProxyError(xhr), [] );
         });
     }
     
@@ -107,17 +108,24 @@ var RestProxy = (function() {
             var results = data.groupBy(options, groups, filters);
             callback( results );
         }, function(xhr) {
-            console.error( JSON.stringify(xhr) );
-            callback( xhr.responseText );
+            callback( new ProxyError(xhr), [] );
         });
     }
     
     CreateProxy.prototype.insert = function(key, record, callback) {
-        _save.call(this, "POST", key, record, callback, errorHandle);
+        _save.call(this, "POST", key, record, function(xhr) {
+            callback(null, xhr);
+        }, function(xhr) {
+            callback( new ProxyError(xhr), xhr );
+        });
     }
 
     CreateProxy.prototype.update = function(key, record, callback) {
-        _save.call(this, "PUT", key, record, callback, errorHandle);
+        _save.call(this, "PUT", key, record, function(xhr) {
+            callback(null, xhr);
+        }, function(xhr) {
+            callback( new ProxyError(xhr), xhr );
+        });
     }
     
     CreateProxy.prototype.delete = function(key, record, callback) {
@@ -129,22 +137,26 @@ var RestProxy = (function() {
         }
         
         _httpRequest(url, "DELETE", config, function(xhr) {
-            if (typeof callback === "function") {
-                success( xhr );
-            }
-        }, errorHandle);
+            callback(null, xhr);
+        }, function(xhr) {
+            callback( new ProxyError(xhr), xhr );
+        });
     }
 
     CreateProxy.prototype.commit = function(key, toInsert, toUpdate, toDelete, callback) {
         var self = this,
             total = toInsert.length + toUpdate.length + toDelete.length,
             cb = callback && typeof callback === "function" ? callback : function() {},
+            errors = [],
             i;
 
-        function progress() {
+        function progress(err) {
             total--;
+            if (err) {
+                errors.push(err);
+            }
             if (total === 0) {
-                cb();
+                cb(errors);
                 return;
             }
         }
