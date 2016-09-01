@@ -42,9 +42,6 @@ var RestProxy = (function() {
                 url += "/" + p + "/" + opts.params[p];
             }
         }
-//        else {
-//            url += "/" + this.config.getEP;
-//        }
         
         _httpRequest(url, "GET", this.config, function(xhr) {
             table.putRange( JSON.parse(xhr.responseText, DbProxy.dateParser) );
@@ -71,11 +68,6 @@ var RestProxy = (function() {
         }, error);
     };
 
-    function errorHandle(xhr) {
-        console.log( JSON.stringify(xhr) );
-        throw xhr.responseText;
-    }
-    
     function CreateProxy(config) {
         this.config = config;
         if (config.serializeFn && typeof config.serializeFn === "function") {
@@ -93,22 +85,31 @@ var RestProxy = (function() {
             if (typeof options === "object" && options.sort) {
                 data.orderBy(options.sort);
             }
-            callback( data );
-        }, errorHandle);
+            callback( null, data );
+        }, function(xhr) {
+            console.error( JSON.stringify(xhr) );
+            callback( xhr.responseText );
+        });
     }
     
     CreateProxy.prototype.query = function(key, filters, callback) {
         _get.call(this, key, function(data) {
             var results = data.query(filters);
-            callback( results );
-        }, errorHandle);
+            callback( null, results );
+        }, function(xhr) {
+            console.error( JSON.stringify(xhr) );
+            callback( xhr.responseText );
+        });
     }
     
     CreateProxy.prototype.groupBy = function(key, filters, options, groups, callback) {
         _get.call(this, key, function(data) {
             var results = data.groupBy(options, groups, filters);
             callback( results );
-        }, errorHandle);
+        }, function(xhr) {
+            console.error( JSON.stringify(xhr) );
+            callback( xhr.responseText );
+        });
     }
     
     CreateProxy.prototype.insert = function(key, record, callback) {
@@ -131,7 +132,7 @@ var RestProxy = (function() {
             if (typeof callback === "function") {
                 success( xhr );
             }
-        }, error);
+        }, errorHandle);
     }
 
     CreateProxy.prototype.commit = function(key, toInsert, toUpdate, toDelete, callback) {

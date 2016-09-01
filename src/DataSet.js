@@ -33,23 +33,18 @@ var DataSet = (function() {
     
     CreateDataSet.prototype.open = function(callback) {
         var self = this,
+            cb = callback && typeof callback === "function" ? callback : function() {},
             opts = { key: self.getTable(), limit: self.limit, sort: self.sort, params: self.params };
-
-        function fn(results, cb) {
-            if (typeof cb === "function") {
-                cb(results);
-            }
-        }
 
         if (self.active) {
             fn(self.data, callback);
             return self;
         }
 
-        self.getProxy().getRecords(opts, function(records) {
+        self.getProxy().getRecords(opts, function(err, records) {
             self.data = records;
             self.active = true;
-            fn(records, callback);
+            cb(err, records);
         });
         
         return self;

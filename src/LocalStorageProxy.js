@@ -38,7 +38,7 @@ var LocalStorageProxy = (function() {
         }
 
         if (typeof callback === "function") {
-            callback( table );
+            callback( null, table );
         }
     }
     
@@ -46,13 +46,13 @@ var LocalStorageProxy = (function() {
         var table = _get(key),
             results = table.query(filters);
         
-        callback( results );
+        callback( null, results );
     }
     
     CreateProxy.prototype.groupBy = function(key, options, groups, filters, callback) {
         var table = _get(key);
         
-        callback( table.groupBy(options, groups, filters) );
+        callback( null, table.groupBy(options, groups, filters) );
     }
     
     CreateProxy.prototype.save = function(key, record, callback) {

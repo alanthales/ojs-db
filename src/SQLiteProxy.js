@@ -121,8 +121,11 @@ var SQLiteProxy = (function() {
             }
             
             if (typeof callback === "function") {
-                callback( table );
+                callback( null, table );
             }
+        }, function(tx, errors) {
+            console.error( JSON.stringify(errors) );
+            callback(errors);
         });
     };
     
