@@ -77,7 +77,7 @@ var SimpleDataSet = (function() {
 
     CreateDataSet.prototype.save = function(record) {
         if (!record) return;
-        if (!record.id) {
+        if (!record.id || !this.getById(record.id)) {
             return this.insert(record);
         }
         return this.update(record);

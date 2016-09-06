@@ -149,7 +149,7 @@ var SQLiteProxy = (function() {
             sql = [_selectFrom, options.key];
             if (options.params) {
                 for (p in options.params) {
-                    where += p + " = " + options.params[p];
+                    where += p + " = '" + options.params[p] + "'";
                 }
                 sql.push(where);
             }
@@ -171,6 +171,11 @@ var SQLiteProxy = (function() {
             field, prop;
         
         for (field in filters) {
+            if (typeof filters[field] !== "object") {
+                where += [field, " = '", filters[field], "'"].join("") + " AND ";
+                continue;
+            }
+            
             for (prop in filters[field]) {
                 switch(prop) {
                     case "$gt":
@@ -258,7 +263,7 @@ var SQLiteProxy = (function() {
             return sql;
         }
             
-        return sql + " GROUP BY " + groupBy;
+        return sql + " GROUP BY " + groupBy.trim().slice(0, -1);
     };
 
     CreateProxy.prototype.query = function(key, filters, callback) {
@@ -274,10 +279,25 @@ var SQLiteProxy = (function() {
     
     CreateProxy.prototype.groupBy = function(key, options, groups, filters, callback) {
         var self = this,
-            sql = _formatGroupBy(key, options, groups, filters);
+            sql = _formatGroupBy(key, options, groups, filters),
+            table = new ArrayMap(),
+            i, l;
         
-        self.getDb().transaction(function(tx) {
-            _select(key, sql, [], tx, callback);
+        self.getDb().transaction(function(transaction) {
+            transaction.executeSql(sql, [], function(tx, results) {
+                l = results.rows.length;
+
+                for (i = 0; i < l; i++) {
+                    table.push(results.rows.item(i));
+                }
+
+                if (typeof callback === "function") {
+                    callback( null, table );
+                }
+            }, function(tx, errors) {
+                console.error( JSON.stringify(errors) );
+                callback(errors);
+            });
         });
     }
 
@@ -369,7 +389,7 @@ var SQLiteProxy = (function() {
 
     var _getUpdateSql = function(key, record) {
         var params = [],
-            where = "id = " + record.id,
+            where = "id = '" + record.id + "'",
             sets = "",
             sql, prop, value;
 
@@ -422,7 +442,7 @@ var SQLiteProxy = (function() {
             }
             total--;
             if (total === 0) {
-                sql = ["DELETE FROM", key, "WHERE", "id =", id].join(" ");
+                sql = ["DELETE FROM ", key, " WHERE id = '", id, "'"].join("");
                 transaction.executeSql(sql, [], callback, callback);
             }
         }
@@ -431,7 +451,7 @@ var SQLiteProxy = (function() {
             fdmap = _maps[key][prop];
             if (fdmap && fdmap.hasMany) {
                 total++;
-                sql = ["DELETE FROM", fdmap.hasMany, "WHERE", fdmap.foreignKey, "=", id].join(" ");
+                sql = ["DELETE FROM ", fdmap.hasMany, " WHERE ", fdmap.foreignKey, " = '", id, "'"].join("");
                 transaction.executeSql(sql, [], progress, progress);
                 if (record[prop] instanceof SimpleDataSet) {
                     record[prop].clear();

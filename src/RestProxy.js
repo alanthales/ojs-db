@@ -16,7 +16,7 @@ var RestProxy = (function() {
         
         http.onreadystatechange = function() {
             if (http.readyState === 4) {
-                callback = [200,201].indexOf(http.status) > -1 ? success : error;
+                callback = [200,201,304].indexOf(http.status) > -1 ? success : error;
                 callback(http);
             }
         }
