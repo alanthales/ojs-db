@@ -117,6 +117,7 @@ var DataSet = (function() {
         sync.exec(self.getTable(), function(allData, toDelete) {
             var serverData = new ArrayMap(),
                 localData = new ArrayMap(),
+                toDeleteMap = toDelete.map(function(item) { return item.id }),
                 deleteFn;
             
             serverData.putRange(allData);
@@ -129,7 +130,7 @@ var DataSet = (function() {
             }
             
             function deleteFix(item) {
-                if (toDelete.indexOfKey('id', item.id) > -1) {
+                if (toDeleteMap.indexOf(item.id) > -1) {
                     self.delete(item);
                 }
             }

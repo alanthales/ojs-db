@@ -172,6 +172,7 @@ var SimpleDataSet = (function() {
     
     CreateDataSet.prototype.forEach = function(fn) {
         this.data.forEach(fn);
+        return this;
     }
     
     return CreateDataSet;
