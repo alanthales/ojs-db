@@ -55,12 +55,21 @@ var SimpleDataSet = (function() {
             return;
         }
         
-        var index = this.data.indexOfKey('id', record.id);
+        var index = this.data.indexOfKey('id', record.id),
+            idxUpd;
         
-        if (!this._updateds[index]) {
+        if (index === -1) {
+            return;
+        }
+        
+        idxUpd = this._updateds
+            .map(function(item) { return item.id })
+            .indexOf(record.id);
+        
+        if (idxUpd === -1) {
             this._updateds.push(record);
         } else {
-            this._updateds.splice(index, 1, record);
+            this._updateds.splice(idxUpd, 1, record);
         }
         
         this._copy = OjsUtils.cloneObject( this.data[index] );
@@ -90,10 +99,11 @@ var SimpleDataSet = (function() {
         
         var index = this.data.indexOfKey('id', record.id);
         
-        if (!this._deleteds[index]) {
-            this._deleteds.push(record);
+        if (index === -1) {
+            return;
         }
         
+        this._deleteds.push(record);
         this._copy = OjsUtils.cloneObject( this.data[index] );
         this._lastOp = 'delete';
         
@@ -106,10 +116,6 @@ var SimpleDataSet = (function() {
         return this;
     }
 
-    CreateDataSet.prototype.filter = function(options) {
-        return this.data.query(options);
-    }
-    
     CreateDataSet.prototype.refresh = function() {
         var self = this;
         if (self.sort) {
@@ -158,6 +164,14 @@ var SimpleDataSet = (function() {
         
         this._copy = null;
         this._lastOp = null;
+    }
+    
+    CreateDataSet.prototype.filter = function(options) {
+        return this.data.query(options);
+    }
+    
+    CreateDataSet.prototype.forEach = function(fn) {
+        this.data.forEach(fn);
     }
     
     return CreateDataSet;

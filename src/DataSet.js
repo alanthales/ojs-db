@@ -4,10 +4,10 @@
     Requires: SimpleDataSet.js, SyncDb.js
 */
 var DataSet = (function() {
-    function CreateDataSet(proxy, table, genIdFn, syncronizer) {
+    function CreateDataSet(proxy, table, genIdFn, synchronizer) {
         var _proxy = proxy,
             _table = table,
-            _syncronizer = syncronizer;
+            _synchronizer = synchronizer;
         
         this.active = false;
         this.limit = 1000;
@@ -22,8 +22,8 @@ var DataSet = (function() {
             return _table;
         }
         
-        this.getSyncronizer = function() {
-            return _syncronizer;
+        this.getSynchronizer = function() {
+            return _synchronizer;
         }
         
         SimpleDataSet.apply(this);
@@ -84,7 +84,7 @@ var DataSet = (function() {
 
         var self = this,
             cb = typeof callback === "function" ? callback : function() {},
-            sync = this.getSyncronizer();
+            sync = this.getSynchronizer();
 
         function done() {
             if (sync && !ignoreSync) {
@@ -108,24 +108,35 @@ var DataSet = (function() {
 
     CreateDataSet.prototype.sync = function(callback) {
         var self = this,
-            sync = this.getSyncronizer();
+            sync = this.getSynchronizer();
         
         if (!sync) {
             return;
         }
         
-        sync.exec(self.getTable(), function(allData) {
+        sync.exec(self.getTable(), function(allData, toDelete) {
             var serverData = new ArrayMap(),
-                localData = new ArrayMap();
+                localData = new ArrayMap(),
+                deleteFn;
             
             serverData.putRange(allData);
             localData.putRange(self.data);
-            
-            localData.forEach(function(item) {
+
+            function deleteDiff(item) {
                 if (serverData.indexOfKey('id', item.id) < 0) {
                     self.delete(item);
                 }
-            });
+            }
+            
+            function deleteFix(item) {
+                if (toDelete.indexOfKey('id', item.id) > -1) {
+                    self.delete(item);
+                }
+            }
+            
+            deleteFn = toDelete && toDelete instanceof Array ? deleteFix : deleteDiff;
+            
+            localData.forEach(deleteFn);
             
             serverData.forEach(function(item) {
                 if (self.data.indexOfKey('id', item.id) < 0) {
