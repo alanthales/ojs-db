@@ -306,8 +306,8 @@ var SQLiteProxy = (function() {
             prop, fdmap, items;//, i, l;
         
         function progress(tx, err) {
-            if (err && err.message) {
-                console.error(err);
+            if (err) {
+                console.error( JSON.stringify(err) );
             }
             total--;
             if (total === 0) {
@@ -437,8 +437,8 @@ var SQLiteProxy = (function() {
             sql, prop, fdmap;
 
         function progress(tx, err) {
-            if (err && err.message) {
-                console.error(err);
+            if (err) {
+                console.error( JSON.stringify(err) );
             }
             total--;
             if (total === 0) {
@@ -479,10 +479,11 @@ var SQLiteProxy = (function() {
             cb = callback && typeof callback === "function" ? callback : function() {},
             errors = [];
 
-        function progress(err) {
+        function progress(tx, err) {
             total--;
             if (err) {
                 errors.push(err);
+                console.error( JSON.stringify(err) );
             }
             if (total === 0) {
                 cb(errors.length ? errors : null);

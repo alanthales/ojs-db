@@ -48,9 +48,9 @@ var SyncDb = (function() {
             updTable = _getData(Operations.Update, table),
             delTable = _getData(Operations.Delete, table);
 
-        insTable = _merge(insTable, toInsert);
-        updTable = _merge(updTable, toUpdate);
-        delTable = _merge(delTable, toDelete);
+        insTable = _merge(toInsert, insTable);
+        updTable = _merge(toUpdate, updTable);
+        delTable = _merge(toDelete, delTable);
         
         _saveTable(Operations.Insert, table, insTable);
         _saveTable(Operations.Update, table, updTable);
