@@ -373,7 +373,9 @@ var SQLiteProxy = (function() {
 
     var _insert = function(key, record, transaction, callback) {
         var obj = _getInsertSql(key, record);
-        transaction.executeSql(obj.sql, obj.params, callback, callback);
+        transaction.executeSql(obj.sql, obj.params, function() {
+            callback();
+        }, callback);
     };
     
     CreateProxy.prototype.insert = function(key, records, transaction, callback) {
@@ -417,7 +419,9 @@ var SQLiteProxy = (function() {
     
     var _update = function(key, record, transaction, callback) {
         var obj = _getUpdateSql(key, record);
-        transaction.executeSql(obj.sql, obj.params, callback, callback);
+        transaction.executeSql(obj.sql, obj.params, function() {
+            callback();
+        }, callback);
     };
     
     CreateProxy.prototype.update = function(key, records, transaction, callback) {
@@ -443,7 +447,9 @@ var SQLiteProxy = (function() {
             total--;
             if (total === 0) {
                 sql = ["DELETE FROM ", key, " WHERE id = '", id, "'"].join("");
-                transaction.executeSql(sql, [], callback, callback);
+                transaction.executeSql(sql, [], function() {
+                    callback();
+                }, callback);
             }
         }
         
@@ -452,7 +458,9 @@ var SQLiteProxy = (function() {
             if (fdmap && fdmap.hasMany) {
                 total++;
                 sql = ["DELETE FROM ", fdmap.hasMany, " WHERE ", fdmap.foreignKey, " = '", id, "'"].join("");
-                transaction.executeSql(sql, [], progress, progress);
+                transaction.executeSql(sql, [], function() {
+                    progress();
+                }, progress);
                 if (record[prop] instanceof SimpleDataSet) {
                     record[prop].clear();
                 }
@@ -519,7 +527,7 @@ var SQLiteProxy = (function() {
             opts.key = fdmap.hasMany;
             opts.params[fdmap.foreignKey] = record.id;
             
-            this.getRecords(opts, function(results) {
+            this.getRecords(opts, function(err, results) {
                 record[property] = new SimpleDataSet();
                 
                 l = results.length;
