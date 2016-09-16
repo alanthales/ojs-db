@@ -305,10 +305,7 @@ var SQLiteProxy = (function() {
         var total = 1,
             prop, fdmap, items;//, i, l;
         
-        function progress(tx, err) {
-            if (err) {
-                console.error( JSON.stringify(err) );
-            }
+        function progress() {
             total--;
             if (total === 0) {
                 if (items && items instanceof SimpleDataSet) {
@@ -373,9 +370,7 @@ var SQLiteProxy = (function() {
 
     var _insert = function(key, record, transaction, callback) {
         var obj = _getInsertSql(key, record);
-        transaction.executeSql(obj.sql, obj.params, function() {
-            callback();
-        }, callback);
+        transaction.executeSql(obj.sql, obj.params, callback);
     };
     
     CreateProxy.prototype.insert = function(key, records, transaction, callback) {
@@ -419,9 +414,7 @@ var SQLiteProxy = (function() {
     
     var _update = function(key, record, transaction, callback) {
         var obj = _getUpdateSql(key, record);
-        transaction.executeSql(obj.sql, obj.params, function() {
-            callback();
-        }, callback);
+        transaction.executeSql(obj.sql, obj.params, callback);
     };
     
     CreateProxy.prototype.update = function(key, records, transaction, callback) {
@@ -440,16 +433,11 @@ var SQLiteProxy = (function() {
             total = 1,
             sql, prop, fdmap;
 
-        function progress(tx, err) {
-            if (err) {
-                console.error( JSON.stringify(err) );
-            }
+        function progress() {
             total--;
             if (total === 0) {
                 sql = ["DELETE FROM ", key, " WHERE id = '", id, "'"].join("");
-                transaction.executeSql(sql, [], function() {
-                    callback();
-                }, callback);
+                transaction.executeSql(sql, [], callback);
             }
         }
         
@@ -458,9 +446,7 @@ var SQLiteProxy = (function() {
             if (fdmap && fdmap.hasMany) {
                 total++;
                 sql = ["DELETE FROM ", fdmap.hasMany, " WHERE ", fdmap.foreignKey, " = '", id, "'"].join("");
-                transaction.executeSql(sql, [], function() {
-                    progress();
-                }, progress);
+                transaction.executeSql(sql, [], progress);
                 if (record[prop] instanceof SimpleDataSet) {
                     record[prop].clear();
                 }
@@ -484,17 +470,12 @@ var SQLiteProxy = (function() {
     CreateProxy.prototype.commit = function(key, toInsert, toUpdate, toDelete, callback) {
         var self = this,
             total = toInsert.length + toUpdate.length + toDelete.length,
-            cb = callback && typeof callback === "function" ? callback : function() {},
-            errors = [];
+            cb = callback && typeof callback === "function" ? callback : function() {};
 
-        function progress(tx, err) {
+        function progress() {
             total--;
-            if (err) {
-                errors.push(err);
-                console.error( JSON.stringify(err) );
-            }
             if (total === 0) {
-                cb(errors.length ? errors : null);
+                cb();
             }
         }
 
@@ -514,23 +495,29 @@ var SQLiteProxy = (function() {
             if (toDelete.length) {
                 self.delete(key, toDelete, tx, progress);
             }
+        }, function(err) {
+            console.error(err.message);
+            cb(err);
         });
     }
     
     var _fetch = function(key, master, record, property, callback) {
         var opts = { params: {} },
             fdmap = _maps[key][property],
-            i = 0,
-            l, child;
+            i, l, child;
 
         if (fdmap && fdmap.hasMany) {
             opts.key = fdmap.hasMany;
             opts.params[fdmap.foreignKey] = record.id;
             
             this.getRecords(opts, function(err, results) {
+                if (err) {
+                    return callback(err);
+                }
+                
                 record[property] = new SimpleDataSet();
                 
-                l = results.length;
+                i = 0; l = results.length;
                 
                 for (; i < l; i++) {
                     child = new ChildRecord(master, record);

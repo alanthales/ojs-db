@@ -86,7 +86,12 @@ var DataSet = (function() {
             cb = typeof callback === "function" ? callback : function() {},
             sync = this.getSynchronizer();
 
-        function done() {
+        function done(err) {
+            if (err) {
+                self.cancel();
+                return cb();
+            }
+            
             if (sync && !ignoreSync) {
                 sync.writeData(self.getTable(), self._inserteds, self._updateds, self._deleteds);
             }
