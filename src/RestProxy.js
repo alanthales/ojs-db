@@ -38,9 +38,11 @@ var RestProxy = (function() {
             p;
         
         if (opts.params) {
+            url += '?';
             for (p in opts.params) {
-                url += "/" + p + "/" + opts.params[p];
+                url += p + "=" + opts.params[p] + '&';
             }
+            url = url.slice(0, -1);
         }
         
         _httpRequest(url, "GET", this.config, function(xhr) {
@@ -65,7 +67,14 @@ var RestProxy = (function() {
     };
 
     function ProxyError(xhr) {
-        var res = JSON.parse(xhr.responseText);
+        var res;
+        
+        try {
+            res = JSON.parse(xhr.responseText);
+        } catch (e) {
+            res = { error: xhr.responseText };
+        }
+        
         this.code = xhr.status;
         this.status = xhr.statusText;
         this.error = res.error || {};
