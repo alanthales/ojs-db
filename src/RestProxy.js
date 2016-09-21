@@ -53,11 +53,17 @@ var RestProxy = (function() {
     
     var _save = function(method, key, record, success, error) {
         var url = this.config.url + "/" + key,
-            config = { data: this.serialize(record) };
+            config = {};
+
+        if (method === "POST" && this.autoPK) {
+            delete record.id;
+        }
         
         if (method === "PUT") {
             url += "/" + record.id;
         }
+
+        config.data = this.serialize(record);
         
         if (this.config.headers) {
             config.headers = this.config.headers;
@@ -82,11 +88,17 @@ var RestProxy = (function() {
     
     function CreateProxy(config) {
         this.config = config;
+        
+        if (config && config.autoPK) {
+            this.autoPK = config.autoPK;
+        }
+        
         if (config.serializeFn && typeof config.serializeFn === "function") {
             this.serialize = config.serializeFn;
         } else {
             this.serialize = _defSerialize;
         }
+        
         DbProxy.apply(this, arguments);
     }
     

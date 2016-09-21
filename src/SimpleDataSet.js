@@ -116,14 +116,6 @@ var SimpleDataSet = (function() {
         return this;
     }
 
-    CreateDataSet.prototype.refresh = function() {
-        var self = this;
-        if (self.sort) {
-            self.data.orderBy(self.sort);
-        }
-        return self;
-    }
-    
     CreateDataSet.prototype.insertAll = function(records) {
         var self = this;
         

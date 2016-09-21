@@ -56,6 +56,22 @@ var DataSet = (function() {
         return this;
     }
 
+    CreateDataSet.prototype.refresh = function(callback) {
+        var cb = callback && typeof callback === "function" ? callback : function() {};
+        
+        if (this.getProxy().autoPK) {
+            this.active = false;
+            return this.open(cb);
+        }
+        
+        if (this.sort) {
+            this.data.orderBy(this.sort);
+        }
+
+        cb();
+        return this;
+    }
+    
     CreateDataSet.prototype.insert = function(record) {
         if (!this.active) {
             throw "Invalid operation on closed dataset";
