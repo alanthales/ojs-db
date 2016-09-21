@@ -119,7 +119,11 @@ var DataSet = (function() {
             return;
         }
         
-        sync.exec(self.getTable(), function(allData, toDelete) {
+        sync.exec(self.getTable(), function(err, allData, toDelete) {
+            if (err) {
+                return callback(err);
+            }
+            
             var serverData = new ArrayMap(),
                 localData = new ArrayMap(),
                 toDeleteMap = toDelete.map(function(item) { return item.id }),

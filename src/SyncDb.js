@@ -71,7 +71,7 @@ var SyncDb = (function() {
     
     CreateSync.prototype.getNews = function(table, callback) {
         if (typeof callback === 'function') {
-            callback( [] );
+            callback( null, [], [] );
         }
     }
     
@@ -83,7 +83,10 @@ var SyncDb = (function() {
             _getData(Operations.Insert, table),
             _getData(Operations.Update, table),
             _getData(Operations.Delete, table),
-            function() {
+            function(err) {
+                if (err) {
+                    return cb(err);
+                }
                 self.cleanData(table);
                 self.getNews(table, cb);
             }
