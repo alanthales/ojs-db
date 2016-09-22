@@ -140,6 +140,12 @@ var DataSet = (function() {
                 return callback(err);
             }
             
+            allData = allData || []; toDelete = toDelete || [];
+            
+            if (!allData.length && !toDelete.length) {
+                return callback();
+            }
+            
             var serverData = new ArrayMap(),
                 localData = new ArrayMap(),
                 toDeleteMap = toDelete.map(function(item) { return item.id }),
@@ -177,10 +183,14 @@ var DataSet = (function() {
     }
     
     CreateDataSet.prototype.fetch = function(property, callback) {
+        var cb = callback && typeof callback === 'function' ? callback : function() {};
+        
         if (!this.active) {
-            throw "Invalid operation on closed dataset";
+            cb();
+            return this;
         }
-        this.getProxy().fetch(this.getTable(), this, property, callback);
+        
+        this.getProxy().fetch(this.getTable(), this, property, cb);
         return this;
     }
     

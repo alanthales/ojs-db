@@ -11,7 +11,7 @@ var SQLiteProxy = (function() {
         var db;
 
         if (window.cordova && window.sqlitePlugin) {
-            db = window.sqlitePlugin.openDatabase({name: dbName});
+            db = window.sqlitePlugin.openDatabase({name: dbName, location: 'default'});
         } else {
             db = window.openDatabase(dbName, "SQLite Database", "1.0", 5*1024*1024);
         }
@@ -26,10 +26,7 @@ var SQLiteProxy = (function() {
     CreateProxy.prototype = Object.create(DbProxy.prototype);
     
     CreateProxy.prototype.createDatabase = function(maps, callback) {
-        var self = this,
-            errorObj = null;
-        
-        DbProxy.prototype.createDatabase.apply(this, arguments);
+        var self = this;
         
         _maps = OjsUtils.cloneObject(maps);
 
@@ -41,7 +38,7 @@ var SQLiteProxy = (function() {
             function progress() {
                 total--;
                 if (total === 0) {
-                    cb(errorObj);
+                    cb();
                 }
             }
 
@@ -67,11 +64,10 @@ var SQLiteProxy = (function() {
                 fields = fields.substr(0, fields.length - 1);
                 sql = ["CREATE TABLE IF NOT EXISTS", table, "(", fields, ")"].join(" ");
 
-                tx.executeSql(sql, [], progress, function(err) {
-                    errorObj = err;
-                    progress();
-                });
+                tx.executeSql(sql, [], progress);
             }
+        }, function(err) {
+            cb(err);
         });
     }
 
@@ -123,9 +119,9 @@ var SQLiteProxy = (function() {
             if (typeof callback === "function") {
                 callback( null, table );
             }
-        }, function(tx, errors) {
-            console.error( JSON.stringify(errors) );
-            callback(errors);
+        }, function(tx, err) {
+            console.error( err.message );
+            callback(err);
         });
     };
     
@@ -294,9 +290,9 @@ var SQLiteProxy = (function() {
                 if (typeof callback === "function") {
                     callback( null, table );
                 }
-            }, function(tx, errors) {
-                console.error( JSON.stringify(errors) );
-                callback(errors);
+            }, function(tx, err) {
+                console.error( err.message );
+                callback(err);
             });
         });
     }
