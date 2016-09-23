@@ -89,9 +89,9 @@ var RestProxy = (function() {
     function CreateProxy(config) {
         this.config = config;
         
-        if (config && config.autoPK) {
-            this.autoPK = config.autoPK;
-        }
+//        if (config && config.autoPK) {
+//            this.autoPK = config.autoPK;
+//        }
         
         if (config.serializeFn && typeof config.serializeFn === "function") {
             this.serialize = config.serializeFn;
@@ -135,9 +135,13 @@ var RestProxy = (function() {
     
     CreateProxy.prototype.insert = function(key, record, callback) {
         _save.call(this, "POST", key, record, function(xhr) {
+            var created = JSON.parse(xhr.responseText);
+            if (this.autoPK) {
+                record.id = created.id || record.id;
+            }
             callback(null, xhr);
         }, function(xhr) {
-            callback( new ProxyError(xhr), xhr );
+            callback( new ProxyError(xhr) );
         });
     }
 
@@ -145,7 +149,7 @@ var RestProxy = (function() {
         _save.call(this, "PUT", key, record, function(xhr) {
             callback(null, xhr);
         }, function(xhr) {
-            callback( new ProxyError(xhr), xhr );
+            callback( new ProxyError(xhr) );
         });
     }
     
@@ -160,7 +164,7 @@ var RestProxy = (function() {
         _httpRequest(url, "DELETE", config, function(xhr) {
             callback(null, xhr);
         }, function(xhr) {
-            callback( new ProxyError(xhr), xhr );
+            callback( new ProxyError(xhr) );
         });
     }
 
@@ -168,13 +172,13 @@ var RestProxy = (function() {
         var self = this,
             total = toInsert.length + toUpdate.length + toDelete.length,
             cb = callback && typeof callback === "function" ? callback : function() {},
-            errors = [],
-            i;
+            errors, i;
 
         function progress(err) {
             total--;
             if (err) {
-                errors.push(err);
+                errors = errors || { messages: [] };
+                errors.messages.push(err);
             }
             if (total === 0) {
                 cb(errors);

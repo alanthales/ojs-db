@@ -59,7 +59,7 @@ var DataSet = (function() {
     CreateDataSet.prototype.refresh = function(callback) {
         var cb = callback && typeof callback === "function" ? callback : function() {};
         
-        if (this.getProxy().autoPK) {
+        if (this.getProxy().shouldReopen) {
             this.active = false;
             return this.open(cb);
         }
