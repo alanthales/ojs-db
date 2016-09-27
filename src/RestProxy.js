@@ -89,9 +89,9 @@ var RestProxy = (function() {
     function CreateProxy(config) {
         this.config = config;
         
-//        if (config && config.autoPK) {
-//            this.autoPK = config.autoPK;
-//        }
+        if (config && config.autoPK) {
+            this.autoPK = config.autoPK;
+        }
         
         if (config.serializeFn && typeof config.serializeFn === "function") {
             this.serialize = config.serializeFn;
