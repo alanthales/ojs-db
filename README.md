@@ -1,7 +1,7 @@
 ## ojs-db
-A JavaScript library to persist data in browser, mobile phone, cloud or anywhere. You define where to write the data through proxies. **100% JavaScript, no binary dependency**. API is simple and easy to use.
+A JavaScript framework to persist data in browser, mobile phone, cloud or anywhere. You define where to write the data through proxies. **100% JavaScript, no binary dependency**. API is simple and easy to use.
 
-## Installation, tests
+## Installation
 The installation is simple, you can download and linking js files directily in your page using `script` tag or do that:
 
 * Clone the project.
