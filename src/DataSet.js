@@ -13,6 +13,7 @@ var DataSet = (function() {
         this.limit = 1000;
         this.params = null;
         this.genId = genIdFn;
+        this.reOpenOnRefresh = false;
         
         this.getProxy = function() {
             return _proxy;
@@ -59,7 +60,7 @@ var DataSet = (function() {
     CreateDataSet.prototype.refresh = function(callback) {
         var cb = callback && typeof callback === "function" ? callback : function() {};
         
-        if (this.getProxy().shouldReopen) {
+        if (this.reOpenOnRefresh) {
             this.active = false;
             return this.open(cb);
         }

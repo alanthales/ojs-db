@@ -33,17 +33,29 @@ var RestProxy = (function() {
 
     var _get = function(options, success, error) {
         var opts = typeof options === "object" ? options : { key: options },
-            url = this.config.url + "/" + opts.key,
+            url = this.config.url + "/" + opts.key + "?",
             table = new ArrayMap(),
             p;
         
         if (opts.params) {
-            url += '?';
             for (p in opts.params) {
-                url += p + "=" + opts.params[p] + '&';
+                url += p + "=" + opts.params[p] + "&";
             }
-            url = url.slice(0, -1);
         }
+        
+        if (opts.sort) {
+            url += "sort=";
+            for (p in opts.sort) {
+                url += p + " " + opts.sort[p] + "&";
+                break;
+            }
+        }
+        
+        if (opts.limit) {
+            url += "limit=" + opts.limit + "&";
+        }
+        
+        url = url.slice(0, -1);
         
         _httpRequest(url, "GET", this.config, function(xhr) {
             table.putRange( JSON.parse(xhr.responseText, DbProxy.dateParser) );
@@ -90,7 +102,7 @@ var RestProxy = (function() {
         this.config = config;
         
         if (config && config.autoPK) {
-            this.autoPK = config.autoPK;
+            this.autoPK = true;
         }
         
         if (config.serializeFn && typeof config.serializeFn === "function") {
@@ -106,9 +118,6 @@ var RestProxy = (function() {
 
     CreateProxy.prototype.getRecords = function(options, callback) {
         _get.call(this, options, function(data) {
-            if (typeof options === "object" && options.sort) {
-                data.orderBy(options.sort);
-            }
             callback( null, data );
         }, function(xhr) {
             callback( new ProxyError(xhr), [] );
@@ -134,10 +143,11 @@ var RestProxy = (function() {
     }
     
     CreateProxy.prototype.insert = function(key, record, callback) {
-        _save.call(this, "POST", key, record, function(xhr) {
+        var self = this;
+        _save.call(self, "POST", key, record, function(xhr) {
             var created = JSON.parse(xhr.responseText);
-            if (this.autoPK) {
-                record.id = created.id || record.id;
+            if (self.autoPK && created.id) {
+                record.id = created.id;
             }
             callback(null, xhr);
         }, function(xhr) {
