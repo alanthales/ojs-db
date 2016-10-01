@@ -156,21 +156,18 @@ The DataSet class contains a method `filter` that works in same way of `db.query
 
 ```javascript
 // Finding the persons with age greather than 21
-persons.filter({ age: { $gt: 21 } }, function(results) {
-  // 'results' contains an array with the following structure:
-  // { id: '2', name: 'Aron', age: 30 }
-  // { id: '3', name: 'John', age: 31 }
-});
+var results = persons.filter({ age: { $gt: 21 } });
+console.log(results); // output: [{ id: '2', name: 'Aron', age: 30 }, { id: '3', name: 'John', age: 31 }]
 
-// To go to one specific record use getById
+// To get one specific record use "getById" method
 var record = persons.getById(3);
 ```
 
 ### Finding records directly from source
-DbFactory class contains methods to get data directly from source by proxy. Use `query` method to find for multiple records that matching you search. You can select records based on field equality or use comparison operators (`$lt`, `$lte`, `$gt`, `$gte`, `$start`, `$end`, `$contain`, `$in`, `$custom`). See below for the syntax.
+DbFactory class utilize the proxies to access data directly from source. The `query` method, find for multiple records that matching your search, you can select records based on field equality or use comparison operators (`$lt`, `$lte`, `$gt`, `$gte`, `$start`, `$end`, `$contain`, `$in`, `$custom`). See below for the syntax. Note: The `dataset.filter` method works in same way that examples below.
 
 #### Basic querying
-Basic querying means are searching for records whose fields match the ones you specify.
+Basic querying means are searching for records whose fields match the ones you specify. Note: Basic querying works in same way to all proxies.
 
 ```javascript
 // Let's say our database contains the following collection named 'persons'
