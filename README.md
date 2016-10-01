@@ -24,16 +24,47 @@ make
 ## API
 It is simple and intuitive to use.
 
+* <a href="#using-arraymap-for-your-needs">Using ArrayMap for your needs</a>
 * <a href="#creating-a-factory-and-a-dataSet">Creating a Factory and a DataSet</a>
 * <a href="#open-a-dataset-to-work-with">Open a DataSet to work with</a>
 * <a href="#saving-records">Saving records</a>
-* <a href="#finding-records">Finding records</a>
+* <a href="#removing-records">Removing records</a>
+* <a href="#filtering-in-memory-records">Filtering in memory records</a>
+* <a href="#finding-records-directly-from-source">Finding records directly from source</a>
   * <a href="#basic-querying">Basic Querying</a>
   * <a href="#operators">Operators</a>
   * <a href="#group-by">Group By</a>
-* <a href="#removing-records">Removing records</a>
-* <a href="#filtering-in-memory-records">Filtering in memory records</a>
-* <a href="#using-arraymap-for-your-needs">Using ArrayMap for your needs</a>
+
+### Using ArrayMap for your needs
+`ArrayMap` is a powerfull class that extends of `Array` to query, group and order data, and get an element index by one of your attributes. That class is used in entire framework e to you use that, just instantiate and fill it with data. See:
+
+```javascript
+var array = new ArrayMap();
+
+// Put a object.
+array.put({ key: 'value' });
+
+// Put a array object
+var elements = [{key: 'key1'}, {key: 'key2'}, {key: 'key3'}];
+array.putRange(elements);
+
+// Query, group and order by
+var q = array.query({ key: 'key1' }) // 'q' contains { key: 'key1' }
+  , g = array.groupBy({ $max: 'key' }, []); // 'g' contains { key: 'key3' }
+  
+array.orderBy({ key: 'desc' }); // array have now reverse order
+
+// Get an element index by your attributes
+var index = array.indexOfKey('key', 'key2'); // 'index' = 1
+
+// You can looping like an javascript Array
+for (var i = 0; i < array.length; i++) {
+    console.log(array[i]);
+}
+for (var obj in array) {
+    console.log(obj);
+}
+```
 
 ### Creating a Factory and a DataSet
 You can use **ojs-db** as an in-memory only database or as a persistent database. The factory is a class to create dataset's, the dataset's persist data through proxies. Each proxy may persist data according to your needs. There are 3 proxies already implemented and you can implement your own proxy. Are they:
@@ -49,14 +80,17 @@ The constructor is used as follows `new DbFactory(proxy, options, synchronizer)`
 
 
 ```javascript
-// Type 1: LocalStorageProxy enum.
+// Type 1: LocalStorageProxy
 var db = new DbFactory(DbProxies.LOCALSTORAGE);
 
-// Type 2: SQLiteProxy enum with config object
+// Type 2: SQLiteProxy
 var db = new DbFactory(DbProxies.SQLITE, "DatabaseName");
 db.createDatabase(maps);
 
-// Type 3: Your own proxy
+// Type 3: RestProxy
+var db = new DbFactory(DbProxies.RESTFUL, { url: "http://myserver" });
+
+// Type 4: Your own proxy
 var proxy = new MyProxy(config)
   , db = new DbFactory(proxy);
 ```
@@ -78,7 +112,7 @@ The DataSet's contains the properties below:
 
 * `limit` (default `1000`): control the quantity of records returned from proxy.
 * `sort` (default `null`): gets the records sorting them by properties in a sort object.
-* `data` (default `[]`): contains all records returned after call `open`. Note: `data` is type of [ArrayMap](src/ArrayMap) and you can use any of your methods.
+* `data` (default `[]`): contains all records returned after call `open`. Note: `data` is type of [ArrayMap](src/ArrayMap.js) and you can use any of your methods.
 
 See examples below:
 
@@ -102,15 +136,38 @@ var products = db.createDataSet("products")
 products.save(p);
 ```
 
-The save method is used both to insert and to update a record. If you only call save, the data was change only in memory, you have to call `post` to persist data to proxy.
+The `save` method is used both to insert and to update a record. If you only call `save`, the data was change only in memory, you have to call `post` to persist data to proxy.
 
 ```javascript
 products.save(p); // memory only.
 products.post(); // persist data.
 ```
 
-### Finding records
-Use `query` to find for multiple records that matching you search, or `getById` to go to one specific record. You can select records based on field equality or use comparison operators (`$lt`, `$lte`, `$gt`, `$gte`, `$start`, `$end`, `$contain`, `$in`, `$custom`). See below for the syntax.
+### Removing records
+`dataset.remove(record)` where `record` is the object to remove. Note: `remove` delete the record from memory only, you must call `post` to persist changes to proxy. See:
+
+```javascript
+persons.remove(record); // memory only.
+persons.post(); // persist data.
+```
+
+### Filtering in memory records
+The DataSet class contains a method `filter` that works in same way of `db.query` (see below), the only difference is that the data are obtained from memory, and not returned directly from the proxy. See:
+
+```javascript
+// Finding the persons with age greather than 21
+persons.filter({ age: { $gt: 21 } }, function(results) {
+  // 'results' contains an array with the following structure:
+  // { id: '2', name: 'Aron', age: 30 }
+  // { id: '3', name: 'John', age: 31 }
+});
+
+// To go to one specific record use getById
+var record = persons.getById(3);
+```
+
+### Finding records directly from source
+DbFactory class contains methods to get data directly from source by proxy. Use `query` method to find for multiple records that matching you search. You can select records based on field equality or use comparison operators (`$lt`, `$lte`, `$gt`, `$gte`, `$start`, `$end`, `$contain`, `$in`, `$custom`). See below for the syntax.
 
 #### Basic querying
 Basic querying means are searching for records whose fields match the ones you specify.
@@ -210,46 +267,6 @@ db.groupBy('persons', { $sum: 'age', alias: 'sum' }, ['name'], {}, function (res
   // { name: 'John', sum: 56 }
   // { name: 'Matt', sum: 17 }
 });
-```
-
-### Removing records
-`dataset.remove(record)` where `record` is the object to remove. Note: `remove` delete the record from memory only, you must call `post` to persist changes to proxy. See:
-
-```javascript
-persons.remove(record); // memory only.
-persons.post(); // persist data.
-```
-
-### Filtering in memory records
-The DataSet class contains a method `filter` that works in same way of `db.query`, the only difference is that the data are obtained from memory, and not returned directly from the proxy. See:
-
-```javascript
-// The first parameter (key) not is needed.
-persons.filter({ age: { $gt: 21 } }, function(results) {
-  // 'results' contains an array with the following structure:
-  // { id: '2', name: 'Aron', age: 30 }
-  // { id: '3', name: 'John', age: 31 }
-});
-```
-
-### Using ArrayMap for your needs
-`ArrayMap` is a powerfull class to quering data, group data and get index of an object. To use you can only instantiate the class and fill it with data. See:
-
-```javascript
-var array = new ArrayMap();
-
-// Put a object.
-array.put({ key: 'value' });
-
-// Put a array object
-var elements = [{key: 'key1'}, {key: 'key2'}, {key: 'key3'}];
-array.putRange(elements);
-
-// Query, group and order by
-var q = array.query({ key: 'key1' }) // 'q' contains { key: 'key1' }
-  , g = array.groupBy({ $max: 'key' }, []); // 'g' contains { key: 'key3' }
-  
-array.orderBy({ key: 'desc' }); // array have now reverse order
 ```
 
 ## License 
