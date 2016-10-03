@@ -125,20 +125,22 @@ var RestProxy = (function() {
     }
     
     CreateProxy.prototype.query = function(key, filters, callback) {
-        _get.call(this, key, function(data) {
-            var results = data.query(filters);
-            callback( null, results );
+        var opts = { key: key, params: filters };
+        _get.call(this, opts, function(data) {
+            callback( null, data );
         }, function(xhr) {
             callback( new ProxyError(xhr), [] );
         });
     }
     
     CreateProxy.prototype.groupBy = function(key, filters, options, groups, callback) {
-        _get.call(this, key, function(data) {
-            var results = data.groupBy(options, groups, filters);
-            callback( results );
-        }, function(xhr) {
-            callback( new ProxyError(xhr), [] );
+        this.query(key, filters, function(err, data) {
+            if (err) {
+                callback(err);
+                return;
+            }
+            var results = data.groupBy(options, groups, {});
+            callback( null, results );
         });
     }
     
