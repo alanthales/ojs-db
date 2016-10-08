@@ -4,6 +4,8 @@
     Requires: DbProxy.js, ArrayMap.js, Utils.js, SimpleDataSet.js, ChildRecord.js
 */
 var SQLiteProxy = (function() {
+    'use strict';
+
     var _selectFrom = "SELECT * FROM",
         _maps = {};
     

@@ -20,6 +20,8 @@
     Autor: Alan Thales, 09/2015
 */
 var ArrayMap = (function() {
+    'use strict';
+    
     var _recordMatch = function(record, opts) {
         var matched = true,
             field, prop, str;

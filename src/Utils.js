@@ -3,6 +3,8 @@
     Alan Thales, 05/2016
 */
 var OjsUtils = (function() {
+    'use strict';
+
     /**
      * Taken from the crypto-browserify module
      * https://github.com/dominictarr/crypto-browserify

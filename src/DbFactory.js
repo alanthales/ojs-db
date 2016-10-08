@@ -4,6 +4,8 @@
     Requires: Utils.js
 */
 var IdGenerators = (function() {
+    'use strict';
+    
     return {
         TIMESTAMP: function() {
             return (new Date()).getTime();
@@ -18,6 +20,8 @@ var IdGenerators = (function() {
     Requires: LocalStorageProxy.js, SQLiteProxy.js, RestProxy.js, DataSet.js
 */
 var DbFactory = (function() {
+    'use strict';
+
     function CreateFactory(proxyType, opts, synchronizer) {
         var _synchronizer = synchronizer,
             _proxy;

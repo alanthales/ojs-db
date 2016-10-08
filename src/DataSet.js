@@ -4,6 +4,8 @@
     Requires: SimpleDataSet.js, SyncDb.js
 */
 var DataSet = (function() {
+    'use strict';
+
     function CreateDataSet(proxy, table, genIdFn, synchronizer) {
         var _proxy = proxy,
             _table = table,

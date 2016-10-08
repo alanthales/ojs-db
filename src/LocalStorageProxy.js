@@ -4,6 +4,8 @@
     Requires: ArrayMap.js, DbProxy.js
 */
 var LocalStorageProxy = (function() {
+    'use strict';
+
     var _get = function(opts) {
         var key = typeof opts === "object" ? opts.key : opts,
             table = window.localStorage[key],

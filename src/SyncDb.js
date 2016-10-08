@@ -4,6 +4,8 @@
     Requires: ArrayMap.js
 */
 var SyncDb = (function() {
+    'use strict';
+
     var Operations = {
         Insert: '_inserted',
         Update: '_updated',

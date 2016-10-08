@@ -4,6 +4,8 @@
     Requires: ArrayMap.js, DbProxy.js
 */
 var RestProxy = (function() {
+    'use strict';
+    
     var _defSerialize = function(obj) {
         return JSON.stringify(obj);
     };

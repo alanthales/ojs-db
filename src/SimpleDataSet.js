@@ -4,6 +4,7 @@
     Requires: ArrayMap.js
 */
 var SimpleDataSet = (function() {
+    'use strict';
     
     function CreateDataSet() {
         this._inserteds = [];
