@@ -26,10 +26,6 @@ var ArrayMap = (function() {
         var matched = true,
             field, prop, str;
 
-        if (opts.$custom && typeof opts.$custom === "function") {
-            return opts.$custom.call(this, record);
-        }
-        
         for (field in opts) {
             if (!matched) {
                 break;
@@ -161,13 +157,13 @@ var ArrayMap = (function() {
         collection.query = function(filters) {
             var self = this,
                 opts = filters && typeof filters === "object" ? filters : { },
-                results = new Collection();
-
-            results.putRange(
-                self.filter(function(record) {
+                results = new Collection(),
+                queryFn = function(record) {
                     return _recordMatch.call(self, record, opts);
-                })
-            );
+                },
+                fn = filters && typeof filters === "function" ? filters : queryFn;
+
+            results.putRange( self.filter(fn) );
 
             return results;
         }

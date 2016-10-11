@@ -200,9 +200,6 @@ var SQLiteProxy = (function() {
                     case "$in":
                         where += [field, " IN (", filters[field][prop].join(","), ")"].join("") + " AND ";
                         break;
-                    case "$custom":
-                        where += filters[field][prop].call(filters[field][prop], field) + " AND ";
-                        break;
                     default:
                         where += "";
                 }
@@ -268,7 +265,7 @@ var SQLiteProxy = (function() {
         var self = this,
             opts = filters && typeof filters === "object" ? filters : { },
             select = [_selectFrom, key].join(" "),
-            sql = _formatSql(select, opts);
+            sql = filters && typeof filters === "function" ? filters() : _formatSql(select, opts);
         
         self.getDb().transaction(function(tx) {
             _select(key, sql, [], tx, callback);
