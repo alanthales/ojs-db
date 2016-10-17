@@ -11,15 +11,15 @@ var SQLiteProxy = (function() {
     
     function CreateProxy(dbName) {
         var db;
-
+        
+        this.getDb = function() { return db; }
+        
         if (window.cordova && window.sqlitePlugin) {
-            db = window.sqlitePlugin.openDatabase({name: dbName, location: 'default'});
+            document.addEventListener("deviceready", function() {
+                db = window.sqlitePlugin.openDatabase({name: dbName, location: "default"});
+            });
         } else {
             db = window.openDatabase(dbName, "SQLite Database", "1.0", 5*1024*1024);
-        }
-
-        this.getDb = function() {
-            return db;
         }
         
         DbProxy.apply(this, arguments);
@@ -31,7 +31,7 @@ var SQLiteProxy = (function() {
         var self = this;
         
         _maps = OjsUtils.cloneObject(maps);
-
+        
         self.getDb().transaction(function(tx) {
             var cb = callback && typeof callback === "function" ? callback : function() {},
                 total = Object.keys(_maps).length,
