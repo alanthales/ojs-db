@@ -10,17 +10,20 @@ var SQLiteProxy = (function() {
         _maps = {};
     
     function CreateProxy(dbName) {
-        var db;
+        var db = null,
+            eventName = typeof window.cordova !== "undefined" ? "deviceready" : "readystatechange";
+        
+        document.addEventListener(eventName, function() {
+            if (document.readyState == "loading") return;
+
+            if (window.sqlitePlugin) {
+                db = window.sqlitePlugin.openDatabase({name: dbName, location: "default"});
+            } else {
+                db = window.openDatabase(dbName, "SQLite Database", "1.0", 5*1024*1024);
+            }
+        });
         
         this.getDb = function() { return db; }
-        
-        if (window.cordova && window.sqlitePlugin) {
-            document.addEventListener("deviceready", function() {
-                db = window.sqlitePlugin.openDatabase({name: dbName, location: "default"});
-            });
-        } else {
-            db = window.openDatabase(dbName, "SQLite Database", "1.0", 5*1024*1024);
-        }
         
         DbProxy.apply(this, arguments);
     }
