@@ -53,6 +53,10 @@ var RestProxy = (function() {
             }
         }
         
+        if (opts.skip) {
+            url += "skip=" + opts.skip + "&";
+        }
+        
         if (opts.limit) {
             url += "limit=" + opts.limit + "&";
         }

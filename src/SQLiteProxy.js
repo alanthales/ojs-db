@@ -148,13 +148,20 @@ var SQLiteProxy = (function() {
         
         if (typeof options === "object") {
             sql = [_selectFrom, options.key];
+            
             if (options.params) {
                 for (p in options.params) {
                     where += p + " = '" + options.params[p] + "'";
                 }
                 sql.push(where);
             }
+            
             sql.push(sortBy);
+            
+            if (options.skip) {
+                sql.push("OFFSET " + options.skip);
+            }
+            
             if (options.limit) {
                 sql.push("LIMIT " + options.limit);
             }

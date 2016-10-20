@@ -15,6 +15,7 @@ var DataSet = (function() {
         this.limit = 1000;
         this.params = null;
         this.genId = genIdFn;
+        this.eof = true;
         this.reOpenOnRefresh = false;
         
         this.getProxy = function() {
@@ -34,20 +35,45 @@ var DataSet = (function() {
 
     CreateDataSet.prototype = Object.create(SimpleDataSet.prototype);
     
-    CreateDataSet.prototype.open = function(callback) {
+    var _getRecords = function(opts, callback) {
         var self = this,
-            cb = callback && typeof callback === "function" ? callback : function() {},
-            opts = { key: self.getTable(), limit: self.limit, sort: self.sort, params: self.params };
-
-        if (self.active) {
-            cb(null, self.data);
-            return self;
-        }
-
+            cb = callback && typeof callback === "function" ? callback : function() {};
+        
         self.getProxy().getRecords(opts, function(err, records) {
             self.data = records;
             self.active = err ? false : true;
+            self.eof = records.length < self.limit;
             cb(err, records);
+        });
+    };
+    
+    CreateDataSet.prototype.open = function(callback) {
+        var opts = { key: this.getTable(), limit: this.limit, sort: this.sort, params: this.params };
+        
+        if (this.active) {
+            if (callback && typeof callback === "function") {
+                callback(null, this.data);
+            }
+            return this;
+        }
+
+        _getRecords.call(this, opts, callback);
+        
+        return this;
+    }
+    
+    CreateDataSet.prototype.next = function(callback) {
+        var self = this,
+            opts = { key: self.getTable(), limit: self.limit, sort: self.sort, params: self.params, skip: self.limit },
+            cb = callback && typeof callback === "function" ? callback : function() {};
+
+        if (self.eof) {
+            cb(null, false);
+            return self;
+        }
+
+        _getRecords.call(self, opts, function(err, results) {
+            cb(err, !self.eof);
         });
         
         return self;

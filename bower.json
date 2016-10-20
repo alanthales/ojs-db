@@ -1,0 +1,20 @@
+{
+  "name": "ojs-db",
+  "homepage": "https://github.com/alanthales/ojs-db",
+  "authors": [
+    "Alan Thales <alanthales@gmail.com>"
+  ],
+  "description": "A JavaScript framework to persist data in anywhere",
+  "main": "ArrayMap.js",
+  "license": "Apache License",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "devDependencies": {
+    "uglify-js": "^1.3.5"
+  }
+}
