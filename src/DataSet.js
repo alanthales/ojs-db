@@ -40,7 +40,7 @@ var DataSet = (function() {
             cb = callback && typeof callback === "function" ? callback : function() {};
         
         self.getProxy().getRecords(opts, function(err, records) {
-            self.data = records;
+            self.data.putRange(records, true);
             self.active = err ? false : true;
             self.eof = records.length < self.limit;
             cb(err, records);
@@ -134,7 +134,7 @@ var DataSet = (function() {
         function done(err) {
             if (err) {
                 self.cancel();
-                return cb();
+                return cb(err);
             }
             
             if (sync && !ignoreSync) {
@@ -158,7 +158,8 @@ var DataSet = (function() {
 
     CreateDataSet.prototype.sync = function(callback) {
         var self = this,
-            sync = this.getSynchronizer();
+            sync = this.getSynchronizer(),
+            cb = callback && typeof callback === "function" ? callback : function() {};
         
         if (!sync) {
             return;
@@ -166,13 +167,13 @@ var DataSet = (function() {
         
         sync.exec(self.getTable(), function(err, allData, toDelete) {
             if (err) {
-                return callback(err);
+                return cb(err);
             }
             
             allData = allData || []; toDelete = toDelete || [];
             
             if (!allData.length && !toDelete.length) {
-                return callback();
+                return cb();
             }
             
             var serverData = new ArrayMap(),
@@ -207,7 +208,7 @@ var DataSet = (function() {
                 }
             });
             
-            self.post(callback, true);
+            self.post(cb, true);
         });
     }
     
