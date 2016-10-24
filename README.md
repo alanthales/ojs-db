@@ -1,24 +1,17 @@
 ## ojs-db
-A JavaScript framework to persist data in browser, mobile phone, cloud or anywhere. You define where to write the data through proxies. **100% JavaScript, no binary dependency**. API is simple and easy to use.
+A JavaScript framework to persist data in browser, mobile phone, cloud or anywhere. You define where to write the data through proxies. **100% JavaScript, no binary dependency**. Simple API and easy to use.
 
 ## Installation
-The installation is simple, you can download and linking js files directily in your page using `script` tag or do that:
-
-* Clone the project.
-* Install uglifyjs to minify and compact the code.
-* Go to project directory and compile.
-* Link the minified file generated in your page.
-
-```
-git clone https://github.com/alanthales/ojs-db.git
-npm install -g uglify-js
-cd ojs-db
-make
-```
+The installation is simple, you can download and linking js files directily in your page:
 
 ```html
-<!-- linking js file generated on page -->
-<script src="ojs-db.min.js"></script>
+<script src="build/ojs-db.min.js"></script>
+```
+
+Or use bower:
+
+```
+bower install https://github.com/alanthales/ojs-db.git --save
 ```
 
 ## API
