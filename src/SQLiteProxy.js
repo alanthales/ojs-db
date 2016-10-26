@@ -134,7 +134,7 @@ var SQLiteProxy = (function() {
         var result = [],
             field;
         for (field in sorters) {
-            result.push(field + sorters[field]);
+            result.push(field + " " + sorters[field]);
         }
         return "ORDER BY " + result.join(",");
     };
