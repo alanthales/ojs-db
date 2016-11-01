@@ -96,12 +96,8 @@ var SQLiteProxy = (function() {
 
     var _formatValue = function(table, key, record) {
         var fdmap = _maps[table][key],
-            value = record[key];
+            value = record[key] || null;
 
-        if (!fdmap || fdmap.hasMany) {
-            return null;
-        }
-        
         if (fdmap.hasOne && record instanceof ChildRecord) {
             value = record.getRecMaster().id;
         }
@@ -351,11 +347,18 @@ var SQLiteProxy = (function() {
         var params = [],
             fields = "",
             values = "",
-            prop, sql, value;
+            prop, sql, value, fdmap;
         
         for (prop in _maps[key]) {
+            fdmap = _maps[key][prop],
+
+            if (!fdmap || fdmap.hasMany) {
+                continue;
+            }
+            
             value = _formatValue(key, prop, record);
-            if (value) {
+            
+            if (value == undefined) {
                 params.push(value);
                 fields += prop + ",";
                 values += "?,";
@@ -393,19 +396,18 @@ var SQLiteProxy = (function() {
         var params = [],
             where = "id = '" + record.id + "'",
             sets = "",
-            sql, prop, value;
+            sql, prop, value, fdmap;
 
         for (prop in _maps[key]) {
-            if (prop == "id") {
+            fdmap = _maps[key][prop];
+
+            if (prop == "id" || !fdmap || fdmap.hasMany) {
                 continue;
             }
             
             value = _formatValue(key, prop, record);
-
-            if (value) {
-                params.push(value);
-                sets += prop + " = ?,";
-            }
+            sets += prop + " = ?,";
+            params.push(value);
         }
 
         sets = sets.substr(0, sets.length - 1);
