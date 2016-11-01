@@ -350,7 +350,7 @@ var SQLiteProxy = (function() {
             prop, sql, value, fdmap;
         
         for (prop in _maps[key]) {
-            fdmap = _maps[key][prop],
+            fdmap = _maps[key][prop];
 
             if (!fdmap || fdmap.hasMany) {
                 continue;
