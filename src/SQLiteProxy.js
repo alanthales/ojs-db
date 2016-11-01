@@ -96,7 +96,7 @@ var SQLiteProxy = (function() {
 
     var _formatValue = function(table, key, record) {
         var fdmap = _maps[table][key],
-            value = record[key] || null;
+            value = typeof record[key] === undefined ? null : record[key];
 
         if (fdmap.hasOne && record instanceof ChildRecord) {
             value = record.getRecMaster().id;
@@ -358,7 +358,7 @@ var SQLiteProxy = (function() {
             
             value = _formatValue(key, prop, record);
             
-            if (value == undefined) {
+            if (value != undefined) {
                 params.push(value);
                 fields += prop + ",";
                 values += "?,";
