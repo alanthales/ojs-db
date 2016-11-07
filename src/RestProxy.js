@@ -10,6 +10,11 @@ var RestProxy = (function() {
         return JSON.stringify(obj);
     };
     
+    var _getHeader = function(obj) {
+        var header = typeof obj === "function" ? obj() : obj;
+        return header;
+    };
+    
     var _httpRequest = function(url, method, config, success, error) {
         var http = new XMLHttpRequest(),
             callback, prop, params;
@@ -26,7 +31,7 @@ var RestProxy = (function() {
         if (typeof config === "object") {
             params = config.data;
             for (prop in config.headers) {
-                http.setRequestHeader(prop, config.headers[prop]);
+                http.setRequestHeader(prop, _getHeader( config.headers[prop] ));
             }
         }
         
