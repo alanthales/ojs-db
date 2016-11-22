@@ -121,12 +121,14 @@ var SimpleDataSet = (function() {
         var self = this;
         
         if (!records instanceof Array) {
-            return;
+            return self;
         }
         
         records.forEach(function(record) {
             self.insert(record);
         });
+
+        return self;
     }
     
     CreateDataSet.prototype.clear = function() {
@@ -165,7 +167,6 @@ var SimpleDataSet = (function() {
     
     CreateDataSet.prototype.forEach = function(fn) {
         this.data.forEach(fn);
-        return this;
     }
     
     return CreateDataSet;
