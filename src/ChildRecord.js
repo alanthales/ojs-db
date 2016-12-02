@@ -18,8 +18,9 @@ var ChildRecord = (function() {
         }
         
         this.setRecMaster = function(recMaster) {
-            if (recMaster)
+            if (recMaster) {
                 _recMaster = recMaster;
+            }
         }
     }
     

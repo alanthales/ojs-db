@@ -27,7 +27,7 @@ var OjsUtils = (function() {
 	 * https://github.com/beatgammit/base64-js/
 	 */
 	var byteArrayToBase64 = function(uint8) {
-		var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/',
+		var lookup = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/",
 			extraBytes = uint8.length % 3,  // if we have 1 byte left, pad 2 bytes
 			output = "",
 			temp, length, i;
@@ -48,14 +48,14 @@ var OjsUtils = (function() {
 				temp = uint8[uint8.length - 1];
 				output += lookup[temp >> 2];
 				output += lookup[(temp << 4) & 0x3F];
-				output += '==';
+				output += "==";
 				break;
 			case 2:
 				temp = (uint8[uint8.length - 2] << 8) + (uint8[uint8.length - 1]);
 				output += lookup[temp >> 10];
 				output += lookup[(temp >> 4) & 0x3F];
 				output += lookup[(temp << 2) & 0x3F];
-				output += '=';
+				output += "=";
 				break;
 		}
 
@@ -64,7 +64,7 @@ var OjsUtils = (function() {
 	
 	return {
 		uid: function(len) {
-			return byteArrayToBase64(randomBytes(Math.ceil(Math.max(8, len * 2)))).replace(/[+\/]/g, '').slice(0, len);
+			return byteArrayToBase64(randomBytes(Math.ceil(Math.max(8, len * 2)))).replace(/[+\/]/g, "").slice(0, len);
 		},
 		
 		cloneObject: function(obj) {
@@ -82,7 +82,7 @@ var OjsUtils = (function() {
 				out = new ChildRecord();
 			}
 			
-			if (Object.prototype.toString.call(obj) === '[object Array]') {
+			if (Object.prototype.toString.call(obj) === "[object Array]") {
 				out = out || []; i = 0; len = obj.length;
 				for ( ; i < len; i++ ) {
 					out[i] = this.cloneObject(obj[i]);
@@ -90,7 +90,7 @@ var OjsUtils = (function() {
 				return out;
 			}
 			
-			if (typeof obj === 'object') {
+			if (typeof obj === "object") {
 				out = out || {};
 				for ( i in obj ) {
 					if (obj.hasOwnProperty(i)) {
