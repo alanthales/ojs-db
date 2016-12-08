@@ -1,7 +1,7 @@
 /*
 	DataSet Class
 	Autor: Alan Thales, 09/2015
-	Requires: SimpleDataSet.js, SyncDb.js
+	Requires: SimpleDataSet.js, SyncDb.js, EventEmitter.js
 */
 var DataSet = (function() {
 	'use strict';
@@ -44,6 +44,7 @@ var DataSet = (function() {
 			self.active = err ? false : true;
 			self.eof = records.length < self.limit;
 			cb(err, records);
+			EventEmitter.emit(self.getTable(), records);
 		});
 	};
 	
@@ -106,6 +107,7 @@ var DataSet = (function() {
 			throw "Invalid operation on closed dataset";
 		}
 		SimpleDataSet.prototype.insert.apply(this, arguments);
+		EventEmitter.emit(self.getTable(), records, 'insert', record);
 	}
 
 	CreateDataSet.prototype.update = function(record) {
@@ -113,6 +115,7 @@ var DataSet = (function() {
 			throw "Invalid operation on closed dataset";
 		}
 		SimpleDataSet.prototype.update.apply(this, arguments);
+		EventEmitter.emit(self.getTable(), records, 'update', record);
 	}
 
 	CreateDataSet.prototype.delete = function(record) {
@@ -120,6 +123,7 @@ var DataSet = (function() {
 			throw "Invalid operation on closed dataset";
 		}
 		SimpleDataSet.prototype.delete.apply(this, arguments);
+		EventEmitter.emit(self.getTable(), records, 'delete', record);
 	}
 
 	CreateDataSet.prototype.post = function(callback, ignoreSync) {
@@ -224,5 +228,10 @@ var DataSet = (function() {
 		return this;
 	}
 	
+	CreateDataSet.prototype.subscribe = function(fn) {
+		EventEmitter.on(this.getTable(), fn);
+		return this;
+	}
+
 	return CreateDataSet;
 })();
