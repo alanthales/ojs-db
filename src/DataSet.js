@@ -17,6 +17,7 @@ var DataSet = (function() {
 		this.genId = genIdFn;
 		this.eof = true;
 		this.reOpenOnRefresh = false;
+		this.eventName = _table + '_event';
 		
 		this.getProxy = function() {
 			return _proxy;
@@ -44,7 +45,7 @@ var DataSet = (function() {
 			self.active = err ? false : true;
 			self.eof = records.length < self.limit;
 			cb(err, records);
-			EventEmitter.emit(self.getTable(), records);
+			EventEmitter.emit(self.eventName, records);
 		});
 	};
 	
@@ -82,6 +83,7 @@ var DataSet = (function() {
 	
 	CreateDataSet.prototype.close = function() {
 		SimpleDataSet.prototype.clear.apply(this, arguments);
+		EventEmitter.emit(self.eventName, []);
 		this.active = false;
 		return this;
 	}
@@ -106,24 +108,43 @@ var DataSet = (function() {
 		if (!this.active) {
 			throw "Invalid operation on closed dataset";
 		}
+
 		SimpleDataSet.prototype.insert.apply(this, arguments);
-		EventEmitter.emit(self.getTable(), records, 'insert', record);
+
+		if (record && this._copy && record.id === this._copy.id) {
+			EventEmitter.emit(self.eventName, {op: 'insert', record: record});
+		}
 	}
 
 	CreateDataSet.prototype.update = function(record) {
 		if (!this.active) {
 			throw "Invalid operation on closed dataset";
 		}
+
 		SimpleDataSet.prototype.update.apply(this, arguments);
-		EventEmitter.emit(self.getTable(), records, 'update', record);
+
+		if (record && this._copy && record.id === this._copy.id) {
+			EventEmitter.emit(self.eventName, {op: 'update', record: record});
+		}
 	}
 
 	CreateDataSet.prototype.delete = function(record) {
 		if (!this.active) {
 			throw "Invalid operation on closed dataset";
 		}
+
 		SimpleDataSet.prototype.delete.apply(this, arguments);
-		EventEmitter.emit(self.getTable(), records, 'delete', record);
+
+		if (record && this._copy && record.id === this._copy.id) {
+			EventEmitter.emit(self.eventName, {op: 'delete', record: record});
+		}
+	}
+
+	CreateDataSet.prototype.cancel = function() {
+		SimpleDataSet.prototype.cancel.apply(this, arguments);
+		if (!this._lastOp && this._copy) {
+			EventEmitter.emit(self.eventName, {op: 'cancel', record: this._copy});
+		}
 	}
 
 	CreateDataSet.prototype.post = function(callback, ignoreSync) {
@@ -229,7 +250,7 @@ var DataSet = (function() {
 	}
 	
 	CreateDataSet.prototype.subscribe = function(fn) {
-		EventEmitter.on(this.getTable(), fn);
+		EventEmitter.on(this.eventName, fn);
 		return this;
 	}
 

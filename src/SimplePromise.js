@@ -2,7 +2,7 @@
  * @fileoverview Simple implementation of CommonJS Promise/A.
  * @author yo_waka
  */
-var Promise = (function() {
+var SimplePromise = (function() {
 	'use strict';
 
 	// Use freeze if exists.

@@ -83,11 +83,10 @@ var SimpleDataSet = (function() {
 	}
 
 	CreateDataSet.prototype.save = function(record) {
-		if (!record) return;
-		if (!record.id) {
+		if (!record) return this;
+		if (!record.id || !this.getById(record.id)) {
 			return this.insert(record);
 		}
-		// var r = this.getById(record.id);
 		return this.update(record);
 	}
 	
@@ -128,7 +127,7 @@ var SimpleDataSet = (function() {
 	}
 	
 	CreateDataSet.prototype.cancel = function() {
-		if (!this._copy) return;
+		if (!this._lastOp) return;
 		
 		var index = this.data.indexOfKey('id', this._copy.id);
 		
@@ -147,7 +146,6 @@ var SimpleDataSet = (function() {
 				break;
 		}
 		
-		this._copy = null;
 		this._lastOp = null;
 	}
 	
