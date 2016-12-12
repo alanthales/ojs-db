@@ -1,5 +1,5 @@
 ## ojs-db
-A JavaScript framework to persist data in browser, mobile phone, cloud or anywhere. You define where to write the data through proxies. **100% JavaScript, no binary dependency**. Simple API and easy to use.
+A reactive framework to persist data in browser, mobile phone, cloud or anywhere. You can define where to write the data through proxies, develop offline first app's and more. **100% JavaScript, no binary dependency**. Simple API and easy to use.
 
 ## Installation
 The installation is simple, you can download and linking js files directily in your page:
