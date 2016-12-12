@@ -17,7 +17,7 @@ var IdGenerators = (function() {
 /*
     Database Factory Utility Class
     Alan Thales, 09/2015
-    Requires: LocalStorageProxy.js, SQLiteProxy.js, RestProxy.js, DataSet.js
+    Requires: LocalStorageProxy.js, SQLiteProxy.js, RestProxy.js, DataSet.js, SimplePromise.js
 */
 var DbFactory = (function() {
     'use strict';
@@ -54,16 +54,46 @@ var DbFactory = (function() {
         }
     }
 
-    CreateFactory.prototype.createDatabase = function(maps, callback) {
-        this.getProxy().createDatabase(maps, callback);
+    CreateFactory.prototype.createDatabase = function(maps) {
+        var defer = SimplePromise.defer();
+
+        this.getProxy().createDatabase(maps, function(err) {
+            if (err) {
+                defer.reject(err);
+                return;
+            }
+            defer.resolve(true);
+        });
+
+        return defer;
     }
 
-    CreateFactory.prototype.query = function(key, filters, callback) {
-        this.getProxy().query(key, filters, callback);
+    CreateFactory.prototype.query = function(key, filters) {
+        var defer = SimplePromise.defer();
+
+        this.getProxy().query(key, filters, function(err, records) {
+            if (err) {
+                defer.reject(err);
+                return;
+            }
+            defer.resolve(records);
+        });
+
+        return defer;
     }
     
-    CreateFactory.prototype.groupBy = function(key, options, groups, filters, callback) {
-        this.getProxy().groupBy(key, options, groups, filters, callback);
+    CreateFactory.prototype.groupBy = function(key, options, groups, filters) {
+        var defer = SimplePromise.defer();
+        
+        this.getProxy().groupBy(key, options, groups, filters, function(err, records) {
+            if (err) {
+                defer.reject(err);
+                return;
+            }
+            defer.resolve(records);
+        });
+
+        return defer;
     }
     
     CreateFactory.prototype.createDataSet = function(table, genIdFn) {

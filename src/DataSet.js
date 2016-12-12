@@ -1,41 +1,40 @@
 /*
 	DataSet Class
 	Autor: Alan Thales, 09/2015
-	Requires: SimpleDataSet.js, SyncDb.js, EventEmitter.js
+	Requires: SimpleDataSet.js, SyncDb.js, EventEmitter.js, SimplePromise.js
 */
 var DataSet = (function() {
 	'use strict';
 
 	function CreateDataSet(proxy, table, genIdFn, synchronizer) {
-		var _proxy = proxy,
-			_table = table,
-			_synchronizer = synchronizer;
-		
+		SimpleDataSet.apply(this);
+
+		this._opts = {};
 		this.active = false;
-		this.limit = 1000;
-		this.params = null;
-		this.genId = genIdFn;
 		this.eof = true;
 		this.reOpenOnRefresh = false;
 		this.eventName = _table + '_event';
-		
-		this.getProxy = function() {
-			return _proxy;
-		}
+		this.genId = genIdFn;
 
-		this.getTable = function() {
-			return _table;
-		}
-		
-		this.getSynchronizer = function() {
-			return _synchronizer;
-		}
-		
-		SimpleDataSet.apply(this);
+		this.getProxy = function() { return proxy; }
+		this.getTable = function() { return table; }
+		this.getSynchronizer = function() { return synchronizer; }
 	}
 
 	CreateDataSet.prototype = Object.create(SimpleDataSet.prototype);
 	
+	CreateDataSet.prototype.sort = function(order) {
+		this._opts.sort = order;
+	}
+
+	CreateDataSet.prototype.limit = function(value) {
+		this._opts.limit = value;
+	}
+
+	CreateDataSet.prototype.where = function(params) {
+		this._opts.params = params;
+	}
+
 	var _getRecords = function(opts, callback) {
 		var self = this,
 			cb = callback && typeof callback === "function" ? callback : function() {};
@@ -43,121 +42,114 @@ var DataSet = (function() {
 		self.getProxy().getRecords(opts, function(err, records) {
 			self.data.putRange(records, true);
 			self.active = err ? false : true;
-			self.eof = records.length < self.limit;
+			self.eof = records.length < self._opts.limit;
 			cb(err, records);
-			EventEmitter.emit(self.eventName, records);
+			if (!err) {
+				EventEmitter.emit(self.eventName, records);
+			}
 		});
 	};
 	
-	CreateDataSet.prototype.open = function(callback) {
-		var opts = { key: this.getTable(), limit: this.limit, sort: this.sort, params: this.params };
-		
+	CreateDataSet.prototype.open = function() {
+		var opts = { key: this.getTable() },
+			defer = SimplePromise.defer();
+
 		if (this.active) {
-			if (callback && typeof callback === "function") {
-				callback(null, this.data);
+			defer.resolve(this.data);
+			return defer;
+		}
+
+		OjsUtils.cloneProperties(this._opts, opts);
+
+		_getRecords.call(this, opts, function(err, records) {
+			if (err) {
+				defer.reject(err);
+				return;
 			}
-			return this;
-		}
-
-		_getRecords.call(this, opts, callback);
-		
-		return this;
-	}
-	
-	CreateDataSet.prototype.next = function(callback) {
-		var self = this,
-			opts = { key: self.getTable(), limit: self.limit, sort: self.sort, params: self.params, skip: self.limit },
-			cb = callback && typeof callback === "function" ? callback : function() {};
-
-		if (self.eof) {
-			cb(null, false);
-			return self;
-		}
-
-		_getRecords.call(self, opts, function(err, results) {
-			cb(err, !self.eof);
+			defer.resolve(records);
 		});
 		
-		return self;
+		return defer;
+	}
+	
+	CreateDataSet.prototype.next = function() {
+		var self = this,
+			opts = { key: self.getTable(), skip: self._opts.limit },
+			defer = SimplePromise.defer()
+
+		if (self.eof) {
+			defer.resolve(false);
+			return defer;
+		}
+
+		OjsUtils.cloneProperties(self._opts, opts);
+
+		_getRecords.call(self, opts, function(err, results) {
+			if (err) {
+				defer.reject(err);
+				return;
+			}
+			defer.resolve(!self.eof);
+		});
+		
+		return defer;
 	}
 	
 	CreateDataSet.prototype.close = function() {
 		SimpleDataSet.prototype.clear.apply(this, arguments);
-		EventEmitter.emit(self.eventName, []);
 		this.active = false;
 		return this;
 	}
 
-	CreateDataSet.prototype.refresh = function(callback) {
-		var cb = callback && typeof callback === "function" ? callback : function() {};
+	CreateDataSet.prototype.refresh = function() {
+		var defer = SimplePromise.defer();
 		
 		if (this.reOpenOnRefresh) {
 			this.active = false;
-			return this.open(cb);
+			return this.open();
 		}
 		
-		if (this.sort) {
-			this.data.orderBy(this.sort);
+		if (this._opts.sort) {
+			this.data.orderBy(this._opts.sort);
 		}
 
-		cb();
-		return this;
+		defer.resolve(this.data);
+		return defer;
 	}
 	
 	CreateDataSet.prototype.insert = function(record) {
 		if (!this.active) {
 			throw "Invalid operation on closed dataset";
 		}
-
 		SimpleDataSet.prototype.insert.apply(this, arguments);
-
-		if (record && this._copy && record.id === this._copy.id) {
-			EventEmitter.emit(self.eventName, {op: 'insert', record: record});
-		}
 	}
 
 	CreateDataSet.prototype.update = function(record) {
 		if (!this.active) {
 			throw "Invalid operation on closed dataset";
 		}
-
 		SimpleDataSet.prototype.update.apply(this, arguments);
-
-		if (record && this._copy && record.id === this._copy.id) {
-			EventEmitter.emit(self.eventName, {op: 'update', record: record});
-		}
 	}
 
 	CreateDataSet.prototype.delete = function(record) {
 		if (!this.active) {
 			throw "Invalid operation on closed dataset";
 		}
-
 		SimpleDataSet.prototype.delete.apply(this, arguments);
-
-		if (record && this._copy && record.id === this._copy.id) {
-			EventEmitter.emit(self.eventName, {op: 'delete', record: record});
-		}
 	}
 
-	CreateDataSet.prototype.cancel = function() {
-		SimpleDataSet.prototype.cancel.apply(this, arguments);
-		if (!this._lastOp && this._copy) {
-			EventEmitter.emit(self.eventName, {op: 'cancel', record: this._copy});
-		}
-	}
-
-	CreateDataSet.prototype.post = function(callback, ignoreSync) {
+	CreateDataSet.prototype.post = function(ignoreSync) {
 		if (!this.active) {
 			throw "Invalid operation on closed dataset";
 		}
 
 		var self = this,
-			cb = typeof callback === "function" ? callback : function() {},
-			sync = this.getSynchronizer();
+			sync = this.getSynchronizer(),
+			defer = SimplePromise.defer();
 
 		if (!self._inserteds.length && !self._updateds.length && !self._deleteds.length) {
-			return cb();
+			defer.resolve(true);
+			return defer;
 		}
 		
 		self.getProxy().commit(
@@ -167,7 +159,8 @@ var DataSet = (function() {
 		function done(err) {
 			if (err) {
 				self.cancel();
-				return cb(err);
+				defer.reject(err);
+				return;
 			}
 			
 			if (sync && !ignoreSync) {
@@ -177,28 +170,33 @@ var DataSet = (function() {
 			self.refresh();
 			self._cleanCache();
 			
-			cb();
+			defer.resolve(true);
 		}
+
+		return defer;
 	}
 
-	CreateDataSet.prototype.sync = function(callback) {
+	CreateDataSet.prototype.sync = function() {
 		var self = this,
 			sync = this.getSynchronizer(),
-			cb = callback && typeof callback === "function" ? callback : function() {};
+			defer = SimplePromise.defer();
 		
 		if (!sync) {
-			return;
+			defer.resolve(true);
+			return defer;
 		}
 		
 		sync.exec(self.getTable(), function(err, allData, toDelete) {
 			if (err) {
-				return cb(err);
+				defer.reject(err);
+				return;
 			}
 			
 			allData = allData || []; toDelete = toDelete || [];
 			
 			if (!allData.length && !toDelete.length) {
-				return cb();
+				defer.resolve(true);
+				return;
 			}
 			
 			var serverData = new ArrayMap(),
@@ -233,26 +231,34 @@ var DataSet = (function() {
 				}
 			});
 			
-			self.post(cb, true);
+			self.post(true).then(function() {
+				defer.resolve(true);
+			}, function(err) {
+				defer.reject(err);
+			});
 		});
+
+		return defer;
 	}
 	
-	CreateDataSet.prototype.fetch = function(property, callback) {
-		var cb = callback && typeof callback === 'function' ? callback : function() {};
-		
+	CreateDataSet.prototype.fetch = function(property) {
+		var defer = SimplePromise.defer();
+
 		if (!this.active) {
-			cb();
-			return this;
+			defer.resolve(true);
+			return defer;
 		}
 		
-		this.getProxy().fetch(this.getTable(), this, property, cb);
-		return this;
+		this.getProxy().fetch(this.getTable(), this, property, function(err) {
+			if (err) {
+				defer.reject(err);
+				return;
+			}
+			defer.resolve(true);
+		});
+
+		return defer;
 	}
 	
-	CreateDataSet.prototype.subscribe = function(fn) {
-		EventEmitter.on(this.eventName, fn);
-		return this;
-	}
-
 	return CreateDataSet;
 })();

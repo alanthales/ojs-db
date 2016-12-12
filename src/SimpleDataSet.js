@@ -1,7 +1,7 @@
 /*
 	SimpleDataSet Class
 	Autor: Alan Thales, 07/2016
-	Requires: ArrayMap.js
+	Requires: ArrayMap.js, EventEmitter.js
 */
 var SimpleDataSet = (function() {
 	'use strict';
@@ -10,9 +10,8 @@ var SimpleDataSet = (function() {
 		this._inserteds = [];
 		this._updateds = [];
 		this._deleteds = [];
-		this._copy = null;
-		this._lastOp = null;
-		this.sort = null;
+		this._history = [];
+		this.eventName = 'event';
 		this.data = new ArrayMap();
 	}
 
@@ -20,8 +19,7 @@ var SimpleDataSet = (function() {
 		this._inserteds.length = 0;
 		this._updateds.length = 0;
 		this._deleteds.length = 0;
-		this._copy = null;
-		this._lastOp = null;
+		this._history.length = 0;
 	}
 	
 	CreateDataSet.prototype.getById = function(id) {
@@ -30,12 +28,18 @@ var SimpleDataSet = (function() {
 	}
 
 	var _afterChange = function(operation, record) {
-		this._copy = OjsUtils.cloneObject( record );
-		this._lastOp = operation;
+		var change = {
+			op: operation,
+			record: OjsUtils.cloneObject( record )
+		};
+
+		this._history.push(change);
 		
 		if (record instanceof ChildRecord) {
 			record.notifyMaster();
 		}
+
+		EventEmitter.emit(this.eventName, {op: operation, record: record});
 	};
 
 	CreateDataSet.prototype.insert = function(record) {
@@ -123,30 +127,39 @@ var SimpleDataSet = (function() {
 	CreateDataSet.prototype.clear = function() {
 		this.data.length = 0;
 		this._cleanCache();
+		EventEmitter.emit(this.eventName, null);
 		return this;
 	}
 	
 	CreateDataSet.prototype.cancel = function() {
-		if (!this._lastOp) return;
+		if (!this._history.length) return;
+
+		var self = this,
+			i = self._history.length - 1,
+			item, index;
+
+		for (; i >= 0; i--) {
+			item = self._history[i];
+			index = self.data.indexOfKey('id', item.record.id);
+
+			switch (item.op) {
+				case 'insert':
+					self.data.splice(index, 1);
+					self._inserteds.pop();
+					break;
+				case 'update':
+					self.data.splice(index, 1, item.record);
+					self._updateds.pop();
+					break;
+				case 'delete':
+					self.data.push(item.record);
+					self._deleteds.pop();
+					break;
+			}
+		};
 		
-		var index = this.data.indexOfKey('id', this._copy.id);
-		
-		switch (this._lastOp) {
-			case 'insert':
-				this.data.splice(index, 1);
-				this._inserteds.pop();
-				break;
-			case 'update':
-				this.data.splice(index, 1, this._copy);
-				this._updateds.pop();
-				break;
-			case 'delete':
-				this.data.push(this._copy);
-				this._deleteds.pop();
-				break;
-		}
-		
-		this._lastOp = null;
+		EventEmitter.emit(this.eventName, {op: 'cancel', records: this._history});
+		this._history.length = 0;
 	}
 	
 	CreateDataSet.prototype.filter = function(options) {
@@ -155,6 +168,11 @@ var SimpleDataSet = (function() {
 	
 	CreateDataSet.prototype.forEach = function(fn) {
 		this.data.forEach(fn);
+	}
+	
+	CreateDataSet.prototype.subscribe = function(fn) {
+		EventEmitter.on(this.eventName, fn);
+		return this;
 	}
 	
 	return CreateDataSet;

@@ -1,5 +1,5 @@
 ## ojs-db
-A JavaScript framework to persist data in browser, mobile phone, cloud or anywhere. You define where to write the data through proxies. **100% JavaScript, no binary dependency**. Simple API and easy to use.
+A reactive framework to persist data in browser, mobile phone, cloud or anywhere. You define where to write the data through proxies, develop offline first apps and more. **100% JavaScript, no binary dependency**. Simple API and easy to use.
 
 ## Installation
 The installation is simple, you can download and linking js files directily in your page:
@@ -101,20 +101,20 @@ var products = db.createDataSet("products")
 ```
 
 ### Open a DataSet to work with
-The DataSet's contains the properties below:
+The DataSet's contains the methods below:
 
-* `limit` (default `1000`): control the quantity of records returned from proxy.
-* `sort` (default `null`): gets the records sorting them by properties in a sort object.
-* `data` (default `[]`): contains all records returned after call `open`. Note: `data` is type of [ArrayMap](src/ArrayMap.js) and you can use any of your methods.
+* `limit`: method to set the quantity of records returned from proxy.
+* `sort`: method to set the records ordering based in properties of object passed.
+* `data`: property that contains all records returned after call `open`. Note: `data` is type of [ArrayMap](src/ArrayMap.js) and you can use any of your methods.
 
 See examples below:
 
 ```javascript
-products.limit = 50;
-products.open(); // just open and get the firsts 50 records.
+products.limit(50).open(); // open and get the firsts 50 records.
 
-clients.sort = { name: 'asc', age: 'desc' };
-clients.open(); // open and gets the records sorted by name and age of high to low
+clients
+  .sort({ name: 'asc', age: 'desc' })
+  .open(); // open and gets the records sorted by name and age of high to low
 ```
 
 ### Saving records
@@ -171,13 +171,13 @@ Basic querying means are searching for records whose fields match the ones you s
 // { id: '5', name: 'Jonh', age: 25 }
 
 // Finding all persons with age equal 17
-db.query('persons', { age: 17 }, function (results) {
+db.query('persons', { age: 17 }).then(function (results) {
   // 'results' is an array containing records 'Joe' and 'Matt'
   // If no record is found, 'results' is equal to []
 });
 
 // Finding all persons with name equal 'John' and age equal 25
-db.query('persons', { name: 'John', age: 25 }, function (results) {
+db.query('persons', { name: 'John', age: 25 }).then(function (results) {
   // 'results' is an array containing record 5 only
 });
 ```
@@ -196,17 +196,17 @@ The syntax is `{ field: { $op: value } }` where `$op` is any comparison operator
 
 ```javascript
 // $lt, $lte, $gt and $gte work on numbers, dates and strings. When used with strings, lexicographical order is used
-db.query('persons', { age: { $gt: 17 } }, function (results) {
+db.query('persons', { age: { $gt: 17 } }).then(function (results) {
   // 'results' contains all records except id's 1 and 4
 });
 
 // Using $start. $end and $contain is used in same way
-db.query('persons', { name: { $start: 'Jo' }}, function (results) {
+db.query('persons', { name: { $start: 'Jo' }}).then(function (results) {
   // 'results' contains Joe, John (3) and John (5)
 });
 
 // Using $in
-db.query('persons', { age: { $in: [30,31] }}, function (results) {
+db.query('persons', { age: { $in: [30,31] }}).then(function (results) {
   // 'results' contains Aron and John (3)
 });
 
@@ -216,7 +216,7 @@ function compareTo(record) {
     return regx.test(record.name);
 };
 
-db.query('persons', { $custom: compareTo }, function (results) {
+db.query('persons', compareTo).then(function (results) {
   // 'results' contains all records, because the regular expression find any name NOT between 0 at 9.
 });
 ```
@@ -232,25 +232,25 @@ The syntax is `{ { $op: field, alias: aliasName }, groups, filters }` where `$op
 
 ```javascript
 // $max and $min work on numbers, dates and strings. When used with strings, lexicographical order is used
-db.groupBy('persons', { $max: 'age' }, [], {}, function (results) {
+db.groupBy('persons', { $max: 'age' }, [], {}).then(function (results) {
   // 'results' contains an array with the following structure:
   // { age: 31 }
 });
 
 // Using $sum. $avg and $count is used in same way
-db.groupBy('persons', { $sum: 'age' }, [], {}, function (results) {
+db.groupBy('persons', { $sum: 'age' }, [], {}).then(function (results) {
   // 'results' contains an array with the following structure:
   // { age: 120 }
 });
 
 // Getting results with alias
-db.groupBy('persons', [{ $max: 'age', alias: 'max' }, { $min: 'age', alias: 'min' }], [], {}, function (results) {
+db.groupBy('persons', [{ $max: 'age', alias: 'max' }, { $min: 'age', alias: 'min' }], [], {}).then(function (results) {
   // 'results' contains an array with the following structure:
   // { max: 31, min: 17 }
 });
 
 // Group by one or many columns
-db.groupBy('persons', { $sum: 'age', alias: 'sum' }, ['name'], {}, function (results) {
+db.groupBy('persons', { $sum: 'age', alias: 'sum' }, ['name'], {}).then(function (results) {
   // 'results' contains an array with the following structure:
   // { name: 'Joe', sum: 17  }
   // { name: 'Aron', sum: 30 }
