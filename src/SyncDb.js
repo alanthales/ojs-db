@@ -57,25 +57,25 @@ var SyncDb = (function() {
         _saveTable(Operations.Insert, table, insTable);
         _saveTable(Operations.Update, table, updTable);
         _saveTable(Operations.Delete, table, delTable);
-    }
+    };
     
     CreateSync.prototype.cleanData = function(table) {
         _saveTable(Operations.Insert, table, []);
         _saveTable(Operations.Update, table, []);
         _saveTable(Operations.Delete, table, []);
-    }
+    };
     
     CreateSync.prototype.sendData = function(table, toInsert, toUpdate, toDelete, callback) {
         if (typeof callback === 'function') {
             callback();
         }
-    }
+    };
     
     CreateSync.prototype.getNews = function(table, callback) {
         if (typeof callback === 'function') {
             callback( null, [], [] );
         }
-    }
+    };
     
     CreateSync.prototype.exec = function(table, callback) {
         var self = this,
@@ -93,7 +93,7 @@ var SyncDb = (function() {
                 self.getNews(table, cb);
             }
         );
-    }
+    };
     
     return CreateSync;
 })();

@@ -23,7 +23,7 @@ var SQLiteProxy = (function() {
 			}
 		});
 		
-		this.getDb = function() { return db; }
+		this.getDb = function() { return db; };
 		
 		DbProxy.apply(this, arguments);
 	}
@@ -58,7 +58,7 @@ var SQLiteProxy = (function() {
 					}
 					
 					if (field.hasOne) {
-						field.type = _maps[field.hasOne]["id"].type;
+						field.type = _maps[field.hasOne].id.type;
 					}
 					
 					fields += [
@@ -74,7 +74,7 @@ var SQLiteProxy = (function() {
 		}, function(err) {
 			cb(err);
 		});
-	}
+	};
 
 	var _parseItem = function(key, item) {
 		var result = {},
@@ -168,7 +168,7 @@ var SQLiteProxy = (function() {
 		self.getDb().transaction(function(tx) {
 			_select(key, sql.join(" "), [], tx, callback);
 		});
-	}
+	};
 
 	var _formatSql = function(sqlNoWhere, filters) {
 		var where = "",
@@ -232,7 +232,7 @@ var SQLiteProxy = (function() {
 			for (prop in opt) break;
 			
 			field = opt[prop];
-			alias = opt["alias"] || field;
+			alias = opt.alias || field;
 			
 			switch(prop) {
 				case "$max":
@@ -276,7 +276,7 @@ var SQLiteProxy = (function() {
 		self.getDb().transaction(function(tx) {
 			_select(key, sql, [], tx, callback);
 		});
-	}
+	};
 	
 	CreateProxy.prototype.groupBy = function(key, options, groups, filters, callback) {
 		var self = this,
@@ -300,7 +300,7 @@ var SQLiteProxy = (function() {
 				callback(err);
 			});
 		});
-	}
+	};
 
 	var _save = function(key, record, transaction, operationFn, callback) {
 		var self = this,
@@ -366,7 +366,7 @@ var SQLiteProxy = (function() {
 			
 			value = _formatValue(key, prop, record);
 			
-			if (value != undefined) {
+			if (value !== undefined) {
 				params.push(value);
 				fields += prop + ",";
 				values += "?,";
@@ -404,7 +404,7 @@ var SQLiteProxy = (function() {
 				callback();
 			}
 		}
-	}
+	};
 
 	var _getUpdateSql = function(key, record) {
 		var params = [],
@@ -453,7 +453,7 @@ var SQLiteProxy = (function() {
 				callback();
 			}
 		}
-	}
+	};
 
 	var _delete = function(key, record, transaction, callback) {
 		var id = typeof record === "object" ? record.id : record,
@@ -498,7 +498,7 @@ var SQLiteProxy = (function() {
 				callback();
 			}
 		}
-	}
+	};
 
 	CreateProxy.prototype.commit = function(key, toInsert, toUpdate, toDelete, callback) {
 		var self = this,
@@ -524,7 +524,7 @@ var SQLiteProxy = (function() {
 				self.delete(key, toDelete, tx, cb);
 			}
 		}
-	}
+	};
 	
 	var _fetch = function(key, master, record, property, callback) {
 		var opts = { params: {} },
@@ -577,7 +577,7 @@ var SQLiteProxy = (function() {
 				cb();
 			}
 		}
-	}
+	};
 	
 	return CreateProxy;
 })();

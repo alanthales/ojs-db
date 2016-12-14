@@ -25,7 +25,7 @@ var EventEmitter = (function() {
 
 			// Cycle through topics queue, fire!
 			topics[topic].forEach(function(item) {
-				item(args != undefined ? args : {});
+				item(args !== undefined ? args : {});
 			});
 		}
 	};

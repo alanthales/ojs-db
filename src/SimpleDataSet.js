@@ -20,12 +20,12 @@ var SimpleDataSet = (function() {
 		this._updateds.length = 0;
 		this._deleteds.length = 0;
 		this._history.length = 0;
-	}
+	};
 	
 	CreateDataSet.prototype.getById = function(id) {
 		var index = this.data.indexOfKey('id', id);
 		return this.data[index];
-	}
+	};
 
 	var _afterChange = function(operation, record) {
 		var change = {
@@ -56,7 +56,7 @@ var SimpleDataSet = (function() {
 		}
 		
 		return this;
-	}
+	};
 
 	CreateDataSet.prototype.update = function(record) {
 		if (!record.id) {
@@ -71,7 +71,7 @@ var SimpleDataSet = (function() {
 		}
 		
 		idxUpd = this._updateds
-			.map(function(item) { return item.id })
+			.map(function(item) { return item.id; })
 			.indexOf(record.id);
 		
 		if (idxUpd === -1) {
@@ -84,7 +84,7 @@ var SimpleDataSet = (function() {
 		this.data.splice(index, 1, record);
 
 		return this;
-	}
+	};
 
 	CreateDataSet.prototype.save = function(record) {
 		if (!record) return this;
@@ -92,7 +92,7 @@ var SimpleDataSet = (function() {
 			return this.insert(record);
 		}
 		return this.update(record);
-	}
+	};
 	
 	CreateDataSet.prototype.delete = function(record) {
 		if (!record.id) {
@@ -108,12 +108,12 @@ var SimpleDataSet = (function() {
 		}
 		
 		return this;
-	}
+	};
 
 	CreateDataSet.prototype.insertAll = function(records) {
 		var self = this;
 		
-		if (!records instanceof Array) {
+		if (!(records instanceof Array)) {
 			return self;
 		}
 		
@@ -122,14 +122,14 @@ var SimpleDataSet = (function() {
 		});
 
 		return self;
-	}
+	};
 	
 	CreateDataSet.prototype.clear = function() {
 		this.data.length = 0;
 		this._cleanCache();
 		EventEmitter.emit(this._event, null);
 		return this;
-	}
+	};
 	
 	CreateDataSet.prototype.cancel = function() {
 		if (!this._history.length) return;
@@ -156,37 +156,37 @@ var SimpleDataSet = (function() {
 					self._deleteds.pop();
 					break;
 			}
-		};
+		}
 		
 		EventEmitter.emit(this._event, {op: 'cancel', records: this._history});
 		this._history.length = 0;
-	}
+	};
 	
 	CreateDataSet.prototype.count = function() {
 		return this.data.length;
-	}
+	};
 
 	CreateDataSet.prototype.item = function(index) {
 		return this.data[index];
-	}
+	};
 
 	CreateDataSet.prototype.filter = function(options) {
 		return this.data.query(options);
-	}
+	};
 	
 	CreateDataSet.prototype.forEach = function(fn) {
 		this.data.forEach(fn);
-	}
+	};
 	
 	CreateDataSet.prototype.event = function(name) {
 		this._event = name;
 		return this;
-	}
+	};
 
 	CreateDataSet.prototype.subscribe = function(fn) {
 		EventEmitter.on(this._event, fn);
 		return this;
-	}
+	};
 	
 	return CreateDataSet;
 })();

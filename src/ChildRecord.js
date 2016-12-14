@@ -11,22 +11,22 @@ var ChildRecord = (function() {
         
         this.getDtsMaster = function() {
             return _dtsMaster;
-        }
+        };
         
         this.getRecMaster = function() {
             return _recMaster;
-        }
+        };
         
         this.setRecMaster = function(recMaster) {
             if (recMaster) {
                 _recMaster = recMaster;
             }
-        }
+        };
     }
     
     CreateRecord.prototype.notifyMaster = function() {
         this.getDtsMaster().save(this.getRecMaster());
-    }
+    };
     
     return CreateRecord;
 })();

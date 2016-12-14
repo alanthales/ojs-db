@@ -15,12 +15,12 @@ var OjsUtils = (function() {
 			i = 0, r;
 
 		for (; i < size; i++) {
-			if ((i & 0x03) == 0) r = Math.random() * 0x100000000;
+			if ((i & 0x03) === 0) r = Math.random() * 0x100000000;
 			bytes[i] = r >>> ((i & 0x03) << 3) & 0xff;
 		}
 
 		return bytes;
-	}
+	};
 
 	/**
 	 * Taken from the base64-js module
@@ -34,7 +34,7 @@ var OjsUtils = (function() {
 
 		function tripletToBase64 (num) {
 			return lookup[num >> 18 & 0x3F] + lookup[num >> 12 & 0x3F] + lookup[num >> 6 & 0x3F] + lookup[num & 0x3F];
-		};
+		}
 
 		// go through the array every three bytes, we'll deal with trailing stuff later
 		for (i = 0, length = uint8.length - extraBytes; i < length; i += 3) {
@@ -60,7 +60,7 @@ var OjsUtils = (function() {
 		}
 
 		return output;
-	}
+	};
 	
 	return {
 		uid: function(len) {
@@ -110,5 +110,5 @@ var OjsUtils = (function() {
 				}
 			}
 		}
-	}
+	};
 })();

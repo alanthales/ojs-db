@@ -26,7 +26,7 @@ var RestProxy = (function() {
                 callback = [200,201,304].indexOf(http.status) > -1 ? success : error;
                 callback(http);
             }
-        }
+        };
         
         if (typeof config === "object") {
             params = config.data;
@@ -133,7 +133,7 @@ var RestProxy = (function() {
         }, function(xhr) {
             callback( new ProxyError(xhr), [] );
         });
-    }
+    };
     
     CreateProxy.prototype.query = function(key, filters, callback) {
         var opts = { key: key, params: filters };
@@ -142,7 +142,7 @@ var RestProxy = (function() {
         }, function(xhr) {
             callback( new ProxyError(xhr), [] );
         });
-    }
+    };
     
     CreateProxy.prototype.groupBy = function(key, filters, options, groups, callback) {
         this.query(key, filters, function(err, data) {
@@ -153,7 +153,7 @@ var RestProxy = (function() {
             var results = data.groupBy(options, groups, {});
             callback( null, results );
         });
-    }
+    };
     
     CreateProxy.prototype.insert = function(key, record, callback) {
         var self = this;
@@ -166,7 +166,7 @@ var RestProxy = (function() {
         }, function(xhr) {
             callback( new ProxyError(xhr) );
         });
-    }
+    };
 
     CreateProxy.prototype.update = function(key, record, callback) {
         _save.call(this, "PUT", key, record, function(xhr) {
@@ -174,7 +174,7 @@ var RestProxy = (function() {
         }, function(xhr) {
             callback( new ProxyError(xhr) );
         });
-    }
+    };
     
     CreateProxy.prototype.delete = function(key, record, callback) {
         var url = this.config.url + "/" + key + "/" + record.id,
@@ -189,7 +189,7 @@ var RestProxy = (function() {
         }, function(xhr) {
             callback( new ProxyError(xhr) );
         });
-    }
+    };
 
     CreateProxy.prototype.commit = function(key, toInsert, toUpdate, toDelete, callback) {
         var self = this,
@@ -225,7 +225,7 @@ var RestProxy = (function() {
         for (i = 0; i < toDelete.length; i++) {
             self.delete(key, toDelete[i], progress);
         }
-    }
+    };
     
     return CreateProxy;
 })();

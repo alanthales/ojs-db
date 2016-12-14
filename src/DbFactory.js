@@ -28,11 +28,11 @@ var DbFactory = (function() {
         
         this.getProxy = function() {
             return _proxy;
-        }
+        };
         
         this.getSynchronizer = function() {
             return _synchronizer;
-        }
+        };
         
         if (proxyType && typeof proxyType === "object") {
             _proxy = proxyType;
@@ -66,7 +66,7 @@ var DbFactory = (function() {
         });
 
         return defer;
-    }
+    };
 
     CreateFactory.prototype.query = function(key, filters) {
         var defer = SimplePromise.defer();
@@ -80,7 +80,7 @@ var DbFactory = (function() {
         });
 
         return defer;
-    }
+    };
     
     CreateFactory.prototype.groupBy = function(key, options, groups, filters) {
         var defer = SimplePromise.defer();
@@ -94,12 +94,12 @@ var DbFactory = (function() {
         });
 
         return defer;
-    }
+    };
     
     CreateFactory.prototype.createDataSet = function(table, genIdFn) {
         var fn = genIdFn || IdGenerators.TIMESTAMP;
         return new DataSet(this.getProxy(), table, fn, this.getSynchronizer());
-    }
+    };
 
     return CreateFactory;
 })();

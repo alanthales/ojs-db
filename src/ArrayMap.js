@@ -78,35 +78,35 @@ var ArrayMap = (function() {
 		}
 
 		return matched;
-	}
+	};
 	
-	var _aggregate = function(array, options, value) {
+	var _aggregate = function(array, options, obj) {
 		var opts = options && options instanceof Array ? options : [options],
-			value = value || {},
+			value = obj || {},
 			prop, field, alias;
 	
 		opts.forEach(function(opt) { 
 			for (prop in opt) break;
 			
 			field = opt[prop];
-			alias = opt["alias"] || field;
+			alias = opt.alias || field;
 			
 			switch(prop) {
 				case "$max":
-					array.sort(function(a, b){return b[field] - a[field]});
+					array.sort(function(a, b){return b[field] - a[field];});
 					value[alias] = array[0][field];
 					break;
 				case "$min":
-					array.sort(function(a, b){return a[field] - b[field]});
+					array.sort(function(a, b){return a[field] - b[field];});
 					value[alias] = array[0][field];
 					break;
 				case "$sum":
-					value[alias] = array.map(function(item) {return item[field]}).reduce(function(previous, current) {
+					value[alias] = array.map(function(item) {return item[field];}).reduce(function(previous, current) {
 						return parseFloat(previous) + parseFloat(current);
 					}, 0);
 					break;
 				case "$avg":
-					value[alias] = array.map(function(item) {return item[field]}).reduce(function(previous, current) {
+					value[alias] = array.map(function(item) {return item[field];}).reduce(function(previous, current) {
 						return parseFloat(previous) + parseFloat(current);
 					}, 0);
 					value[alias] /= array.length;
@@ -118,7 +118,7 @@ var ArrayMap = (function() {
 		});
 
 		return value;
-	}
+	};
 	
 	function Collection() {
 		var collection = [];
@@ -131,16 +131,16 @@ var ArrayMap = (function() {
 			return this.map(function(item) {
 				return item[key];
 			});
-		}
+		};
 
 		collection.indexOfKey = function(key, value) {
 			return this.mapTable(key).indexOf(value);
-		}
+		};
 
 		collection.put = function(obj, index) {
 			var i = index || this.length;
 			this[i] = obj;
-		}
+		};
 
 		collection.putRange = function(arr, tail) {
 			var pos = tail && typeof tail === "boolean" ? this.length : 0,
@@ -157,7 +157,7 @@ var ArrayMap = (function() {
 			for (; i < l; i++) {
 				this.put(arr[i], pos+i);
 			}
-		}
+		};
 
 		collection.query = function(filters) {
 			var self = this,
@@ -171,7 +171,7 @@ var ArrayMap = (function() {
 			results.putRange( self.filter(fn) );
 
 			return results;
-		}
+		};
 		
 		collection.orderBy = function(sorters) {
 			var opts = sorters && typeof sorters === "object" ? sorters : { },
@@ -213,7 +213,7 @@ var ArrayMap = (function() {
 			});
 			
 			return this;
-		}
+		};
 		
 		collection.groupBy = function(options, groups, filters) {
 			var self = this,
@@ -244,11 +244,11 @@ var ArrayMap = (function() {
 			);
 			
 			return results;
-		}
+		};
 		
 		collection.compute = function(options) {
 			return _aggregate(this, options);
-		}
+		};
 		
 		return collection;
 	}

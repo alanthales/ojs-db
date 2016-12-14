@@ -16,24 +16,24 @@ var DataSet = (function() {
 		this._reOpenOnRefresh = false;
 		this.genId = genIdFn;
 
-		this.getProxy = function() { return proxy; }
-		this.getTable = function() { return table; }
-		this.getSynchronizer = function() { return synchronizer; }
+		this.getProxy = function() { return proxy; };
+		this.getTable = function() { return table; };
+		this.getSynchronizer = function() { return synchronizer; };
 	}
 
 	CreateDataSet.prototype = Object.create(SimpleDataSet.prototype);
 	
 	CreateDataSet.prototype.sort = function(order) {
 		this._opts.sort = order;
-	}
+	};
 
 	CreateDataSet.prototype.limit = function(value) {
 		this._opts.limit = value;
-	}
+	};
 
 	CreateDataSet.prototype.where = function(params) {
 		this._opts.params = params;
-	}
+	};
 
 	var _getRecords = function(opts, callback) {
 		var self = this,
@@ -71,7 +71,7 @@ var DataSet = (function() {
 		});
 		
 		return defer;
-	}
+	};
 	
 	CreateDataSet.prototype.next = function() {
 		if (!this._active) {
@@ -84,7 +84,7 @@ var DataSet = (function() {
 
 		var self = this,
 			opts = { key: self.getTable(), skip: self._opts.limit },
-			defer = SimplePromise.defer()
+			defer = SimplePromise.defer();
 
 		if (self._eof) {
 			defer.resolve(self);
@@ -102,13 +102,13 @@ var DataSet = (function() {
 		});
 		
 		return defer;
-	}
+	};
 	
 	CreateDataSet.prototype.close = function() {
 		SimpleDataSet.prototype.clear.apply(this, arguments);
 		this._active = false;
 		return this;
-	}
+	};
 
 	CreateDataSet.prototype.refresh = function() {
 		if (this._reOpenOnRefresh) {
@@ -124,28 +124,28 @@ var DataSet = (function() {
 
 		defer.resolve(this);
 		return defer;
-	}
+	};
 	
 	CreateDataSet.prototype.insert = function(record) {
 		if (!this._active) {
 			throw "Invalid operation on closed dataset";
 		}
 		SimpleDataSet.prototype.insert.apply(this, arguments);
-	}
+	};
 
 	CreateDataSet.prototype.update = function(record) {
 		if (!this._active) {
 			throw "Invalid operation on closed dataset";
 		}
 		SimpleDataSet.prototype.update.apply(this, arguments);
-	}
+	};
 
 	CreateDataSet.prototype.delete = function(record) {
 		if (!this._active) {
 			throw "Invalid operation on closed dataset";
 		}
 		SimpleDataSet.prototype.delete.apply(this, arguments);
-	}
+	};
 
 	CreateDataSet.prototype.post = function(ignoreSync) {
 		if (!this._active) {
@@ -185,7 +185,7 @@ var DataSet = (function() {
 		}
 
 		return defer;
-	}
+	};
 
 	CreateDataSet.prototype.sync = function() {
 		var self = this,
@@ -212,7 +212,7 @@ var DataSet = (function() {
 			
 			var serverData = new ArrayMap(),
 				localData = new ArrayMap(),
-				toDeleteMap = toDelete.map(function(item) { return item.id }),
+				toDeleteMap = toDelete.map(function(item) { return item.id; }),
 				deleteFn;
 			
 			serverData.putRange(allData);
@@ -250,7 +250,7 @@ var DataSet = (function() {
 		});
 
 		return defer;
-	}
+	};
 	
 	CreateDataSet.prototype.fetch = function(property) {
 		if (!this._active) {
@@ -268,20 +268,20 @@ var DataSet = (function() {
 		});
 
 		return defer;
-	}
+	};
 	
 	CreateDataSet.prototype.eof = function() {
 		return this._eof;
-	}
+	};
 
 	CreateDataSet.prototype.active = function() {
 		return this._active;
-	}
+	};
 
 	CreateDataSet.prototype.reOpenOnRefresh = function(value) {
 		this._reOpenOnRefresh = value.toString() === "true";
 		return this;
-	}
+	};
 
 	return CreateDataSet;
 })();

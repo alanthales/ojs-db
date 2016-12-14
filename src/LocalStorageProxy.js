@@ -42,20 +42,20 @@ var LocalStorageProxy = (function() {
         if (typeof callback === "function") {
             callback( null, table );
         }
-    }
+    };
     
     CreateProxy.prototype.query = function(key, filters, callback) {
         var table = _get(key),
             results = table.query(filters);
         
         callback( null, results );
-    }
+    };
     
     CreateProxy.prototype.groupBy = function(key, options, groups, filters, callback) {
         var table = _get(key);
         
         callback( null, table.groupBy(options, groups, filters) );
-    }
+    };
     
     CreateProxy.prototype.save = function(key, record, callback) {
         var table = _get(key),
@@ -66,7 +66,7 @@ var LocalStorageProxy = (function() {
             table.splice(index, 1, record);
         }
         _saveAll(key, table, callback);
-    }
+    };
 
     CreateProxy.prototype.remove = function(key, record, callback) {
         var id = typeof record === "object" ? record.id : record,
@@ -74,7 +74,7 @@ var LocalStorageProxy = (function() {
             index = table.indexOfKey("id", id);
         table.splice(index, 1);
         _saveAll(key, table, callback);
-    }
+    };
 
     CreateProxy.prototype.commit = function(key, toInsert, toUpdate, toDelete, callback) {
         var self = this,
@@ -101,7 +101,7 @@ var LocalStorageProxy = (function() {
         for (i = 0; i < toDelete.length; i++) {
             self.remove(key, toDelete[i], progress);
         }
-    }
+    };
     
     return CreateProxy;
 })();
