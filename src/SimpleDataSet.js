@@ -11,7 +11,7 @@ var SimpleDataSet = (function() {
 		this._updateds = [];
 		this._deleteds = [];
 		this._history = [];
-		this.eventName = 'event';
+		this._event = 'event';
 		this.data = new ArrayMap();
 	}
 
@@ -39,7 +39,7 @@ var SimpleDataSet = (function() {
 			record.notifyMaster();
 		}
 
-		EventEmitter.emit(this.eventName, {op: operation, record: record});
+		EventEmitter.emit(this._event, {op: operation, record: record});
 	};
 
 	CreateDataSet.prototype.insert = function(record) {
@@ -127,7 +127,7 @@ var SimpleDataSet = (function() {
 	CreateDataSet.prototype.clear = function() {
 		this.data.length = 0;
 		this._cleanCache();
-		EventEmitter.emit(this.eventName, null);
+		EventEmitter.emit(this._event, null);
 		return this;
 	}
 	
@@ -158,10 +158,18 @@ var SimpleDataSet = (function() {
 			}
 		};
 		
-		EventEmitter.emit(this.eventName, {op: 'cancel', records: this._history});
+		EventEmitter.emit(this._event, {op: 'cancel', records: this._history});
 		this._history.length = 0;
 	}
 	
+	CreateDataSet.prototype.count = function() {
+		return this.data.length;
+	}
+
+	CreateDataSet.prototype.item = function(index) {
+		return this.data[index];
+	}
+
 	CreateDataSet.prototype.filter = function(options) {
 		return this.data.query(options);
 	}
@@ -170,8 +178,13 @@ var SimpleDataSet = (function() {
 		this.data.forEach(fn);
 	}
 	
+	CreateDataSet.prototype.event = function(name) {
+		this._event = name;
+		return this;
+	}
+
 	CreateDataSet.prototype.subscribe = function(fn) {
-		EventEmitter.on(this.eventName, fn);
+		EventEmitter.on(this._event, fn);
 		return this;
 	}
 	

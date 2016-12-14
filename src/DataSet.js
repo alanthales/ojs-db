@@ -10,10 +10,10 @@ var DataSet = (function() {
 		SimpleDataSet.apply(this);
 
 		this._opts = {};
-		this.active = false;
-		this.eof = true;
-		this.reOpenOnRefresh = false;
-		this.eventName = _table + '_event';
+		this._event = _table + "_event";
+		this._eof = true;
+		this._active = false;
+		this._reOpenOnRefresh = false;
 		this.genId = genIdFn;
 
 		this.getProxy = function() { return proxy; }
@@ -41,44 +41,53 @@ var DataSet = (function() {
 		
 		self.getProxy().getRecords(opts, function(err, records) {
 			self.data.putRange(records, true);
-			self.active = err ? false : true;
-			self.eof = records.length < self._opts.limit;
+			self._active = err ? false : true;
+			self._eof = records.length < self._opts.limit;
 			cb(err, records);
 			if (!err) {
-				EventEmitter.emit(self.eventName, records);
+				EventEmitter.emit(self._event, records);
 			}
 		});
 	};
 	
 	CreateDataSet.prototype.open = function() {
 		var opts = { key: this.getTable() },
-			defer = SimplePromise.defer();
+			defer = SimplePromise.defer(),
+			self = this;
 
-		if (this.active) {
-			defer.resolve(this.data);
+		if (self._active) {
+			defer.resolve(self);
 			return defer;
 		}
 
-		OjsUtils.cloneProperties(this._opts, opts);
+		OjsUtils.cloneProperties(self._opts, opts);
 
-		_getRecords.call(this, opts, function(err, records) {
+		_getRecords.call(self, opts, function(err, records) {
 			if (err) {
 				defer.reject(err);
 				return;
 			}
-			defer.resolve(records);
+			defer.resolve(self);
 		});
 		
 		return defer;
 	}
 	
 	CreateDataSet.prototype.next = function() {
+		if (!this._active) {
+			throw "Invalid operation on closed dataset";
+		}
+
+		if (this._opts.limit || isNaN(this._opts.limit)) {
+			throw "You must set 'limit' to use this method";
+		}
+
 		var self = this,
 			opts = { key: self.getTable(), skip: self._opts.limit },
 			defer = SimplePromise.defer()
 
-		if (self.eof) {
-			defer.resolve(false);
+		if (self._eof) {
+			defer.resolve(self);
 			return defer;
 		}
 
@@ -89,7 +98,7 @@ var DataSet = (function() {
 				defer.reject(err);
 				return;
 			}
-			defer.resolve(!self.eof);
+			defer.resolve(self);
 		});
 		
 		return defer;
@@ -97,49 +106,49 @@ var DataSet = (function() {
 	
 	CreateDataSet.prototype.close = function() {
 		SimpleDataSet.prototype.clear.apply(this, arguments);
-		this.active = false;
+		this._active = false;
 		return this;
 	}
 
 	CreateDataSet.prototype.refresh = function() {
-		var defer = SimplePromise.defer();
-		
-		if (this.reOpenOnRefresh) {
-			this.active = false;
+		if (this._reOpenOnRefresh) {
+			this._active = false;
 			return this.open();
 		}
 		
+		var defer = SimplePromise.defer();
+
 		if (this._opts.sort) {
 			this.data.orderBy(this._opts.sort);
 		}
 
-		defer.resolve(this.data);
+		defer.resolve(this);
 		return defer;
 	}
 	
 	CreateDataSet.prototype.insert = function(record) {
-		if (!this.active) {
+		if (!this._active) {
 			throw "Invalid operation on closed dataset";
 		}
 		SimpleDataSet.prototype.insert.apply(this, arguments);
 	}
 
 	CreateDataSet.prototype.update = function(record) {
-		if (!this.active) {
+		if (!this._active) {
 			throw "Invalid operation on closed dataset";
 		}
 		SimpleDataSet.prototype.update.apply(this, arguments);
 	}
 
 	CreateDataSet.prototype.delete = function(record) {
-		if (!this.active) {
+		if (!this._active) {
 			throw "Invalid operation on closed dataset";
 		}
 		SimpleDataSet.prototype.delete.apply(this, arguments);
 	}
 
 	CreateDataSet.prototype.post = function(ignoreSync) {
-		if (!this.active) {
+		if (!this._active) {
 			throw "Invalid operation on closed dataset";
 		}
 
@@ -167,10 +176,12 @@ var DataSet = (function() {
 				sync.writeData(self.getTable(), self._inserteds, self._updateds, self._deleteds);
 			}
 			
-			self.refresh();
-			self._cleanCache();
+			self.refresh().then(
+				function() { defer.resolve(true); },
+				function(err) { defer.reject(err); }
+			);
 			
-			defer.resolve(true);
+			self._cleanCache();
 		}
 
 		return defer;
@@ -182,7 +193,7 @@ var DataSet = (function() {
 			defer = SimplePromise.defer();
 		
 		if (!sync) {
-			defer.resolve(true);
+			defer.resolve(self);
 			return defer;
 		}
 		
@@ -195,7 +206,7 @@ var DataSet = (function() {
 			allData = allData || []; toDelete = toDelete || [];
 			
 			if (!allData.length && !toDelete.length) {
-				defer.resolve(true);
+				defer.resolve(self);
 				return;
 			}
 			
@@ -232,7 +243,7 @@ var DataSet = (function() {
 			});
 			
 			self.post(true).then(function() {
-				defer.resolve(true);
+				defer.resolve(self);
 			}, function(err) {
 				defer.reject(err);
 			});
@@ -242,23 +253,35 @@ var DataSet = (function() {
 	}
 	
 	CreateDataSet.prototype.fetch = function(property) {
+		if (!this._active) {
+			throw "Invalid operation on closed dataset";
+		}
+
 		var defer = SimplePromise.defer();
 
-		if (!this.active) {
-			defer.resolve(true);
-			return defer;
-		}
-		
 		this.getProxy().fetch(this.getTable(), this, property, function(err) {
 			if (err) {
 				defer.reject(err);
 				return;
 			}
-			defer.resolve(true);
+			defer.resolve(self);
 		});
 
 		return defer;
 	}
 	
+	CreateDataSet.prototype.eof = function() {
+		return this._eof;
+	}
+
+	CreateDataSet.prototype.active = function() {
+		return this._active;
+	}
+
+	CreateDataSet.prototype.reOpenOnRefresh = function(value) {
+		this._reOpenOnRefresh = value.toString() === "true";
+		return this;
+	}
+
 	return CreateDataSet;
 })();

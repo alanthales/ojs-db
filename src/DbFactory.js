@@ -11,7 +11,7 @@ var IdGenerators = (function() {
             return (new Date()).getTime();
         },
         UUID: OjsUtils.uid
-    }
+    };
 })();
 
 /*
