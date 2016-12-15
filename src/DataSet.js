@@ -25,14 +25,22 @@ var DataSet = (function() {
 	
 	CreateDataSet.prototype.sort = function(order) {
 		this._opts.sort = order;
+		return this;
 	};
 
 	CreateDataSet.prototype.limit = function(value) {
 		this._opts.limit = value;
+		return this;
 	};
 
 	CreateDataSet.prototype.where = function(params) {
 		this._opts.params = params;
+		return this;
+	};
+
+	CreateDataSet.prototype.reOpenOnRefresh = function(value) {
+		this._reOpenOnRefresh = value.toString() === "true";
+		return this;
 	};
 
 	var _getRecords = function(opts, callback) {
@@ -276,11 +284,6 @@ var DataSet = (function() {
 
 	CreateDataSet.prototype.active = function() {
 		return this._active;
-	};
-
-	CreateDataSet.prototype.reOpenOnRefresh = function(value) {
-		this._reOpenOnRefresh = value.toString() === "true";
-		return this;
 	};
 
 	return CreateDataSet;
