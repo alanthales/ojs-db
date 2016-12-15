@@ -4,7 +4,8 @@
   "authors": [
     "Alan Thales <alanthales@gmail.com>"
   ],
-  "description": "A JavaScript framework to persist data in anywhere",
+  "description": "A reactive framework to persist data in anywhere",
+  "version": "1.0",
   "main": "ArrayMap.js",
   "license": "Apache License",
   "ignore": [
