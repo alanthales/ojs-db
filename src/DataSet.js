@@ -1,7 +1,7 @@
 /*
 	DataSet Class
 	Autor: Alan Thales, 09/2015
-	Requires: SimpleDataSet.js, SyncDb.js, EventEmitter.js, SimplePromise.js
+	Requires: SimpleDataSet.js, EventEmitter.js, SimplePromise.js
 */
 var DataSet = (function() {
 	'use strict';
