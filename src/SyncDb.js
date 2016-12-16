@@ -7,30 +7,26 @@ var SyncDb = (function() {
     'use strict';
 
     var Operations = {
-        Insert: '_inserted',
-        Update: '_updated',
-        Delete: '_deleted'
+        Insert: 'inserted',
+        Update: 'updated',
+        Delete: 'deleted'
     };
     
     function CreateSync() { }
     
-    var _getTableName = function(operation, table) {
-        return ['sync_', table, operation].join('');
+    var _getTableName = function(table) {
+        return ['sync_', table].join('');
     };
     
-    var _saveTable = function(operation, tableName, tableValues) {
-        var key = _getTableName(operation, tableName);
-        window.localStorage[key] = JSON.stringify(tableValues);
+    var _getData = function(tableName) {
+        var key = _getTableName(tableName),
+            table = window.localStorage[key] || '{}';
+        return JSON.parse(table, DbProxy.dateParser);
     };
-    
-    var _getData = function(operation, tableName) {
-        var key = _getTableName(operation, tableName),
-            table = window.localStorage[key],
-            result = new ArrayMap();
-        if (table) {
-            result.putRange( JSON.parse(table, DbProxy.dateParser) );
-        }
-        return result;
+
+    var _saveTable = function(tableName, values) {
+        var key = _getTableName(tableName);
+        window.localStorage[key] = JSON.stringify(values);
     };
     
     var _merge = function(arr1, arr2) {
@@ -45,54 +41,49 @@ var SyncDb = (function() {
         return result;
     };
     
-    CreateSync.prototype.writeData = function(table, toInsert, toUpdate, toDelete) {
-        var insTable = _getData(Operations.Insert, table),
-            updTable = _getData(Operations.Update, table),
-            delTable = _getData(Operations.Delete, table);
+    CreateSync.prototype.writeData = function(key, toInsert, toUpdate, toDelete) {
+        var values = _getData(key);
 
-        insTable = _merge(toInsert, insTable);
-        updTable = _merge(toUpdate, updTable);
-        delTable = _merge(toDelete, delTable);
-        
-        _saveTable(Operations.Insert, table, insTable);
-        _saveTable(Operations.Update, table, updTable);
-        _saveTable(Operations.Delete, table, delTable);
+        values[Operations.Insert] = _merge(toInsert, values[Operations.Insert]);
+        values[Operations.Update] = _merge(toUpdate, values[Operations.Update]);
+        values[Operations.Delete] = _merge(toDelete, values[Operations.Delete]);
+
+        _saveTable(key, values);
     };
     
-    CreateSync.prototype.cleanData = function(table) {
-        _saveTable(Operations.Insert, table, []);
-        _saveTable(Operations.Update, table, []);
-        _saveTable(Operations.Delete, table, []);
+    CreateSync.prototype.cleanData = function(key) {
+        _saveTable(key, {});
     };
     
-    CreateSync.prototype.sendData = function(table, toInsert, toUpdate, toDelete, callback) {
+    CreateSync.prototype.sendData = function(key, toInsert, toUpdate, toDelete, callback) {
         if (typeof callback === 'function') {
             callback();
         }
     };
     
-    CreateSync.prototype.getNews = function(table, callback) {
+    CreateSync.prototype.getNews = function(key, callback) {
         if (typeof callback === 'function') {
             callback( null, [], [] );
         }
     };
     
-    CreateSync.prototype.exec = function(table, callback) {
+    CreateSync.prototype.exec = function(key, callback) {
         var self = this,
+            values = _getData(key),
             cb = callback || function() {};
+
         self.sendData(
-            table,
-            _getData(Operations.Insert, table),
-            _getData(Operations.Update, table),
-            _getData(Operations.Delete, table),
-            function(err) {
-                if (err) {
-                    return cb(err);
-                }
-                self.cleanData(table);
-                self.getNews(table, cb);
-            }
+            key, values[Operations.Insert], values[Operations.Update],
+            values[Operations.Delete], done
         );
+
+        function done(err) {
+            if (err) {
+                return cb(err);
+            }
+            self.cleanData(key);
+            self.getNews(key, cb);
+        }
     };
     
     return CreateSync;
