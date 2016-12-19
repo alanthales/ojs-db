@@ -155,75 +155,106 @@ var RestProxy = (function() {
         });
     };
     
-    CreateProxy.prototype.insert = function(key, record, callback) {
-        var self = this;
-        _save.call(self, "POST", key, record, function(xhr) {
-            var created = JSON.parse(xhr.responseText);
-            if (self.autoPK && created.id) {
-                record.id = created.id;
-            }
-            callback(null, xhr);
-        }, function(xhr) {
+    CreateProxy.prototype.insert = function(key, records, callback) {
+        var self = this,
+		    l = records.length,
+			i = 0;
+		
+		if (l === 0) return callback();
+		
+        for (; i < l; i++) (function(i) {
+            _save.call(self, "POST", key, records[i], function(xhr) {
+                var created = JSON.parse(xhr.responseText);
+
+                if (self.autoPK && created.id) {
+                    records[i].id = created.id;
+                }
+
+                if (i === l) {
+                    callback(null, xhr);
+                }
+            }, error);
+        }) (i);
+
+        function error(xhr) {
             callback( new ProxyError(xhr) );
-        });
+        }
     };
 
-    CreateProxy.prototype.update = function(key, record, callback) {
-        _save.call(this, "PUT", key, record, function(xhr) {
-            callback(null, xhr);
-        }, function(xhr) {
+    CreateProxy.prototype.update = function(key, records, callback) {
+        var self = this,
+		    l = records.length,
+			i = 0;
+		
+		if (l === 0) return callback();
+		
+        for (; i < l; i++) {
+            _save.call(self, "PUT", key, records[i], progress, error);
+        }
+
+        function progress(xhr) {
+            if (i === l) {
+                callback(null, xhr);
+            }
+        }
+
+        function error(xhr) {
             callback( new ProxyError(xhr) );
-        });
+        }
     };
     
-    CreateProxy.prototype.delete = function(key, record, callback) {
-        var url = this.config.url + "/" + key + "/" + record.id,
-            config = {};
+    CreateProxy.prototype.delete = function(key, records, callback) {
+        var baseurl = this.config.url + "/" + key + "/",
+            config = {},
+		    l = records.length,
+			i = 0,
+            url;
         
+		if (l === 0) return callback();
+
         if (this.config.headers) {
             config.headers = this.config.headers;
         }
         
-        _httpRequest(url, "DELETE", config, function(xhr) {
-            callback(null, xhr);
-        }, function(xhr) {
+        for (; i < l; i++) {
+            url = baseurl + records[i].id;
+            _httpRequest(url, "DELETE", config, progress, error);
+        }
+
+        function progress(xhr) {
+            if (i === l) {
+                callback(null, xhr);
+            }
+        }
+
+        function error(xhr) {
             callback( new ProxyError(xhr) );
-        });
+        }
     };
 
     CreateProxy.prototype.commit = function(key, toInsert, toUpdate, toDelete, callback) {
         var self = this,
             total = toInsert.length + toUpdate.length + toDelete.length,
-            cb = callback && typeof callback === "function" ? callback : function() {},
-            errors, i;
-
-        function progress(err) {
-            total--;
-            if (err) {
-                errors = errors || { messages: [] };
-                errors.messages.push(err);
-            }
-            if (total === 0) {
-                cb(errors);
-                return;
-            }
-        }
+            cb = callback && typeof callback === "function" ? callback : function() {};
 
         if (total === 0) {
             return cb();
         }
         
-        // to insert
-        for (i = 0; i < toInsert.length; i++) {
-            self.insert(key, toInsert[i], progress);
+        self.insert(key, toInsert, updateFn);
+
+        function updateFn(err) {
+            if (err) {
+                return cb(err);
+            }
+            self.update(key, toUpdate[i], deleteFn);
         }
-        // to update
-        for (i = 0; i < toUpdate.length; i++) {
-            self.update(key, toUpdate[i], progress);
-        }
-        // to delete
-        for (i = 0; i < toDelete.length; i++) {
-            self.delete(key, toDelete[i], progress);
+
+        function deleteFn(err) {
+            if (err) {
+                return cb(err);
+            }
+            self.delete(key, toDelete[i], cb);
         }
     };
     
