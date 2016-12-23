@@ -1,32 +1,39 @@
 var EventEmitter = (function() {
     'use strict';
 
-	var topics = {};
+	function CreateEmitter() {
+		var _topics = {};
+		this.topics = function() { return _topics; };
+	}
 
-	return {
-		on: function(topic, listener) {
-			// Create the topic's object if not yet created
-			if (!topics.hasOwnProperty(topic))  { topics[topic] = []; }
+	CreateEmitter.prototype.on = function(topic, listener) {
+		var topics = this.topics();
 
-			// Add the listener to queue
-			var index = topics[topic].push(listener) - 1;
+		// Create the topic's object if not yet created
+		if (!topics.hasOwnProperty(topic))  { topics[topic] = []; }
 
-			// Provide handle back for removal of topic
-			return {
-				remove: function() {
-					delete topics[topic][index];
-				}
-			};
-		},
+		// Add the listener to queue
+		var index = topics[topic].push(listener) - 1;
 
-		emit: function(topic, args) {
-			// If the topic doesn't exist, or there's no listeners in queue, just leave
-			if (!topics.hasOwnProperty(topic)) { return; }
-
-			// Cycle through topics queue, fire!
-			topics[topic].forEach(function(item) {
-				item(args !== undefined ? args : {});
-			});
-		}
+		// Provide handle back for removal of topic
+		return {
+			remove: function() {
+				delete topics[topic][index];
+			}
+		};
 	};
+
+	CreateEmitter.prototype.emit = function(topic, args) {
+		var topics = this.topics();
+		
+		// If the topic doesn't exist, or there's no listeners in queue, just leave
+		if (!topics.hasOwnProperty(topic)) { return; }
+
+		// Cycle through topics queue, fire!
+		topics[topic].forEach(function(item) {
+			item(args !== undefined ? args : {});
+		});
+	};
+
+	return CreateEmitter;
 })();

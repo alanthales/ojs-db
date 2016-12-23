@@ -1,24 +1,22 @@
 /*
 	DataSet Class
 	Autor: Alan Thales, 09/2015
-	Requires: SimpleDataSet.js, EventEmitter.js, SimplePromise.js
+	Requires: SimpleDataSet.js, SimplePromise.js
 */
 var DataSet = (function() {
 	'use strict';
 
 	function CreateDataSet(proxy, table, genIdFn, synchronizer) {
-		SimpleDataSet.apply(this);
+		SimpleDataSet.apply(this, table);
 
 		this._opts = {};
-		this._event = _table + "_event";
 		this._eof = true;
 		this._active = false;
 		this._reOpenOnRefresh = false;
 		this.genId = genIdFn;
 
-		this.getProxy = function() { return proxy; };
-		this.getTable = function() { return table; };
-		this.getSynchronizer = function() { return synchronizer; };
+		this.proxy = function() { return proxy; };
+		this.synchronizer = function() { return synchronizer; };
 	}
 
 	CreateDataSet.prototype = Object.create(SimpleDataSet.prototype);
@@ -47,19 +45,19 @@ var DataSet = (function() {
 		var self = this,
 			cb = callback && typeof callback === "function" ? callback : function() {};
 		
-		self.getProxy().getRecords(opts, function(err, records) {
+		self.proxy().getRecords(opts, function(err, records) {
 			self.data.putRange(records, true);
 			self._active = err ? false : true;
 			self._eof = records.length < self._opts.limit;
 			cb(err, records);
 			if (!err) {
-				EventEmitter.emit(self._event, records);
+				self.emit(self.table(), {event: 'get', data: records});
 			}
 		});
 	};
 	
 	CreateDataSet.prototype.open = function() {
-		var opts = { key: this.getTable() },
+		var opts = { key: this.table() },
 			defer = SimplePromise.defer(),
 			self = this;
 
@@ -91,7 +89,7 @@ var DataSet = (function() {
 		}
 
 		var self = this,
-			opts = { key: self.getTable(), skip: self._opts.limit },
+			opts = { key: self.table(), skip: self._opts.limit },
 			defer = SimplePromise.defer();
 
 		if (self._eof) {
@@ -161,7 +159,7 @@ var DataSet = (function() {
 		}
 
 		var self = this,
-			sync = this.getSynchronizer(),
+			sync = this.synchronizer(),
 			defer = SimplePromise.defer();
 
 		if (!self._inserteds.length && !self._updateds.length && !self._deleteds.length) {
@@ -169,8 +167,8 @@ var DataSet = (function() {
 			return defer;
 		}
 		
-		self.getProxy().commit(
-			self.getTable(), self._inserteds, self._updateds, self._deleteds, done
+		self.proxy().commit(
+			self.table(), self._inserteds, self._updateds, self._deleteds, done
 		);
 
 		function done(err) {
@@ -181,7 +179,7 @@ var DataSet = (function() {
 			}
 			
 			if (sync && !ignoreSync) {
-				sync.writeData(self.getTable(), self._inserteds, self._updateds, self._deleteds);
+				sync.writeData(self.table(), self._inserteds, self._updateds, self._deleteds);
 			}
 			
 			self.refresh().then(
@@ -197,7 +195,7 @@ var DataSet = (function() {
 
 	CreateDataSet.prototype.sync = function() {
 		var self = this,
-			sync = this.getSynchronizer(),
+			sync = this.synchronizer(),
 			defer = SimplePromise.defer();
 		
 		if (!sync) {
@@ -205,7 +203,7 @@ var DataSet = (function() {
 			return defer;
 		}
 		
-		sync.exec(self.getTable(), function(err, allData, toDelete) {
+		sync.exec(self.table(), function(err, allData, toDelete) {
 			if (err) {
 				defer.reject(err);
 				return;
@@ -243,11 +241,7 @@ var DataSet = (function() {
 			localData.forEach(deleteFn);
 			
 			serverData.forEach(function(item) {
-				if (self.data.indexOfKey('id', item.id) < 0) {
-					self.insert(item);
-				} else {
-					self.update(item);
-				}
+				self.save(item);
 			});
 			
 			self.post(true).then(function() {
@@ -267,7 +261,7 @@ var DataSet = (function() {
 
 		var defer = SimplePromise.defer();
 
-		this.getProxy().fetch(this.getTable(), this, property, function(err) {
+		this.proxy().fetch(this.table(), this, property, function(err) {
 			if (err) {
 				defer.reject(err);
 				return;

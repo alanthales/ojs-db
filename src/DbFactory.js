@@ -7,9 +7,7 @@ var IdGenerators = (function() {
     'use strict';
     
     return {
-        TIMESTAMP: function() {
-            return (new Date()).getTime();
-        },
+        TIMESTAMP: function() { return (new Date()).getTime(); },
         UUID: OjsUtils.uid
     };
 })();
@@ -26,13 +24,8 @@ var DbFactory = (function() {
         var _synchronizer = synchronizer,
             _proxy;
         
-        this.getProxy = function() {
-            return _proxy;
-        };
-        
-        this.getSynchronizer = function() {
-            return _synchronizer;
-        };
+        this.proxy = function() { return _proxy; };
+        this.synchronizer = function() { return _synchronizer; };
         
         if (proxyType && typeof proxyType === "object") {
             _proxy = proxyType;
@@ -57,7 +50,7 @@ var DbFactory = (function() {
     CreateFactory.prototype.createDatabase = function(maps) {
         var defer = SimplePromise.defer();
 
-        this.getProxy().createDatabase(maps, function(err) {
+        this.proxy().createDatabase(maps, function(err) {
             if (err) {
                 defer.reject(err);
                 return;
@@ -71,7 +64,7 @@ var DbFactory = (function() {
     CreateFactory.prototype.query = function(key, filters) {
         var defer = SimplePromise.defer();
 
-        this.getProxy().query(key, filters, function(err, records) {
+        this.proxy().query(key, filters, function(err, records) {
             if (err) {
                 defer.reject(err);
                 return;
@@ -85,7 +78,7 @@ var DbFactory = (function() {
     CreateFactory.prototype.groupBy = function(key, options, groups, filters) {
         var defer = SimplePromise.defer();
         
-        this.getProxy().groupBy(key, options, groups, filters, function(err, records) {
+        this.proxy().groupBy(key, options, groups, filters, function(err, records) {
             if (err) {
                 defer.reject(err);
                 return;
@@ -98,7 +91,7 @@ var DbFactory = (function() {
     
     CreateFactory.prototype.createDataSet = function(table, genIdFn) {
         var fn = genIdFn || IdGenerators.TIMESTAMP;
-        return new DataSet(this.getProxy(), table, fn, this.getSynchronizer());
+        return new DataSet(this.proxy(), table, fn, this.synchronizer());
     };
 
     return CreateFactory;

@@ -6,14 +6,20 @@
 var SimpleDataSet = (function() {
 	'use strict';
 	
-	function CreateDataSet() {
+	function CreateDataSet(table) {
+        EventEmitter.apply(this);
+
+		var _table = table || 'tableName';
 		this._inserteds = [];
 		this._updateds = [];
 		this._deleteds = [];
 		this._history = [];
-		this._event = 'event';
 		this.data = new ArrayMap();
+		
+		this.table = function() { return _table; };
 	}
+
+	CreateDataSet.prototype = Object.create(EventEmitter.prototype);
 
 	CreateDataSet.prototype._cleanCache = function() {
 		this._inserteds.length = 0;
@@ -39,7 +45,7 @@ var SimpleDataSet = (function() {
 			record.notifyMaster();
 		}
 
-		EventEmitter.emit(this._event, {op: operation, record: record});
+		this.emit(this.table(), {event: operation, data: record});
 	};
 
 	CreateDataSet.prototype.insert = function(record) {
@@ -127,7 +133,7 @@ var SimpleDataSet = (function() {
 	CreateDataSet.prototype.clear = function() {
 		this.data.length = 0;
 		this._cleanCache();
-		EventEmitter.emit(this._event, null);
+		this.emit(this.table(), {event: 'clear', data: []});
 		return this;
 	};
 	
@@ -158,7 +164,7 @@ var SimpleDataSet = (function() {
 			}
 		}
 		
-		EventEmitter.emit(this._event, {op: 'cancel', records: this._history});
+		this.emit(this.table(), {event: 'cancel', data: this._history});
 		this._history.length = 0;
 	};
 	
@@ -178,13 +184,8 @@ var SimpleDataSet = (function() {
 		this.data.forEach(fn);
 	};
 	
-	CreateDataSet.prototype.event = function(name) {
-		this._event = name;
-		return this;
-	};
-
 	CreateDataSet.prototype.subscribe = function(fn) {
-		EventEmitter.on(this._event, fn);
+		this.on(this.table(), fn);
 		return this;
 	};
 	
