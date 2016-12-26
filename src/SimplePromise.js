@@ -242,4 +242,4 @@ var SimplePromise = (function() {
 		isPromise: isPromise,
 		when: when
 	};
-});
+})();

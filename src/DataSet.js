@@ -7,7 +7,7 @@ var DataSet = (function() {
 	'use strict';
 
 	function CreateDataSet(proxy, table, genIdFn, synchronizer) {
-		SimpleDataSet.apply(this, table);
+		SimpleDataSet.apply(this, [table]);
 
 		this._opts = {};
 		this._eof = true;
