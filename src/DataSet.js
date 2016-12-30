@@ -187,7 +187,7 @@ var DataSet = (function() {
 			cb = callback && typeof callback === "function" ? callback : function() {};
 		
 		if (!sync) {
-			return;
+			return cb();
 		}
 		
 		sync.exec(self.getTable(), function(err, allData, toDelete) {
@@ -203,7 +203,7 @@ var DataSet = (function() {
 			
 			var serverData = new ArrayMap(),
 				localData = new ArrayMap(),
-				toDeleteMap = toDelete.map(function(item) { return item.id }),
+				toDeleteMap = toDelete.map(function(item) { return item.id; }),
 				deleteFn;
 			
 			serverData.putRange(allData);
@@ -226,13 +226,9 @@ var DataSet = (function() {
 			localData.forEach(deleteFn);
 			
 			serverData.forEach(function(item) {
-				if (self.data.indexOfKey('id', item.id) < 0) {
-					self.insert(item);
-				} else {
-					self.update(item);
-				}
+				self.save(item);
 			});
-			
+
 			self.post(cb, true);
 		});
 	}
@@ -240,7 +236,7 @@ var DataSet = (function() {
 	CreateDataSet.prototype.fetch = function(property, callback) {
 		var cb = callback && typeof callback === 'function' ? callback : function() {};
 		
-		if (!this.active) {
+		if (!this.active || !this.data.length) {
 			cb();
 			return this;
 		}
