@@ -162,19 +162,23 @@ var RestProxy = (function() {
 		
 		if (l === 0) return callback();
 		
-        for (; i < l; i++) (function(i) {
-            _save.call(self, "POST", key, records[i], function(xhr) {
+        for (; i < l; i++) {
+            progress(records[i], i);
+        }
+
+        function progress(record, index) {
+            _save.call(self, "POST", key, record, function(xhr) {
                 var created = JSON.parse(xhr.responseText);
 
                 if (self.autoPK && created.id) {
-                    records[i].id = created.id;
+                    records.id = created.id;
                 }
 
-                if (i === l) {
+                if (index === (l - 1)) {
                     callback(null, xhr);
                 }
             }, error);
-        }) (i);
+        }
 
         function error(xhr) {
             callback( new ProxyError(xhr) );
@@ -189,13 +193,15 @@ var RestProxy = (function() {
 		if (l === 0) return callback();
 		
         for (; i < l; i++) {
-            _save.call(self, "PUT", key, records[i], progress, error);
+            progress(records[i], i);
         }
 
-        function progress(xhr) {
-            if (i === l) {
-                callback(null, xhr);
-            }
+        function progress(record, index) {
+            _save.call(self, "PUT", key, record, function(xhr) {
+                if (index === (l - 1)) {
+                    callback(null, xhr);
+                }
+            }, error);
         }
 
         function error(xhr) {
@@ -207,9 +213,8 @@ var RestProxy = (function() {
         var baseurl = this.config.url + "/" + key + "/",
             config = {},
 		    l = records.length,
-			i = 0,
-            url;
-        
+			i = 0;
+
 		if (l === 0) return callback();
 
         if (this.config.headers) {
@@ -217,14 +222,17 @@ var RestProxy = (function() {
         }
         
         for (; i < l; i++) {
-            url = baseurl + records[i].id;
-            _httpRequest(url, "DELETE", config, progress, error);
+            progress(records[i], i);
         }
 
-        function progress(xhr) {
-            if (i === l) {
-                callback(null, xhr);
-            }
+        function progress(record, index) {
+            var url = baseurl + record.id;
+
+            _httpRequest(url, "DELETE", config, function(xhr) {
+                if (index === (l - 1)) {
+                    callback(null, xhr);
+                }
+            }, error);
         }
 
         function error(xhr) {
