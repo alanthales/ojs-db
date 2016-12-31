@@ -390,19 +390,22 @@ var SQLiteProxy = (function() {
 	};
 	
 	CreateProxy.prototype.insert = function(key, records, transaction, callback) {
-		var l = records.length,
+		var self = this,
+			l = records.length,
 			i = 0;
 		
 		if (l === 0) return callback();
 		
 		for (; i < l; i++) {
-			_save.call(this, key, records[i], transaction, _insert, progress);
+			progress(records[i], i);
 		}
 
-		function progress() {
-			if (i === l) {
-				callback();
-			}
+		function progress(record, index) {
+			_save.call(self, key, record, transaction, _insert, function() {
+				if (index === (l - 1)) {
+					callback();
+				}
+			});
 		}
 	};
 
@@ -439,19 +442,22 @@ var SQLiteProxy = (function() {
 	};
 	
 	CreateProxy.prototype.update = function(key, records, transaction, callback) {
-		var l = records.length,
+		var self = this,
+			l = records.length,
 			i = 0;
 		
 		if (l === 0) return callback();
 		
 		for (; i < l; i++) {
-			_save.call(this, key, records[i], transaction, _update, progress);
+			progress(records[i], i);
 		}
 
-		function progress() {
-			if (i === l) {
-				callback();
-			}
+		function progress(record, index) {
+			_save.call(self, key, record, transaction, _update, function() {
+				if (index === (l - 1)) {
+					callback();
+				}
+			});
 		}
 	};
 
@@ -484,19 +490,22 @@ var SQLiteProxy = (function() {
 	};
 	
 	CreateProxy.prototype.delete = function(key, records, transaction, callback) {
-		var l = records.length,
+		var self = this,
+			l = records.length,
 			i = 0;
 		
 		if (l === 0) return callback();
 		
 		for (; i < l; i++) {
-			_delete.call(this, key, records[i], transaction, progress);
+			progress(records[i], i);
 		}
 
-		function progress() {
-			if (i === l) {
-				callback();
-			}
+		function progress(record, index) {
+			_delete.call(self, key, record, transaction, function() {
+				if (index === (l - 1)) {
+					callback();
+				}
+			});
 		}
 	};
 

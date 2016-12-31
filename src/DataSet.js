@@ -264,7 +264,13 @@ var DataSet = (function() {
 			throw "Invalid operation on closed dataset";
 		}
 
-		var defer = SimplePromise.defer();
+		var defer = SimplePromise.defer(),
+			self = this;
+
+		if (!this.count()) {
+			defer.resolve(self);
+			return defer;
+		}
 
 		this.proxy().fetch(this.table(), this, property, function(err) {
 			if (err) {

@@ -1,5 +1,5 @@
 ## ojs-db
-A reactive framework to persist data in browser, mobile phone, cloud or anywhere. You define where to write the data through proxies, develop offline first apps and more. **100% JavaScript, no binary dependency**. Simple API and easy to use.
+A reactive framework to persist data in browser, mobile phone, cloud or anywhere. You can define where to write the data through proxies, develop offline first app's and more. **100% JavaScript, no binary dependency**. Simple API and easy to use.
 
 ## Installation
 The installation is simple, you can download and linking js files directily in your page:
@@ -114,7 +114,8 @@ products.limit(50).open(); // open and get the firsts 50 records.
 
 clients
   .sort({ name: 'asc', age: 'desc' })
-  .open(); // open and gets the records sorted by name and age of high to low
+  .open()
+  .then(); // open and gets the records sorted by name and age of high to low
 ```
 
 ### Saving records
@@ -133,7 +134,7 @@ The `save` method is used both to insert and to update a record. If you only cal
 
 ```javascript
 products.save(p); // memory only.
-products.post(); // persist data.
+products.post().then(); // persist data.
 ```
 
 ### Removing records
@@ -141,7 +142,7 @@ products.post(); // persist data.
 
 ```javascript
 persons.remove(record); // memory only.
-persons.post(); // persist data.
+persons.post().then(); // persist data.
 ```
 
 ### Filtering in memory records
