@@ -1,3 +1,7 @@
+/*
+    Event Emitter Class
+    Autor: Alan Thales, 12/2016
+*/
 var EventEmitter = (function() {
     'use strict';
 

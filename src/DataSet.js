@@ -17,11 +17,6 @@ var DataSet = (function() {
 
 		this.proxy = function() { return proxy; };
 		this.synchronizer = function() { return synchronizer; };
-
-		var self = this;
-		self.proxy().on(table, function(args) {
-			self.emit(table, {event: 'proxy', data: args});
-		});
 	}
 
 	CreateDataSet.prototype = Object.create(SimpleDataSet.prototype);
