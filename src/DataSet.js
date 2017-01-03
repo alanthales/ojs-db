@@ -91,7 +91,7 @@ var DataSet = (function() {
 			throw "You must set 'limit' to use this method";
 		}
 
-		_pages[this.table()] = ++_pages[this.table()] || 0;
+		_pages[this.table()] = ++_pages[this.table()] || 1;
 
 		var self = this,
 			skip = _pages[self.table()] * self._opts.limit,
