@@ -6,6 +6,8 @@
 var DataSet = (function() {
 	'use strict';
 
+	var _pages = {};
+
 	function CreateDataSet(proxy, table, genIdFn, synchronizer) {
 		var _proxy = proxy,
 			_table = table,
@@ -65,8 +67,11 @@ var DataSet = (function() {
 	}
 	
 	CreateDataSet.prototype.next = function(callback) {
+		_pages[this.getTable()] = ++_pages[this.getTable()] || 1;
+
 		var self = this,
-			opts = { key: self.getTable(), limit: self.limit, sort: self.sort, params: self.params, skip: self.limit },
+			skip = _pages[self.getTable()] * self.limit,
+			opts = { key: self.getTable(), limit: self.limit, sort: self.sort, params: self.params, skip: skip },
 			cb = callback && typeof callback === "function" ? callback : function() {};
 
 		if (self.eof) {
