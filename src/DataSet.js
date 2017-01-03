@@ -6,6 +6,8 @@
 var DataSet = (function() {
 	'use strict';
 
+	var _pages = {};
+
 	function CreateDataSet(proxy, table, genIdFn, synchronizer) {
 		SimpleDataSet.apply(this, [table]);
 
@@ -13,6 +15,7 @@ var DataSet = (function() {
 		this._eof = true;
 		this._active = false;
 		this._reOpenOnRefresh = false;
+		this._page = 0;
 		this.genId = genIdFn;
 
 		this.proxy = function() { return proxy; };
@@ -88,8 +91,11 @@ var DataSet = (function() {
 			throw "You must set 'limit' to use this method";
 		}
 
+		_pages[this.table()] = ++_pages[this.table()] || 0;
+
 		var self = this,
-			opts = { key: self.table(), skip: self._opts.limit },
+			skip = _pages[self.table()] * self._opts.limit,
+			opts = { key: self.table(), skip: skip },
 			defer = SimplePromise.defer();
 
 		if (self._eof) {
