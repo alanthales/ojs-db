@@ -84,7 +84,7 @@ var DataSet = (function() {
 			throw "Invalid operation on closed dataset";
 		}
 
-		if (this._opts.limit || isNaN(this._opts.limit)) {
+		if (!this._opts.limit || isNaN(this._opts.limit)) {
 			throw "You must set 'limit' to use this method";
 		}
 
