@@ -15,7 +15,6 @@ var DataSet = (function() {
 		this._eof = true;
 		this._active = false;
 		this._reOpenOnRefresh = false;
-		this._page = 0;
 		this.genId = genIdFn;
 
 		this.proxy = function() { return proxy; };
@@ -51,7 +50,7 @@ var DataSet = (function() {
 		self.proxy().getRecords(opts, function(err, records) {
 			self.data.putRange(records, true);
 			self._active = err ? false : true;
-			self._eof = records.length < self._opts.limit;
+			self._eof = records && records.length < (self._opts.limit || 30);
 			cb(err, records);
 			if (!err) {
 				self.emit(self.table(), {event: 'get', data: records});
@@ -88,7 +87,7 @@ var DataSet = (function() {
 		}
 
 		if (!this._opts.limit || isNaN(this._opts.limit)) {
-			throw "You must set 'limit' to use this method";
+			this._opts.limit = 30;
 		}
 
 		_pages[this.table()] = ++_pages[this.table()] || 1;
@@ -98,7 +97,7 @@ var DataSet = (function() {
 			opts = { key: self.table(), skip: skip },
 			defer = SimplePromise.defer();
 
-		if (self._eof) {
+		if (self.eof()) {
 			defer.resolve(self);
 			return defer;
 		}

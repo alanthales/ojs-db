@@ -130,10 +130,10 @@ var SimpleDataSet = (function() {
 		return self;
 	};
 	
-	CreateDataSet.prototype.clear = function(notNotify) {
+	CreateDataSet.prototype.clear = function(mustNotify) {
 		this.data.length = 0;
 		this._cleanCache();
-		if (!notNotify) {
+		if (mustNotify) {
 			this.emit(this.table(), {event: 'clear', data: []});
 		}
 		return this;
