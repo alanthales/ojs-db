@@ -8,14 +8,15 @@ var DataSet = (function() {
 
 	var _pages = {};
 
-	function CreateDataSet(proxy, table, genIdFn, synchronizer) {
+	function CreateDataSet(table, proxy, synchronizer) {
 		SimpleDataSet.apply(this, [table]);
+
+		_pages[table] = 0;
 
 		this._opts = {};
 		this._eof = true;
 		this._active = false;
 		this._reOpenOnRefresh = false;
-		this.genId = genIdFn;
 
 		this.proxy = function() { return proxy; };
 		this.synchronizer = function() { return synchronizer; };
@@ -90,7 +91,7 @@ var DataSet = (function() {
 			this._opts.limit = 30;
 		}
 
-		_pages[this.table()] = ++_pages[this.table()] || 1;
+		_pages[this.table()] = ++_pages[this.table()];
 
 		var self = this,
 			skip = _pages[self.table()] * self._opts.limit,
@@ -117,6 +118,7 @@ var DataSet = (function() {
 	
 	CreateDataSet.prototype.close = function() {
 		SimpleDataSet.prototype.clear.apply(this, arguments);
+		_pages[this.table()] = 0;
 		this._active = false;
 		return this;
 	};
@@ -158,6 +160,18 @@ var DataSet = (function() {
 		SimpleDataSet.prototype.delete.apply(this, arguments);
 	};
 
+	var _filterOp = function(changes, operation) {
+		var results = [];
+
+		changes.forEach(function(item) {
+			if (item.op === operation) {
+				results.push(item.record);
+			}
+		});
+
+		return results;
+	};
+
 	CreateDataSet.prototype.post = function(ignoreSync) {
 		if (!this._active) {
 			throw "Invalid operation on closed dataset";
@@ -165,16 +179,19 @@ var DataSet = (function() {
 
 		var self = this,
 			sync = this.synchronizer(),
-			defer = SimplePromise.defer();
+			defer = SimplePromise.defer(),
+			toInsert, toUpdate, toDelete;
 
-		if (!self._inserteds.length && !self._updateds.length && !self._deleteds.length) {
+		if (!self._history.length) {
 			defer.resolve(true);
 			return defer;
 		}
 		
-		self.proxy().commit(
-			self.table(), self._inserteds, self._updateds, self._deleteds, done
-		);
+		toInsert = _filterOp(self._history, 'insert');
+		toUpdate = _filterOp(self._history, 'update');
+		toDelete = _filterOp(self._history, 'delete');
+		
+		self.proxy().commit(self.table(), toInsert, toUpdate, toDelete, done);
 
 		function done(err) {
 			if (err) {
@@ -184,7 +201,7 @@ var DataSet = (function() {
 			}
 			
 			if (sync && !ignoreSync) {
-				sync.writeData(self.table(), self._inserteds, self._updateds, self._deleteds);
+				sync.writeData(self.table(), toInsert, toUpdate, toDelete);
 			}
 			
 			self.refresh().then(

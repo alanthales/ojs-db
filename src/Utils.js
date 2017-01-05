@@ -63,7 +63,11 @@ var OjsUtils = (function() {
 	};
 	
 	return {
-		uid: function(len) {
+		newId: function() {
+			return performance && performance.now ? performance.now() : (new Date()).getTime();
+		},
+
+		uuid: function(len) {
 			return byteArrayToBase64(randomBytes(Math.ceil(Math.max(8, len * 2)))).replace(/[+\/]/g, "").slice(0, len);
 		},
 		

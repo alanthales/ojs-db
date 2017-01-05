@@ -1,19 +1,7 @@
 /*
-	Id Genrators for dataset records
-	Alan Thales, 06/2016
-	Requires: Utils.js
-*/
-var IdGenerators = (function() {
-	return {
-		TIMESTAMP: function() { return (new Date()).getTime(); },
-		UUID: OjsUtils.uid
-	};
-})();
-
-/*
 	Database Factory Utility Class
 	Alan Thales, 09/2015
-	Requires: LocalStorageProxy.js, SQLiteProxy.js, RestProxy.js, DataSet.js, SimplePromise.js
+	Requires: DataSet.js, SimplePromise.js, LocalStorageProxy.js, SQLiteProxy.js, RestProxy.js
 */
 var DbFactory = (function() {
 	'use strict';
@@ -87,9 +75,9 @@ var DbFactory = (function() {
 		return defer;
 	};
 	
-	CreateFactory.prototype.createDataSet = function(table, genIdFn) {
-		var fn = genIdFn || IdGenerators.TIMESTAMP;
-		return new DataSet(this.proxy(), table, fn, this.synchronizer());
+	CreateFactory.prototype.createDataSet = function(table) {
+		// var fn = genIdFn || IdGenerators.TIMESTAMP;
+		return new DataSet(table, this.proxy(), this.synchronizer());
 	};
 
 	var _save = function(key, toInsert, toUpdate, toDelete) {
