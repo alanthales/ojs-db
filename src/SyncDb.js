@@ -61,7 +61,7 @@ var SyncDb = (function() {
         }
     };
     
-    CreateSync.prototype.getNews = function(key, callback) {
+    CreateSync.prototype.getData = function(key, callback) {
         if (typeof callback === 'function') {
             callback( null, [], [] );
         }
@@ -82,7 +82,7 @@ var SyncDb = (function() {
                 return cb(err);
             }
             self.cleanData(key);
-            self.getNews(key, cb);
+            self.getData(key, cb);
         }
     };
     

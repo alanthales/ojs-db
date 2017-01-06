@@ -99,7 +99,7 @@ var SQLiteProxy = (function() {
 			value = typeof record[key] === undefined ? null : record[key];
 
 		if (fdmap.hasOne && record instanceof ChildRecord) {
-			value = record.getRecMaster().id;
+			value = record.master().id;
 		}
 		
 		return value;
@@ -535,7 +535,7 @@ var SQLiteProxy = (function() {
 		}
 	};
 	
-	var _fetch = function(key, master, record, property, callback) {
+	var _fetch = function(key, record, property, callback) {
 		var opts = { params: {} },
 			fdmap = _maps[key][property],
 			i, l, child;
@@ -549,12 +549,12 @@ var SQLiteProxy = (function() {
 					return callback(err);
 				}
 				
-				record[property] = new SimpleDataSet();
+				record[property] = new SimpleDataSet(key);
 				
 				i = 0; l = results.length;
 				
 				for (; i < l; i++) {
-					child = new ChildRecord(master, record);
+					child = new ChildRecord(record);
 					OjsUtils.cloneProperties(results[i], child);
 					record[property].data.push(child);
 				}
@@ -569,22 +569,23 @@ var SQLiteProxy = (function() {
 	CreateProxy.prototype.fetch = function(key, dataset, property, callback) {
 		var cb = typeof callback === "function" ? callback : function() {},
 			total = dataset.data.length,
+			self = this,
 			i = 0;
 		
 		if (total === 0) {
-			cb();
-			return;
+			return cb();
 		}
 		
 		for (; i < total; i++) {
-			_fetch.call(this, key, dataset, dataset.data[i], property, progress);
+			progress(dataset.data[i], i);
 		}
 
-		function progress() {
-			total--;
-			if (total === 0) {
-				cb();
-			}
+		function progress(record, index) {
+			_fetch.call(self, key, record, property, function(err) {
+				if (index === (total - 1)) {
+					cb(err);
+				}
+			});
 		}
 	};
 	

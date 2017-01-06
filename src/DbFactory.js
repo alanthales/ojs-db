@@ -1,4 +1,14 @@
 /*
+	Data base events
+	Alan Thales, 01/2017
+	Require: EventEmitter.js
+*/
+var DbEvents = (function() {
+	var emitter = new EventEmitter();
+	return emitter;
+})();
+
+/*
 	Database Factory Utility Class
 	Alan Thales, 09/2015
 	Requires: DataSet.js, SimplePromise.js, LocalStorageProxy.js, SQLiteProxy.js, RestProxy.js
@@ -9,7 +19,7 @@ var DbFactory = (function() {
 	function CreateFactory(proxyType, opts, synchronizer) {
 		var _synchronizer = synchronizer,
 			_proxy;
-		
+
 		this.proxy = function() { return _proxy; };
 		this.synchronizer = function() { return _synchronizer; };
 		
@@ -75,7 +85,7 @@ var DbFactory = (function() {
 		return defer;
 	};
 	
-	CreateFactory.prototype.createDataSet = function(table) {
+	CreateFactory.prototype.dataset = function(table) {
 		// var fn = genIdFn || IdGenerators.TIMESTAMP;
 		return new DataSet(table, this.proxy(), this.synchronizer());
 	};
@@ -95,15 +105,18 @@ var DbFactory = (function() {
 	};
 
 	CreateFactory.prototype.insert = function(key, toInsert) {
-		return _save.call(this, key, toInsert, [], []);
+		var elements = toInsert instanceof Array ? toInsert : [toInsert];
+		return _save.call(this, key, elements, [], []);
 	};
 
 	CreateFactory.prototype.update = function(key, toUpdate) {
-		return _save.call(this, key, [], toUpdate, []);
+		var elements = toUpdate instanceof Array ? toUpdate : [toUpdate];
+		return _save.call(this, key, [], elements, []);
 	};
 
 	CreateFactory.prototype.delete = function(key, toDelete) {
-		return _save.call(this, key, [], [], toDelete);
+		var elements = toDelete instanceof Array ? toDelete : [toDelete];
+		return _save.call(this, key, [], [], elements);
 	};
 
 	return CreateFactory;

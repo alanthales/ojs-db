@@ -55,7 +55,7 @@ var SimpleDataSet = (function() {
 		this.emit(this.table(), {event: operation, data: record});
 
 		if (record instanceof ChildRecord) {
-			record.notifyMaster();
+			DbEvents.emit(this.table(), {event: 'child.change', data: record});
 		}
 	};
 

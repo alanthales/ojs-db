@@ -5,28 +5,11 @@
 var ChildRecord = (function() {
     'use strict';
     
-    function CreateRecord(dtsMaster, recMaster) {
-        var _dtsMaster = dtsMaster,
-            _recMaster = recMaster;
-        
-        this.getDtsMaster = function() {
-            return _dtsMaster;
-        };
-        
-        this.getRecMaster = function() {
-            return _recMaster;
-        };
-        
-        this.setRecMaster = function(recMaster) {
-            if (recMaster) {
-                _recMaster = recMaster;
-            }
+    function CreateRecord(record) {
+        this.master = function() {
+            return record;
         };
     }
-    
-    CreateRecord.prototype.notifyMaster = function() {
-        this.getDtsMaster().save(this.getRecMaster());
-    };
     
     return CreateRecord;
 })();

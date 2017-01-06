@@ -1,7 +1,7 @@
 /*
 	DataSet Class
 	Autor: Alan Thales, 09/2015
-	Requires: SimpleDataSet.js, SimplePromise.js
+	Requires: SimpleDataSet.js, SimplePromise.js, DbEvents.js
 */
 var DataSet = (function() {
 	'use strict';
@@ -11,6 +11,7 @@ var DataSet = (function() {
 	function CreateDataSet(table, proxy, synchronizer) {
 		SimpleDataSet.apply(this, [table]);
 
+		var self = this;
 		_pages[table] = 0;
 
 		this._opts = {};
@@ -20,6 +21,14 @@ var DataSet = (function() {
 
 		this.proxy = function() { return proxy; };
 		this.synchronizer = function() { return synchronizer; };
+
+		DbEvents.on(table, function(args) {
+			if (args.event === 'child.change') {
+				self.save(args.data.master());
+			} else {
+				self.emit(table, args);
+			}
+		});
 	}
 
 	CreateDataSet.prototype = Object.create(SimpleDataSet.prototype);

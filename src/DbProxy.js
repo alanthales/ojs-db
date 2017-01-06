@@ -13,15 +13,10 @@ var DbProxies = (function() {
 /*
 	DbProxy Parent Class
 	Autor: Alan Thales, 09/2015
-	Require: EventEmitter.js
 */
 var DbProxy = (function() {
-	function CreateProxy() {
-		EventEmitter.apply(this);
-	}
+	function CreateProxy() {}
 	
-	CreateProxy.prototype = Object.create(EventEmitter.prototype);
-
 	CreateProxy.prototype.createDatabase = function(maps, callback) {};
 	
 	CreateProxy.prototype.getRecords = function(options, callback) {};
