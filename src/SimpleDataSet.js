@@ -55,7 +55,8 @@ var SimpleDataSet = (function() {
 		this.emit(this.table(), {event: operation, data: record});
 
 		if (record instanceof ChildRecord) {
-			DbEvents.emit(this.table(), {event: 'child.change', data: record});
+			var table = [this.table(), '.child'].join('');
+			DbEvents.emit(table, {event: operation, data: record});
 		}
 	};
 

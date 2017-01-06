@@ -328,15 +328,19 @@ var ArrayMap = function() {
             op: operation,
             record: OjsUtils.cloneObject(record)
         };
-        return (exists = this._history.some(function(item, index) {
+        if (exists = this._history.some(function(item, index) {
             return idx = index, item.op === operation && item.record.id === record.id;
-        })) ? void this._history.splice(idx, 1, change) : (this._history.push(change), this.emit(this.table(), {
+        })) return void this._history.splice(idx, 1, change);
+        if (this._history.push(change), this.emit(this.table(), {
             event: operation,
             data: record
-        }), void (record instanceof ChildRecord && DbEvents.emit(this.table(), {
-            event: "child.change",
-            data: record
-        })));
+        }), record instanceof ChildRecord) {
+            var table = [ this.table(), ".child" ].join("");
+            DbEvents.emit(table, {
+                event: operation,
+                data: record
+            });
+        }
     };
     return CreateDataSet.prototype.insert = function(record) {
         record.id || (record.id = OjsUtils.newId());
@@ -399,19 +403,23 @@ var ArrayMap = function() {
 }(), DataSet = function() {
     "use strict";
     function CreateDataSet(table, proxy, synchronizer) {
-        SimpleDataSet.apply(this, [ table ]);
-        var self = this;
-        _pages[table] = 0, this._opts = {}, this._eof = !0, this._active = !1, this._reOpenOnRefresh = !1, 
-        this.proxy = function() {
+        SimpleDataSet.apply(this, [ table ]), _pages[table] = 0, this._opts = {}, this._eof = !0, 
+        this._active = !1, this._reOpenOnRefresh = !1, this.proxy = function() {
             return proxy;
         }, this.synchronizer = function() {
             return synchronizer;
-        }, DbEvents.on(table, function(args) {
-            "child.change" === args.event ? self.save(args.data.master()) : self.emit(table, args);
+        };
+        var childTable = [ table, ".child" ].join(""), self = this;
+        DbEvents.on(childTable, function(args) {
+            self.save(args.data.master());
         });
     }
     var _pages = {};
-    CreateDataSet.prototype = Object.create(SimpleDataSet.prototype), CreateDataSet.prototype.sort = function(order) {
+    CreateDataSet.prototype = Object.create(SimpleDataSet.prototype), CreateDataSet.prototype.emit = function(key, args) {
+        DbEvents.emit(key, args);
+    }, CreateDataSet.prototype.subscribe = function(fn) {
+        return DbEvents.on(this.table(), fn), this;
+    }, CreateDataSet.prototype.sort = function(order) {
         return this._opts.sort = order, this;
     }, CreateDataSet.prototype.limit = function(value) {
         return this._opts.limit = value, this;
@@ -880,11 +888,11 @@ var ArrayMap = function() {
         var p, opts = "object" == typeof options ? options : {
             key: options
         }, url = this.config.url + "/" + opts.key + "?", table = new ArrayMap();
-        if (opts.params) for (p in opts.params) url += p + "=" + opts.params[p] + "&";
+        if (opts.params) for (p in opts.params) url += p + "=" + JSON.stringify(opts.params[p]) + "&";
         if (opts.sort) {
             url += "sort=";
             for (p in opts.sort) {
-                url += p + " " + opts.sort[p] + "&";
+                url += p + " " + JSON.stringify(opts.sort[p]) + "&";
                 break;
             }
         }

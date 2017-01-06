@@ -11,7 +11,6 @@ var DataSet = (function() {
 	function CreateDataSet(table, proxy, synchronizer) {
 		SimpleDataSet.apply(this, [table]);
 
-		var self = this;
 		_pages[table] = 0;
 
 		this._opts = {};
@@ -22,17 +21,25 @@ var DataSet = (function() {
 		this.proxy = function() { return proxy; };
 		this.synchronizer = function() { return synchronizer; };
 
-		DbEvents.on(table, function(args) {
-			if (args.event === 'child.change') {
-				self.save(args.data.master());
-			} else {
-				self.emit(table, args);
-			}
+		var childTable = [table, '.child'].join(''),
+			self = this;
+
+		DbEvents.on(childTable, function(args) {
+			self.save(args.data.master());
 		});
 	}
 
 	CreateDataSet.prototype = Object.create(SimpleDataSet.prototype);
 	
+	CreateDataSet.prototype.emit = function(key, args) {
+		DbEvents.emit(key, args);
+	};
+
+	CreateDataSet.prototype.subscribe = function(fn) {
+		DbEvents.on(this.table(), fn);
+		return this;
+	};
+
 	CreateDataSet.prototype.sort = function(order) {
 		this._opts.sort = order;
 		return this;
