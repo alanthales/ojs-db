@@ -64,7 +64,11 @@ var OjsUtils = (function() {
 	
 	return {
 		newId: function() {
-			return performance && performance.now ? performance.now() : (new Date()).getTime();
+			var now = (new Date()).getTime();
+			if (performance && performance.now) {
+				now = parseInt(performance.now().toString().replace('.', ''));
+			}
+			return now;
 		},
 
 		uuid: function(len) {

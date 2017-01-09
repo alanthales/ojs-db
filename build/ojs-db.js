@@ -185,7 +185,9 @@ var ArrayMap = function() {
     };
     return {
         newId: function() {
-            return performance && performance.now ? performance.now() : new Date().getTime();
+            var now = new Date().getTime();
+            return performance && performance.now && (now = parseInt(performance.now().toString().replace(".", ""))), 
+            now;
         },
         uuid: function(len) {
             return byteArrayToBase64(randomBytes(Math.ceil(Math.max(8, 2 * len)))).replace(/[+\/]/g, "").slice(0, len);
@@ -888,11 +890,11 @@ var ArrayMap = function() {
         var p, opts = "object" == typeof options ? options : {
             key: options
         }, url = this.config.url + "/" + opts.key + "?", table = new ArrayMap();
-        if (opts.params) for (p in opts.params) url += p + "=" + JSON.stringify(opts.params[p]) + "&";
+        if (opts.params) for (p in opts.params) url += p + "=" + ("object" == typeof opts.params[p] ? JSON.stringify(opts.params[p]) : opts.params[p]) + "&";
         if (opts.sort) {
             url += "sort=";
             for (p in opts.sort) {
-                url += p + " " + JSON.stringify(opts.sort[p]) + "&";
+                url += p + (opts.sort[p] ? " " + opts.sort[p] : "") + "&";
                 break;
             }
         }

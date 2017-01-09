@@ -46,14 +46,14 @@ var RestProxy = (function() {
         
         if (opts.params) {
             for (p in opts.params) {
-                url += p + "=" + JSON.stringify(opts.params[p]) + "&";
+                url += p + "=" + (typeof opts.params[p] === "object" ? JSON.stringify(opts.params[p]) : opts.params[p]) + "&";
             }
         }
         
         if (opts.sort) {
             url += "sort=";
             for (p in opts.sort) {
-                url += p + " " + JSON.stringify(opts.sort[p]) + "&";
+                url += p + (opts.sort[p] ? " " + opts.sort[p] : "") + "&";
                 break;
             }
         }
