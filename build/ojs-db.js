@@ -970,10 +970,10 @@ var ArrayMap = function() {
         for (this.config.headers && (config.headers = this.config.headers); l > i; i++) progress(records[i], i);
     }, CreateProxy.prototype.commit = function(key, toInsert, toUpdate, toDelete, callback) {
         function updateFn(err) {
-            return err ? cb(err) : void self.update(key, toUpdate[i], deleteFn);
+            return err ? cb(err) : void self.update(key, toUpdate, deleteFn);
         }
         function deleteFn(err) {
-            return err ? cb(err) : void self["delete"](key, toDelete[i], cb);
+            return err ? cb(err) : void self["delete"](key, toDelete, cb);
         }
         var self = this, total = toInsert.length + toUpdate.length + toDelete.length, cb = callback && "function" == typeof callback ? callback : function() {};
         return 0 === total ? cb() : void self.insert(key, toInsert, updateFn);
