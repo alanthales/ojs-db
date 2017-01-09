@@ -255,14 +255,14 @@ var RestProxy = (function() {
             if (err) {
                 return cb(err);
             }
-            self.update(key, toUpdate[i], deleteFn);
+            self.update(key, toUpdate, deleteFn);
         }
 
         function deleteFn(err) {
             if (err) {
                 return cb(err);
             }
-            self.delete(key, toDelete[i], cb);
+            self.delete(key, toDelete, cb);
         }
     };
     
