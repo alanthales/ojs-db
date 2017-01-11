@@ -70,7 +70,7 @@ var DataSet = (function() {
 			self._eof = records && records.length < (self._opts.limit || 30);
 			cb(err, records);
 			if (!err) {
-				self.emit(self.table(), {event: 'get', data: records});
+				self.emit(self.table(), {event: 'read', data: records});
 			}
 		});
 	};
