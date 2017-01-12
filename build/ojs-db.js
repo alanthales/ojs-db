@@ -338,7 +338,7 @@ var ArrayMap = function() {
             data: record
         }), record instanceof ChildRecord) {
             var table = [ this.table(), ".child" ].join("");
-            DbEvents.emit(table, {
+            ojsEvents.emit(table, {
                 event: operation,
                 data: record
             });
@@ -412,15 +412,15 @@ var ArrayMap = function() {
             return synchronizer;
         };
         var childTable = [ table, ".child" ].join(""), self = this;
-        DbEvents.on(childTable, function(args) {
+        ojsEvents.on(childTable, function(args) {
             self.save(args.data.master());
         });
     }
     var _pages = {};
     CreateDataSet.prototype = Object.create(SimpleDataSet.prototype), CreateDataSet.prototype.emit = function(key, args) {
-        DbEvents.emit(key, args);
+        ojsEvents.emit(key, args);
     }, CreateDataSet.prototype.subscribe = function(fn) {
-        return DbEvents.on(this.table(), fn), this;
+        return ojsEvents.on(this.table(), fn), this;
     }, CreateDataSet.prototype.sort = function(order) {
         return this._opts.sort = order, this;
     }, CreateDataSet.prototype.limit = function(value) {
@@ -435,7 +435,7 @@ var ArrayMap = function() {
         self.proxy().getRecords(opts, function(err, records) {
             self.data.putRange(records, !0), self._active = err ? !1 : !0, self._eof = records && records.length < (self._opts.limit || 30), 
             cb(err, records), err || self.emit(self.table(), {
-                event: "get",
+                event: "read",
                 data: records
             });
         });
@@ -531,7 +531,7 @@ var ArrayMap = function() {
     }, CreateDataSet.prototype.active = function() {
         return this._active;
     }, CreateDataSet;
-}(), DbProxies = function() {
+}(), ojsProxies = function() {
     return {
         LOCALSTORAGE: 0,
         SQLITE: 1,
@@ -1014,10 +1014,10 @@ var ArrayMap = function() {
         var self = this, values = _getData(key), cb = callback || function() {};
         self.sendData(key, values[Operations.Insert], values[Operations.Update], values[Operations.Delete], done);
     }, CreateSync;
-}(), DbEvents = function() {
+}(), ojsEvents = function() {
     var emitter = new EventEmitter();
     return emitter;
-}(), DbFactory = function() {
+}(), ojsDb = function() {
     "use strict";
     function CreateFactory(proxyType, opts, synchronizer) {
         var _proxy, _synchronizer = synchronizer;

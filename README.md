@@ -66,33 +66,33 @@ You can use **ojs-db** as an in-memory only database or as a persistent database
 * `SQLiteProxy`: To persist data in browser SQLite or SQLite datase in mobile phones, if using cordova sqlite plugin.
 * `RestProxy`: To persist data in a webservice.
 
-The constructor is used as follows `new DbFactory(proxy, options, synchronizer)` where:
-* `proxy` (required): is a proxy instance, or an enum representing the proxy that will be instantiated (`DbProxies.LOCALSTORAGE`, `DbProxies.SQLITE`, `DbProxies.RESTFUL`).
+The constructor is used as follows `new ojsDb(proxy, options, synchronizer)` where:
+* `proxy` (required): is a proxy instance, or an enum representing the proxy that will be instantiated (`ojsProxies.LOCALSTORAGE`, `ojsProxies.SQLITE`, `ojsProxies.RESTFUL`).
 * `options` (optional): is an object with the settings for the proxy, case use an enum to instantiate.
 * `synchronizer` (optional): is a SyncDb instance to synchronizing local data with cloud or another place.
 
 
 ```javascript
 // Type 1: LocalStorageProxy
-var db = new DbFactory(DbProxies.LOCALSTORAGE);
+var db = new ojsDb(ojsProxies.LOCALSTORAGE);
 
 // Type 2: SQLiteProxy
-var db = new DbFactory(DbProxies.SQLITE, "DatabaseName");
+var db = new ojsDb(ojsProxies.SQLITE, "DatabaseName");
 db.createDatabase(maps);
 
 // Type 3: RestProxy
-var db = new DbFactory(DbProxies.RESTFUL, { url: "http://myserver" });
+var db = new ojsDb(ojsProxies.RESTFUL, { url: "http://myserver" });
 
 // Type 4: Your own proxy
 var proxy = new MyProxy(config)
-  , db = new DbFactory(proxy);
+  , db = new ojsDb(proxy);
 ```
 
 The dataset is the class that search , insert, remove and change records. In general you will have only one factory in the application, but many dataset's. Look:
 
 ```javascript
 // Creating a Factory.
-var db = new DbFactory(DbProxies.LOCALSTORAGE);
+var db = new ojsDb(ojsProxies.LOCALSTORAGE);
 
 // Creating DataSet's.
 var products = db.createDataSet("products")
@@ -158,7 +158,7 @@ var record = persons.getById(3);
 ```
 
 ### Finding records directly from source
-DbFactory class utilize the proxies to access data directly from source. The `query` method, find for multiple records that matching your search, you can select records based on field equality or use comparison operators (`$lt`, `$lte`, `$gt`, `$gte`, `$start`, `$end`, `$contain`, `$in`, `$custom`). See below for the syntax. Note: The `dataset.filter` method works in same way that examples below.
+ojsDb class utilize the proxies to access data directly from source. The `query` method, find for multiple records that matching your search, you can select records based on field equality or use comparison operators (`$lt`, `$lte`, `$gt`, `$gte`, `$start`, `$end`, `$contain`, `$in`, `$custom`). See below for the syntax. Note: The `dataset.filter` method works in same way that examples below.
 
 #### Basic querying
 Basic querying means are searching for records whose fields match the ones you specify. Note: Basic querying works in same way to all proxies.

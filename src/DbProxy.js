@@ -2,7 +2,7 @@
 	Proxy Enums
 	Alan Thales, 09/2015
 */
-var DbProxies = (function() {
+var ojsProxies = (function() {
 	return {
 		LOCALSTORAGE: 0,
 		SQLITE: 1,

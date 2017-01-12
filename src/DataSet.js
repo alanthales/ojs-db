@@ -1,7 +1,7 @@
 /*
 	DataSet Class
 	Autor: Alan Thales, 09/2015
-	Requires: SimpleDataSet.js, SimplePromise.js, DbEvents.js
+	Requires: SimpleDataSet.js, SimplePromise.js, DbFactory.js
 */
 var DataSet = (function() {
 	'use strict';
@@ -24,7 +24,7 @@ var DataSet = (function() {
 		var childTable = [table, '.child'].join(''),
 			self = this;
 
-		DbEvents.on(childTable, function(args) {
+		ojsEvents.on(childTable, function(args) {
 			self.save(args.data.master());
 		});
 	}
@@ -32,11 +32,11 @@ var DataSet = (function() {
 	CreateDataSet.prototype = Object.create(SimpleDataSet.prototype);
 	
 	CreateDataSet.prototype.emit = function(key, args) {
-		DbEvents.emit(key, args);
+		ojsEvents.emit(key, args);
 	};
 
 	CreateDataSet.prototype.subscribe = function(fn) {
-		DbEvents.on(this.table(), fn);
+		ojsEvents.on(this.table(), fn);
 		return this;
 	};
 
