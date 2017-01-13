@@ -1,9 +1,9 @@
 /*
-    SyncDb Abstract Class
+    DbSync Abstract Class
     Autor: Alan Thales, 03/2016
     Requires: ArrayMap.js
 */
-var SyncDb = (function() {
+var DbSync = (function() {
     'use strict';
 
     var Operations = {

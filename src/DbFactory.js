@@ -3,17 +3,18 @@
 	Alan Thales, 01/2017
 	Require: EventEmitter.js
 */
-var ojsEvents = (function() {
+var DbEvents = (function() {
 	var emitter = new EventEmitter();
 	return emitter;
 })();
+
 
 /*
 	Database Factory Main Class
 	Alan Thales, 09/2015
 	Requires: DataSet.js, SimplePromise.js, LocalStorageProxy.js, SQLiteProxy.js, RestProxy.js
 */
-var ojsDb = (function() {
+var DbFactory = (function() {
 	'use strict';
 
 	function CreateFactory(proxyType, opts, synchronizer) {
@@ -121,3 +122,6 @@ var ojsDb = (function() {
 
 	return CreateFactory;
 })();
+
+var ojsEvents = DbEvents;
+var ojsDb = DbFactory;

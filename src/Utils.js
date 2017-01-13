@@ -120,3 +120,5 @@ var OjsUtils = (function() {
 		}
 	};
 })();
+
+var ojsUtils = OjsUtils;

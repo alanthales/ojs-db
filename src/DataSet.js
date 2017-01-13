@@ -24,7 +24,7 @@ var DataSet = (function() {
 		var childTable = [table, '.child'].join(''),
 			self = this;
 
-		ojsEvents.on(childTable, function(args) {
+		DbEvents.on(childTable, function(args) {
 			self.save(args.data.master());
 		});
 	}
@@ -32,11 +32,11 @@ var DataSet = (function() {
 	CreateDataSet.prototype = Object.create(SimpleDataSet.prototype);
 	
 	CreateDataSet.prototype.emit = function(key, args) {
-		ojsEvents.emit(key, args);
+		DbEvents.emit(key, args);
 	};
 
 	CreateDataSet.prototype.subscribe = function(fn) {
-		ojsEvents.on(this.table(), fn);
+		DbEvents.on(this.table(), fn);
 		return this;
 	};
 
