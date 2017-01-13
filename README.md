@@ -67,21 +67,21 @@ You can use **ojs-db** as an in-memory only database or as a persistent database
 * `RestProxy`: To persist data in a webservice.
 
 The constructor is used as follows `new ojsDb(proxy, options, synchronizer)` where:
-* `proxy` (required): is a proxy instance, or an enum representing the proxy that will be instantiated (`ojsProxies.LOCALSTORAGE`, `ojsProxies.SQLITE`, `ojsProxies.RESTFUL`).
+* `proxy` (required): is a proxy instance, or an enum representing the proxy that will be instantiated (`DbProxies.LOCALSTORAGE`, `DbProxies.SQLITE`, `DbProxies.RESTFUL`).
 * `options` (optional): is an object with the settings for the proxy, case use an enum to instantiate.
 * `synchronizer` (optional): is a SyncDb instance to synchronizing local data with cloud or another place.
 
 
 ```javascript
 // Type 1: LocalStorageProxy
-var db = new ojsDb(ojsProxies.LOCALSTORAGE);
+var db = new ojsDb(DbProxies.LOCALSTORAGE);
 
 // Type 2: SQLiteProxy
-var db = new ojsDb(ojsProxies.SQLITE, "DatabaseName");
+var db = new ojsDb(DbProxies.SQLITE, "DatabaseName");
 db.createDatabase(maps);
 
 // Type 3: RestProxy
-var db = new ojsDb(ojsProxies.RESTFUL, { url: "http://myserver" });
+var db = new ojsDb(DbProxies.RESTFUL, { url: "http://myserver" });
 
 // Type 4: Your own proxy
 var proxy = new MyProxy(config)
@@ -92,7 +92,7 @@ The dataset is the class that search , insert, remove and change records. In gen
 
 ```javascript
 // Creating a Factory.
-var db = new ojsDb(ojsProxies.LOCALSTORAGE);
+var db = new ojsDb(DbProxies.LOCALSTORAGE);
 
 // Creating DataSet's.
 var products = db.createDataSet("products")

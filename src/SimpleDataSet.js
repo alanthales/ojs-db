@@ -10,9 +10,6 @@ var SimpleDataSet = (function() {
 		EventEmitter.apply(this);
 
 		var _table = table || 'tableName';
-		// this._inserteds = [];
-		// this._updateds = [];
-		// this._deleteds = [];
 		this._history = [];
 		this.data = new ArrayMap();
 		
@@ -22,9 +19,6 @@ var SimpleDataSet = (function() {
 	CreateDataSet.prototype = Object.create(EventEmitter.prototype);
 
 	CreateDataSet.prototype._cleanCache = function() {
-		// this._inserteds.length = 0;
-		// this._updateds.length = 0;
-		// this._deleteds.length = 0;
 		this._history.length = 0;
 	};
 	
@@ -56,7 +50,7 @@ var SimpleDataSet = (function() {
 
 		if (record instanceof ChildRecord) {
 			var table = [this.table(), '.child'].join('');
-			ojsEvents.emit(table, {event: operation, data: record});
+			DbEvents.emit(table, {event: operation, data: record});
 		}
 	};
 
@@ -68,7 +62,6 @@ var SimpleDataSet = (function() {
 		var index = this.data.indexOfKey('id', record.id);
 		
 		if (index === -1) {
-			// this._inserteds.push(record);
 			this.data.push(record);
 			_afterChange.call(this, 'insert', record);		
 		}
@@ -82,21 +75,10 @@ var SimpleDataSet = (function() {
 		}
 		
 		var index = this.data.indexOfKey('id', record.id);
-			// idxUpd;
 		
 		if (index === -1) {
 			return this;
 		}
-		
-		// idxUpd = this._updateds
-		// 	.map(function(item) { return item.id; })
-		// 	.indexOf(record.id);
-		
-		// if (idxUpd === -1) {
-		// 	this._updateds.push(record);
-		// } else {
-		// 	this._updateds.splice(idxUpd, 1, record);
-		// }
 		
 		_afterChange.call(this, 'update', this.data[index]);		
 		this.data.splice(index, 1, record);
@@ -120,7 +102,6 @@ var SimpleDataSet = (function() {
 		var index = this.data.indexOfKey('id', record.id);
 		
 		if (index >= 0) {
-			// this._deleteds.push(record);
 			_afterChange.call(this, 'delete', this.data[index]);
 			this.data.splice(index, 1);
 		}
@@ -165,15 +146,12 @@ var SimpleDataSet = (function() {
 			switch (item.op) {
 				case 'insert':
 					self.data.splice(index, 1);
-					// self._inserteds.pop();
 					break;
 				case 'update':
 					self.data.splice(index, 1, item.record);
-					// self._updateds.pop();
 					break;
 				case 'delete':
 					self.data.push(item.record);
-					// self._deleteds.pop();
 					break;
 			}
 		}

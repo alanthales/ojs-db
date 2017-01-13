@@ -123,5 +123,4 @@ var DbFactory = (function() {
 	return CreateFactory;
 })();
 
-var ojsEvents = DbEvents;
 var ojsDb = DbFactory;
