@@ -9,17 +9,23 @@ var SQLiteProxy = (function() {
 	var _selectFrom = "SELECT * FROM",
 		_maps = {};
 	
-	function CreateProxy(dbName) {
+	function CreateProxy(opts) {
 		var db = null,
 			eventName = typeof window.cordova !== "undefined" ? "deviceready" : "readystatechange";
 		
+		if (typeof opts === "object") {
+			opts.location = opts.location || "default";
+		} else {
+			opts.name = opts;
+		}
+
 		document.addEventListener(eventName, function() {
 			if (document.readyState == "loading") return;
 
 			if (window.sqlitePlugin) {
-				db = window.sqlitePlugin.openDatabase({name: dbName, location: "default"});
+				db = window.sqlitePlugin.openDatabase(opts);
 			} else {
-				db = window.openDatabase(dbName, "SQLite Database", "1.0", 5*1024*1024);
+				db = window.openDatabase(opts.name, "SQLite Database", "1.0", 5*1024*1024);
 			}
 		});
 		

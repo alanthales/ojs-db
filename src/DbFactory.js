@@ -87,7 +87,6 @@ var DbFactory = (function() {
 	};
 	
 	CreateFactory.prototype.dataset = function(table) {
-		// var fn = genIdFn || IdGenerators.TIMESTAMP;
 		return new DataSet(table, this.proxy(), this.synchronizer());
 	};
 
@@ -118,6 +117,10 @@ var DbFactory = (function() {
 	CreateFactory.prototype.delete = function(key, toDelete) {
 		var elements = toDelete instanceof Array ? toDelete : [toDelete];
 		return _save.call(this, key, [], [], elements);
+	};
+
+	CreateFactory.config = function(proxy, options, synchronizer) {
+		return new CreateFactory(proxy, options, synchronizer);
 	};
 
 	return CreateFactory;
