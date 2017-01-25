@@ -8,7 +8,6 @@ var DbEvents = (function() {
 	return emitter;
 })();
 
-
 /*
 	Database Factory Main Class
 	Alan Thales, 09/2015
@@ -44,7 +43,7 @@ var DbFactory = (function() {
 		}
 	}
 
-	CreateFactory.prototype.createDatabase = function(maps) {
+	CreateFactory.prototype.createDb = function(maps) {
 		var defer = SimplePromise.defer();
 
 		this.proxy().createDatabase(maps, function(err) {
@@ -117,10 +116,6 @@ var DbFactory = (function() {
 	CreateFactory.prototype.delete = function(key, toDelete) {
 		var elements = toDelete instanceof Array ? toDelete : [toDelete];
 		return _save.call(this, key, [], [], elements);
-	};
-
-	CreateFactory.config = function(proxy, options, synchronizer) {
-		return new CreateFactory(proxy, options, synchronizer);
 	};
 
 	return CreateFactory;

@@ -33,8 +33,9 @@ var DbProxy = (function() {
 		
 		if (typeof value === 'string') {
 			test = reISO.exec(value);
-			if (test)
+			if (test) {
 				return new Date(value);
+			}
 		}
 		
 		return value;

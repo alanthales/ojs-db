@@ -583,13 +583,11 @@ var ArrayMap = function() {
     }, CreateProxy;
 }(), SQLiteProxy = function() {
     "use strict";
-    function CreateProxy(dbName) {
+    function CreateProxy(opts) {
         var db = null, eventName = "undefined" != typeof window.cordova ? "deviceready" : "readystatechange";
+        "object" == typeof opts ? opts.location = opts.location || "default" : opts.name = opts, 
         document.addEventListener(eventName, function() {
-            "loading" != document.readyState && (db = window.sqlitePlugin ? window.sqlitePlugin.openDatabase({
-                name: dbName,
-                location: "default"
-            }) : window.openDatabase(dbName, "SQLite Database", "1.0", 5242880));
+            "loading" != document.readyState && (db = window.sqlitePlugin ? window.sqlitePlugin.openDatabase(opts) : window.openDatabase(opts.name, "SQLite Database", "1.0", 5242880));
         }), this.getDb = function() {
             return db;
         }, DbProxy.apply(this, arguments);
@@ -1043,7 +1041,7 @@ var ArrayMap = function() {
             throw "Proxy not implemented";
         }
     }
-    CreateFactory.prototype.createDatabase = function(maps) {
+    CreateFactory.prototype.createDb = function(maps) {
         var defer = SimplePromise.defer();
         return this.proxy().createDatabase(maps, function(err) {
             return err ? void defer.reject(err) : void defer.resolve(!0);
