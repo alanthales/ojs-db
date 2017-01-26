@@ -3,7 +3,7 @@
 	Autor: Alan Thales, 09/2015
 	Requires: SimpleDataSet.js, SimplePromise.js, DbFactory.js
 */
-var DataSet = (function() {
+var DataSet = (function(exports) {
 	'use strict';
 
 	var _pages = {};
@@ -28,6 +28,8 @@ var DataSet = (function() {
 			self.save(args.data.master());
 		});
 	}
+
+	exports.DataSet = CreateDataSet;
 
 	CreateDataSet.prototype = Object.create(SimpleDataSet.prototype);
 	
@@ -325,4 +327,4 @@ var DataSet = (function() {
 	};
 
 	return CreateDataSet;
-})();
+})(this);

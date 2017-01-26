@@ -2,13 +2,15 @@
     Event Emitter Class
     Autor: Alan Thales, 12/2016
 */
-var EventEmitter = (function() {
+var EventEmitter = (function(exports) {
     'use strict';
 
 	function CreateEmitter() {
 		var _topics = {};
 		this.topics = function() { return _topics; };
 	}
+
+	exports.EventEmitter = CreateEmitter;
 
 	CreateEmitter.prototype.on = function(topic, listener) {
 		var topics = this.topics();
@@ -40,4 +42,4 @@ var EventEmitter = (function() {
 	};
 
 	return CreateEmitter;
-})();
+})(this);

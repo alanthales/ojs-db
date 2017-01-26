@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var ArrayMap = function() {
+var ArrayMap = function(exports) {
     "use strict";
     function Collection() {
         var collection = [];
@@ -30,7 +30,7 @@ var ArrayMap = function() {
             this[i] = obj;
         }, collection.putRange = function(arr, tail) {
             var l, i, pos = tail && "boolean" == typeof tail ? this.length : 0;
-            if (arr) for (arr instanceof Array || (arr = [ arr ]), i = 0, l = arr.length; l > i; i++) this.put(arr[i], pos + i);
+            if (arr) for (arr instanceof Array || (arr = [ arr ]), i = 0, l = arr.length; i < l; i++) this.put(arr[i], pos + i);
         }, collection.query = function(filters) {
             var self = this, opts = filters && "object" == typeof filters ? filters : {}, results = new Collection(), queryFn = function(record) {
                 return _recordMatch.call(self, record, opts);
@@ -38,9 +38,9 @@ var ArrayMap = function() {
             return results.putRange(self.filter(fn)), results;
         }, collection.orderBy = function(sorters) {
             var field, opts = sorters && "object" == typeof sorters ? sorters : {}, ascSort = function(fieldA, fieldB) {
-                return "string" == typeof fieldA ? fieldA.localeCompare(fieldB) : (fieldA > fieldB) - (fieldB > fieldA);
+                return "string" == typeof fieldA ? fieldA.localeCompare(fieldB) : (fieldA > fieldB) - (fieldA < fieldB);
             }, descSort = function(fieldA, fieldB) {
-                return "string" == typeof fieldB ? fieldB.localeCompare(fieldA) : (fieldB > fieldA) - (fieldA > fieldB);
+                return "string" == typeof fieldB ? fieldB.localeCompare(fieldA) : (fieldB > fieldA) - (fieldB < fieldA);
             };
             return this.sort(function(a, b) {
                 var result = 0;
@@ -57,7 +57,7 @@ var ArrayMap = function() {
             var group, g, i, self = this, results = new Collection(), flts = filters && "object" == typeof filters ? filters : {}, l = groups.length, grouped = {};
             return self.forEach(function(item) {
                 if (_recordMatch.call(self, item, flts)) {
-                    for (g = {}, i = 0; l > i; i++) g[groups[i]] = item[groups[i]];
+                    for (g = {}, i = 0; i < l; i++) g[groups[i]] = item[groups[i]];
                     group = JSON.stringify(g), grouped[group] = grouped[group] || [], grouped[group].push(item);
                 }
             }), results.putRange(Object.keys(grouped).map(function(item) {
@@ -100,7 +100,7 @@ var ArrayMap = function() {
                         break;
 
                       case "$end":
-                        matched = -1 !== str.indexOf(opts[field][prop], str.length - opts[field][prop].length);
+                        matched = str.indexOf(opts[field][prop], str.length - opts[field][prop].length) !== -1;
                         break;
 
                       case "$contain":
@@ -157,11 +157,12 @@ var ArrayMap = function() {
             }
         }), value;
     };
-    return Collection.prototype = Object.create(Array.prototype), Collection;
-}(), OjsUtils = function() {
+    return exports.ArrayMap = Collection, Collection.prototype = Object.create(Array.prototype), 
+    Collection;
+}(this), OjsUtils = function(exports) {
     "use strict";
     var randomBytes = function(size) {
-        for (var r, bytes = new Array(size), i = 0; size > i; i++) 0 === (3 & i) && (r = 4294967296 * Math.random()), 
+        for (var r, bytes = new Array(size), i = 0; i < size; i++) 0 === (3 & i) && (r = 4294967296 * Math.random()), 
         bytes[i] = r >>> ((3 & i) << 3) & 255;
         return bytes;
     }, byteArrayToBase64 = function(uint8) {
@@ -169,7 +170,7 @@ var ArrayMap = function() {
             return lookup[num >> 18 & 63] + lookup[num >> 12 & 63] + lookup[num >> 6 & 63] + lookup[63 & num];
         }
         var temp, length, i, lookup = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", extraBytes = uint8.length % 3, output = "";
-        for (i = 0, length = uint8.length - extraBytes; length > i; i += 3) temp = (uint8[i] << 16) + (uint8[i + 1] << 8) + uint8[i + 2], 
+        for (i = 0, length = uint8.length - extraBytes; i < length; i += 3) temp = (uint8[i] << 16) + (uint8[i + 1] << 8) + uint8[i + 2], 
         output += tripletToBase64(temp);
         switch (extraBytes) {
           case 1:
@@ -183,7 +184,7 @@ var ArrayMap = function() {
         }
         return output;
     };
-    return {
+    return exports.OjsUtils = {
         newId: function() {
             var now = new Date().getTime();
             return performance && performance.now && (now = parseInt(performance.now().toString().replace(".", ""))), 
@@ -197,7 +198,7 @@ var ArrayMap = function() {
             if (!obj || obj instanceof Date) return obj;
             if (obj instanceof ArrayMap ? out = new ArrayMap() : obj instanceof SimpleDataSet ? out = new SimpleDataSet() : obj instanceof ChildRecord && (out = new ChildRecord()), 
             "[object Array]" === Object.prototype.toString.call(obj)) {
-                for (out = out || [], i = 0, len = obj.length; len > i; i++) out[i] = this.cloneObject(obj[i]);
+                for (out = out || [], i = 0, len = obj.length; i < len; i++) out[i] = this.cloneObject(obj[i]);
                 return out;
             }
             if ("object" == typeof obj) {
@@ -210,16 +211,16 @@ var ArrayMap = function() {
         cloneProperties: function(source, dest) {
             for (var prop in source) source.hasOwnProperty(prop) && (dest[prop] = source[prop]);
         }
-    };
-}(), ojsUtils = OjsUtils, ChildRecord = function() {
+    }, exports.OjsUtils;
+}(this), ojsUtils = OjsUtils, ChildRecord = function(exports) {
     "use strict";
     function CreateRecord(record) {
         this.master = function() {
             return record;
         };
     }
-    return CreateRecord;
-}(), EventEmitter = function() {
+    return exports.ChildRecord = CreateRecord, CreateRecord;
+}(this), EventEmitter = function(exports) {
     "use strict";
     function CreateEmitter() {
         var _topics = {};
@@ -227,7 +228,7 @@ var ArrayMap = function() {
             return _topics;
         };
     }
-    return CreateEmitter.prototype.on = function(topic, listener) {
+    return exports.EventEmitter = CreateEmitter, CreateEmitter.prototype.on = function(topic, listener) {
         var topics = this.topics();
         topics.hasOwnProperty(topic) || (topics[topic] = []);
         var index = topics[topic].push(listener) - 1;
@@ -242,7 +243,7 @@ var ArrayMap = function() {
             item(void 0 !== args ? args : {});
         });
     }, CreateEmitter;
-}(), SimplePromise = function() {
+}(this), SimplePromise = function(exports) {
     "use strict";
     function defer(opt_scope) {
         return new Deferred(opt_scope);
@@ -255,7 +256,7 @@ var ArrayMap = function() {
             results.push(value), args.length === results.length && deferred.resolve(results);
         }, errback = function(error) {
             deferred.reject(error);
-        }, i = 0, len = args.length; len > i; i++) {
+        }, i = 0, len = args.length; i < len; i++) {
             var arg = args[i];
             isPromise(arg) ? arg.then(callback, errback).resolve() : "function" == typeof arg ? defer().then(arg).then(callback, errback).resolve() : defer().then(function() {
                 return arg;
@@ -305,12 +306,12 @@ var ArrayMap = function() {
         UNRESOLVED: "unresolved",
         RESOLVED: "resolved",
         REJECTED: "rejected"
-    }, freeze(Deferred.State), {
+    }, freeze(Deferred.State), exports.SimplePromise = {
         defer: defer,
         isPromise: isPromise,
         when: when
-    };
-}(), SimpleDataSet = function() {
+    }, exports.SimplePromise;
+}(this), SimpleDataSet = function(exports) {
     "use strict";
     function CreateDataSet(table) {
         EventEmitter.apply(this);
@@ -319,7 +320,8 @@ var ArrayMap = function() {
             return _table;
         };
     }
-    CreateDataSet.prototype = Object.create(EventEmitter.prototype), CreateDataSet.prototype._cleanCache = function() {
+    exports.SimpleDataSet = CreateDataSet, CreateDataSet.prototype = Object.create(EventEmitter.prototype), 
+    CreateDataSet.prototype._cleanCache = function() {
         this._history.length = 0;
     }, CreateDataSet.prototype.getById = function(id) {
         var index = this.data.indexOfKey("id", id);
@@ -347,16 +349,16 @@ var ArrayMap = function() {
     return CreateDataSet.prototype.insert = function(record) {
         record.id || (record.id = OjsUtils.newId());
         var index = this.data.indexOfKey("id", record.id);
-        return -1 === index && (this.data.push(record), _afterChange.call(this, "insert", record)), 
+        return index === -1 && (this.data.push(record), _afterChange.call(this, "insert", record)), 
         this;
     }, CreateDataSet.prototype.update = function(record) {
         if (!record.id) return this;
         var index = this.data.indexOfKey("id", record.id);
-        return -1 === index ? this : (_afterChange.call(this, "update", this.data[index]), 
+        return index === -1 ? this : (_afterChange.call(this, "update", this.data[index]), 
         this.data.splice(index, 1, record), this);
     }, CreateDataSet.prototype.save = function(record) {
         return record ? record.id && this.getById(record.id) ? this.update(record) : this.insert(record) : this;
-    }, CreateDataSet.prototype["delete"] = function(record) {
+    }, CreateDataSet.prototype.delete = function(record) {
         if (!record.id) return this;
         var index = this.data.indexOfKey("id", record.id);
         return index >= 0 && (_afterChange.call(this, "delete", this.data[index]), this.data.splice(index, 1)), 
@@ -402,7 +404,7 @@ var ArrayMap = function() {
     }, CreateDataSet.prototype.subscribe = function(fn) {
         return this.on(this.table(), fn), this;
     }, CreateDataSet;
-}(), DataSet = function() {
+}(this), DataSet = function(exports) {
     "use strict";
     function CreateDataSet(table, proxy, synchronizer) {
         SimpleDataSet.apply(this, [ table ]), _pages[table] = 0, this._opts = {}, this._eof = !0, 
@@ -417,7 +419,8 @@ var ArrayMap = function() {
         });
     }
     var _pages = {};
-    CreateDataSet.prototype = Object.create(SimpleDataSet.prototype), CreateDataSet.prototype.emit = function(key, args) {
+    exports.DataSet = CreateDataSet, CreateDataSet.prototype = Object.create(SimpleDataSet.prototype), 
+    CreateDataSet.prototype.emit = function(key, args) {
         DbEvents.emit(key, args);
     }, CreateDataSet.prototype.subscribe = function(fn) {
         return DbEvents.on(this.table(), fn), this;
@@ -433,7 +436,7 @@ var ArrayMap = function() {
     var _getRecords = function(opts, callback) {
         var self = this, cb = callback && "function" == typeof callback ? callback : function() {};
         self.proxy().getRecords(opts, function(err, records) {
-            self.data.putRange(records, !0), self._active = err ? !1 : !0, self._eof = records && records.length < (self._opts.limit || 30), 
+            self.data.putRange(records, !0), self._active = !err, self._eof = records && records.length < (self._opts.limit || 30), 
             cb(err, records), err || self.emit(self.table(), {
                 event: "read",
                 data: records
@@ -450,7 +453,7 @@ var ArrayMap = function() {
         }), defer);
     }, CreateDataSet.prototype.next = function() {
         if (!this._active) throw "Invalid operation on closed dataset";
-        (!this._opts.limit || isNaN(this._opts.limit)) && (this._opts.limit = 30), _pages[this.table()] = ++_pages[this.table()];
+        this._opts.limit && !isNaN(this._opts.limit) || (this._opts.limit = 30), _pages[this.table()] = ++_pages[this.table()];
         var self = this, skip = _pages[self.table()] * self._opts.limit, opts = {
             key: self.table(),
             skip: skip
@@ -473,9 +476,9 @@ var ArrayMap = function() {
     }, CreateDataSet.prototype.update = function(record) {
         if (!this._active) throw "Invalid operation on closed dataset";
         SimpleDataSet.prototype.update.apply(this, arguments);
-    }, CreateDataSet.prototype["delete"] = function(record) {
+    }, CreateDataSet.prototype.delete = function(record) {
         if (!this._active) throw "Invalid operation on closed dataset";
-        SimpleDataSet.prototype["delete"].apply(this, arguments);
+        SimpleDataSet.prototype.delete.apply(this, arguments);
     };
     var _filterOp = function(changes, operation) {
         var results = [];
@@ -501,10 +504,10 @@ var ArrayMap = function() {
         var self = this, sync = this.synchronizer(), defer = SimplePromise.defer();
         return sync ? (sync.exec(self.table(), function(err, allData, toDelete) {
             function deleteDiff(item) {
-                serverData.indexOfKey("id", item.id) < 0 && self["delete"](item);
+                serverData.indexOfKey("id", item.id) < 0 && self.delete(item);
             }
             function deleteFix(item) {
-                toDeleteMap.indexOf(item.id) > -1 && self["delete"](item);
+                toDeleteMap.indexOf(item.id) > -1 && self.delete(item);
             }
             if (err) return void defer.reject(err);
             if (allData = allData || [], toDelete = toDelete || [], !allData.length && !toDelete.length) return void defer.resolve(self);
@@ -531,22 +534,22 @@ var ArrayMap = function() {
     }, CreateDataSet.prototype.active = function() {
         return this._active;
     }, CreateDataSet;
-}(), DbProxies = function() {
-    return {
+}(this), DbProxies = function(exports) {
+    return exports.DbProxies = {
         LOCALSTORAGE: 0,
         SQLITE: 1,
         RESTFUL: 2
-    };
-}(), DbProxy = function() {
+    }, exports.DbProxies;
+}(this), DbProxy = function(exports) {
     function CreateProxy() {}
-    return CreateProxy.prototype.createDatabase = function(maps, callback) {}, CreateProxy.prototype.getRecords = function(options, callback) {}, 
-    CreateProxy.prototype.groupBy = function(key, options, groups, filters, callback) {}, 
+    return exports.DbProxy = CreateProxy, CreateProxy.prototype.createDatabase = function(maps, callback) {}, 
+    CreateProxy.prototype.getRecords = function(options, callback) {}, CreateProxy.prototype.groupBy = function(key, options, groups, filters, callback) {}, 
     CreateProxy.prototype.commit = function(key, toInsert, toUpdate, toDelete, callback) {}, 
     CreateProxy.prototype.fetch = function(key, property, callback) {}, CreateProxy.dateParser = function(key, value) {
         var test, reISO = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*))(?:Z|(\+|-)([\d|:]*))?$/;
         return "string" == typeof value && (test = reISO.exec(value)) ? new Date(value) : value;
     }, CreateProxy;
-}(), LocalStorageProxy = function() {
+}(this), LocalStorageProxy = function(exports) {
     "use strict";
     function CreateProxy() {
         DbProxy.apply(this, arguments);
@@ -557,7 +560,8 @@ var ArrayMap = function() {
     }, _saveAll = function(key, table, callback) {
         window.localStorage[key] = JSON.stringify(table), "function" == typeof callback && callback();
     };
-    return CreateProxy.prototype = Object.create(DbProxy.prototype), CreateProxy.prototype.getRecords = function(options, callback) {
+    return exports.LocalStorageProxy = CreateProxy, CreateProxy.prototype = Object.create(DbProxy.prototype), 
+    CreateProxy.prototype.getRecords = function(options, callback) {
         var table = _get(options);
         options.sort && table.orderBy(options.sort), "function" == typeof callback && callback(null, table);
     }, CreateProxy.prototype.query = function(key, filters, callback) {
@@ -568,7 +572,7 @@ var ArrayMap = function() {
         callback(null, table.groupBy(options, groups, filters));
     }, CreateProxy.prototype.save = function(key, record, callback) {
         var table = _get(key), index = table.indexOfKey("id", record.id);
-        -1 === index ? table.push(record) : table.splice(index, 1, record), _saveAll(key, table, callback);
+        index === -1 ? table.push(record) : table.splice(index, 1, record), _saveAll(key, table, callback);
     }, CreateProxy.prototype.remove = function(key, record, callback) {
         var id = "object" == typeof record ? record.id : record, table = _get(key), index = table.indexOfKey("id", id);
         table.splice(index, 1), _saveAll(key, table, callback);
@@ -581,7 +585,7 @@ var ArrayMap = function() {
         for (i = 0; i < toSave.length; i++) self.save(key, toSave[i], progress);
         for (i = 0; i < toDelete.length; i++) self.remove(key, toDelete[i], progress);
     }, CreateProxy;
-}(), SQLiteProxy = function() {
+}(this), SQLiteProxy = function(exports) {
     "use strict";
     function CreateProxy(opts) {
         var db = null, eventName = "undefined" != typeof window.cordova ? "deviceready" : "readystatechange";
@@ -593,7 +597,8 @@ var ArrayMap = function() {
         }, DbProxy.apply(this, arguments);
     }
     var _selectFrom = "SELECT * FROM", _maps = {};
-    CreateProxy.prototype = Object.create(DbProxy.prototype), CreateProxy.prototype.createDatabase = function(maps, callback) {
+    exports.SQLiteProxy = CreateProxy, CreateProxy.prototype = Object.create(DbProxy.prototype), 
+    CreateProxy.prototype.createDatabase = function(maps, callback) {
         var self = this;
         _maps = OjsUtils.cloneObject(maps), self.getDb().transaction(function(tx) {
             function progress() {
@@ -613,7 +618,7 @@ var ArrayMap = function() {
     };
     var _parseItem = function(key, item) {
         var prop, value, fdmap, result = {};
-        for (prop in _maps[key]) value = item[prop], fdmap = _maps[key][prop], ("date" === fdmap.type || "datetime" === fdmap.type) && (value = new Date(value)), 
+        for (prop in _maps[key]) value = item[prop], fdmap = _maps[key][prop], "date" !== fdmap.type && "datetime" !== fdmap.type || (value = new Date(value)), 
         result[prop] = value;
         return result;
     }, _formatValue = function(table, key, record) {
@@ -623,7 +628,7 @@ var ArrayMap = function() {
     }, _select = function(key, sql, params, transaction, callback) {
         var i, l, record, table = new ArrayMap();
         transaction.executeSql(sql, params, function(tx, results) {
-            for (l = results.rows.length, i = 0; l > i; i++) record = _parseItem(key, results.rows.item(i)), 
+            for (l = results.rows.length, i = 0; i < l; i++) record = _parseItem(key, results.rows.item(i)), 
             table.push(record);
             "function" == typeof callback && callback(null, table);
         }, function(tx, err) {
@@ -722,7 +727,7 @@ var ArrayMap = function() {
         var i, l, self = this, sql = _formatGroupBy(key, options, groups, filters), table = new ArrayMap();
         self.getDb().transaction(function(transaction) {
             transaction.executeSql(sql, [], function(tx, results) {
-                for (l = results.rows.length, i = 0; l > i; i++) table.push(results.rows.item(i));
+                for (l = results.rows.length, i = 0; i < l; i++) table.push(results.rows.item(i));
                 "function" == typeof callback && callback(null, table);
             }, function(tx, err) {
                 console.error(err.message), callback(err);
@@ -735,7 +740,7 @@ var ArrayMap = function() {
                 self.update(fdmap.hasMany, updateds, transaction, deleteFn);
             }
             function deleteFn() {
-                self["delete"](fdmap.hasMany, deleteds, transaction, done);
+                self.delete(fdmap.hasMany, deleteds, transaction, done);
             }
             var prop, fdmap, items, inserteds = new ArrayMap(), updateds = new ArrayMap(), deleteds = new ArrayMap();
             for (prop in record) fdmap = _maps[key][prop], fdmap && fdmap.hasMany && (items = record[prop], 
@@ -771,7 +776,7 @@ var ArrayMap = function() {
         }
         var self = this, l = records.length, i = 0;
         if (0 === l) return callback();
-        for (;l > i; i++) progress(records[i], i);
+        for (;i < l; i++) progress(records[i], i);
     };
     var _getUpdateSql = function(key, record) {
         var sql, prop, value, fdmap, params = [], where = "id = '" + record.id + "'", sets = "";
@@ -794,7 +799,7 @@ var ArrayMap = function() {
         }
         var self = this, l = records.length, i = 0;
         if (0 === l) return callback();
-        for (;l > i; i++) progress(records[i], i);
+        for (;i < l; i++) progress(records[i], i);
     };
     var _delete = function(key, record, transaction, callback) {
         function progress() {
@@ -807,7 +812,7 @@ var ArrayMap = function() {
         transaction.executeSql(sql, [], progress), record[prop] instanceof SimpleDataSet && record[prop].clear());
         progress();
     };
-    CreateProxy.prototype["delete"] = function(key, records, transaction, callback) {
+    CreateProxy.prototype.delete = function(key, records, transaction, callback) {
         function progress(record, index) {
             _delete.call(self, key, record, transaction, function() {
                 index === l - 1 && callback();
@@ -815,14 +820,14 @@ var ArrayMap = function() {
         }
         var self = this, l = records.length, i = 0;
         if (0 === l) return callback();
-        for (;l > i; i++) progress(records[i], i);
+        for (;i < l; i++) progress(records[i], i);
     }, CreateProxy.prototype.commit = function(key, toInsert, toUpdate, toDelete, callback) {
         function beginTransaction(tx) {
             function updateFn() {
                 self.update(key, toUpdate, tx, deleteFn);
             }
             function deleteFn() {
-                self["delete"](key, toDelete, tx, cb);
+                self.delete(key, toDelete, tx, cb);
             }
             self.insert(key, toInsert, tx, updateFn);
         }
@@ -838,7 +843,7 @@ var ArrayMap = function() {
         fdmap && fdmap.hasMany ? (opts.key = fdmap.hasMany, opts.params[fdmap.foreignKey] = record.id, 
         this.getRecords(opts, function(err, results) {
             if (err) return callback(err);
-            for (record[property] = new SimpleDataSet(key), i = 0, l = results.length; l > i; i++) child = new ChildRecord(record), 
+            for (record[property] = new SimpleDataSet(key), i = 0, l = results.length; i < l; i++) child = new ChildRecord(record), 
             OjsUtils.cloneProperties(results[i], child), record[property].data.push(child);
             callback();
         })) : callback();
@@ -851,9 +856,9 @@ var ArrayMap = function() {
         }
         var cb = "function" == typeof callback ? callback : function() {}, total = dataset.data.length, self = this, i = 0;
         if (0 === total) return cb();
-        for (;total > i; i++) progress(dataset.data[i], i);
+        for (;i < total; i++) progress(dataset.data[i], i);
     }, CreateProxy;
-}(), RestProxy = function() {
+}(this), RestProxy = function(exports) {
     "use strict";
     function ProxyError(xhr) {
         var res;
@@ -906,7 +911,8 @@ var ArrayMap = function() {
         config.data = this.serialize(record), this.config.headers && (config.headers = this.config.headers), 
         _httpRequest(url, method, config, success, error);
     };
-    return CreateProxy.prototype = Object.create(DbProxy.prototype), CreateProxy.prototype.getRecords = function(options, callback) {
+    return exports.RestProxy = CreateProxy, CreateProxy.prototype = Object.create(DbProxy.prototype), 
+    CreateProxy.prototype.getRecords = function(options, callback) {
         _get.call(this, options, function(data) {
             callback(null, data);
         }, function(xhr) {
@@ -940,7 +946,7 @@ var ArrayMap = function() {
         }
         var self = this, l = records.length, i = 0;
         if (0 === l) return callback();
-        for (;l > i; i++) progress(records[i], i);
+        for (;i < l; i++) progress(records[i], i);
     }, CreateProxy.prototype.update = function(key, records, callback) {
         function progress(record, index) {
             _save.call(self, "PUT", key, record, function(xhr) {
@@ -952,8 +958,8 @@ var ArrayMap = function() {
         }
         var self = this, l = records.length, i = 0;
         if (0 === l) return callback();
-        for (;l > i; i++) progress(records[i], i);
-    }, CreateProxy.prototype["delete"] = function(key, records, callback) {
+        for (;i < l; i++) progress(records[i], i);
+    }, CreateProxy.prototype.delete = function(key, records, callback) {
         function progress(record, index) {
             var url = baseurl + record.id;
             _httpRequest(url, "DELETE", config, function(xhr) {
@@ -965,25 +971,27 @@ var ArrayMap = function() {
         }
         var baseurl = this.config.url + "/" + key + "/", config = {}, l = records.length, i = 0;
         if (0 === l) return callback();
-        for (this.config.headers && (config.headers = this.config.headers); l > i; i++) progress(records[i], i);
+        for (this.config.headers && (config.headers = this.config.headers); i < l; i++) progress(records[i], i);
     }, CreateProxy.prototype.commit = function(key, toInsert, toUpdate, toDelete, callback) {
         function updateFn(err) {
             return err ? cb(err) : void self.update(key, toUpdate, deleteFn);
         }
         function deleteFn(err) {
-            return err ? cb(err) : void self["delete"](key, toDelete, cb);
+            return err ? cb(err) : void self.delete(key, toDelete, cb);
         }
         var self = this, total = toInsert.length + toUpdate.length + toDelete.length, cb = callback && "function" == typeof callback ? callback : function() {};
         return 0 === total ? cb() : void self.insert(key, toInsert, updateFn);
     }, CreateProxy;
-}(), DbSync = function() {
+}(this), DbSync = function(exports) {
     "use strict";
     function CreateSync() {}
     var Operations = {
         Insert: "inserted",
         Update: "updated",
         Delete: "deleted"
-    }, _getTableName = function(table) {
+    };
+    exports.DbSync = CreateSync;
+    var _getTableName = function(table) {
         return [ "sync_", table ].join("");
     }, _getData = function(tableName) {
         var key = _getTableName(tableName), table = window.localStorage[key] || "{}";
@@ -992,7 +1000,7 @@ var ArrayMap = function() {
         var key = _getTableName(tableName);
         window.localStorage[key] = JSON.stringify(values);
     }, _merge = function(arr1, arr2) {
-        for (var result = new ArrayMap(), concated = arr1.concat(arr2), i = 0, l = concated.length; l > i; i++) result.indexOfKey("id", concated[i].id) < 0 && result.put(concated[i]);
+        for (var result = new ArrayMap(), concated = arr1.concat(arr2), i = 0, l = concated.length; i < l; i++) result.indexOfKey("id", concated[i].id) < 0 && result.put(concated[i]);
         return result;
     };
     return CreateSync.prototype.writeData = function(key, toInsert, toUpdate, toDelete) {
@@ -1012,10 +1020,9 @@ var ArrayMap = function() {
         var self = this, values = _getData(key), cb = callback || function() {};
         self.sendData(key, values[Operations.Insert], values[Operations.Update], values[Operations.Delete], done);
     }, CreateSync;
-}(), DbEvents = function() {
-    var emitter = new EventEmitter();
-    return emitter;
-}(), DbFactory = function() {
+}(this), DbEvents = function(exports) {
+    return exports.DbEvents = new EventEmitter(), exports.DbEvents;
+}(this), DbFactory = function(exports) {
     "use strict";
     function CreateFactory(proxyType, opts, synchronizer) {
         var _proxy, _synchronizer = synchronizer;
@@ -1041,7 +1048,7 @@ var ArrayMap = function() {
             throw "Proxy not implemented";
         }
     }
-    CreateFactory.prototype.createDb = function(maps) {
+    exports.DbFactory = CreateFactory, CreateFactory.prototype.createDb = function(maps) {
         var defer = SimplePromise.defer();
         return this.proxy().createDatabase(maps, function(err) {
             return err ? void defer.reject(err) : void defer.resolve(!0);
@@ -1071,8 +1078,8 @@ var ArrayMap = function() {
     }, CreateFactory.prototype.update = function(key, toUpdate) {
         var elements = toUpdate instanceof Array ? toUpdate : [ toUpdate ];
         return _save.call(this, key, [], elements, []);
-    }, CreateFactory.prototype["delete"] = function(key, toDelete) {
+    }, CreateFactory.prototype.delete = function(key, toDelete) {
         var elements = toDelete instanceof Array ? toDelete : [ toDelete ];
         return _save.call(this, key, [], [], elements);
     }, CreateFactory;
-}(), ojsDb = DbFactory;
+}(this), ojsDb = DbFactory;

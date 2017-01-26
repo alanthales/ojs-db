@@ -3,7 +3,7 @@
 	Autor: Alan Thales, 09/2015
 	Requires: DbProxy.js, ArrayMap.js, Utils.js, SimpleDataSet.js, ChildRecord.js
 */
-var SQLiteProxy = (function() {
+var SQLiteProxy = (function(exports) {
 	'use strict';
 
 	var _selectFrom = "SELECT * FROM",
@@ -33,6 +33,8 @@ var SQLiteProxy = (function() {
 		
 		DbProxy.apply(this, arguments);
 	}
+
+	exports.SQLiteProxy = CreateProxy;
 	
 	CreateProxy.prototype = Object.create(DbProxy.prototype);
 	
@@ -596,4 +598,4 @@ var SQLiteProxy = (function() {
 	};
 	
 	return CreateProxy;
-})();
+})(this);

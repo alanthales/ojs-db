@@ -2,20 +2,23 @@
 	Proxy Enums
 	Alan Thales, 09/2015
 */
-var DbProxies = (function() {
-	return {
+var DbProxies = (function(exports) {
+	exports.DbProxies = {
 		LOCALSTORAGE: 0,
 		SQLITE: 1,
 		RESTFUL: 2
 	};
-})();
+	return exports.DbProxies;
+})(this);
 
 /*
 	DbProxy Parent Class
 	Autor: Alan Thales, 09/2015
 */
-var DbProxy = (function() {
+var DbProxy = (function(exports) {
 	function CreateProxy() {}
+
+	exports.DbProxy = CreateProxy;
 	
 	CreateProxy.prototype.createDatabase = function(maps, callback) {};
 	
@@ -42,4 +45,4 @@ var DbProxy = (function() {
 	};
 	
 	return CreateProxy;
-})();
+})(this);

@@ -3,7 +3,7 @@
     Autor: Alan Thales, 09/2015
     Requires: ArrayMap.js, DbProxy.js
 */
-var RestProxy = (function() {
+var RestProxy = (function(exports) {
     'use strict';
     
     var _defSerialize = function(obj) {
@@ -124,6 +124,8 @@ var RestProxy = (function() {
         
         DbProxy.apply(this, arguments);
     }
+
+    exports.RestProxy = CreateProxy;
     
     CreateProxy.prototype = Object.create(DbProxy.prototype);
 
@@ -267,4 +269,4 @@ var RestProxy = (function() {
     };
     
     return CreateProxy;
-})();
+})(this);

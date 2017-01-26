@@ -3,7 +3,7 @@
     Autor: Alan Thales, 03/2016
     Requires: ArrayMap.js
 */
-var DbSync = (function() {
+var DbSync = (function(exports) {
     'use strict';
 
     var Operations = {
@@ -13,6 +13,8 @@ var DbSync = (function() {
     };
     
     function CreateSync() { }
+
+    exports.DbSync = CreateSync;
     
     var _getTableName = function(table) {
         return ['sync_', table].join('');
@@ -87,4 +89,4 @@ var DbSync = (function() {
     };
     
     return CreateSync;
-})();
+})(this);

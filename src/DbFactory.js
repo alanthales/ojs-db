@@ -3,17 +3,17 @@
 	Alan Thales, 01/2017
 	Require: EventEmitter.js
 */
-var DbEvents = (function() {
-	var emitter = new EventEmitter();
-	return emitter;
-})();
+var DbEvents = (function(exports) {
+	exports.DbEvents = new EventEmitter();
+	return exports.DbEvents;
+})(this);
 
 /*
 	Database Factory Main Class
 	Alan Thales, 09/2015
 	Requires: DataSet.js, SimplePromise.js, LocalStorageProxy.js, SQLiteProxy.js, RestProxy.js
 */
-var DbFactory = (function() {
+var DbFactory = (function(exports) {
 	'use strict';
 
 	function CreateFactory(proxyType, opts, synchronizer) {
@@ -42,6 +42,8 @@ var DbFactory = (function() {
 				throw "Proxy not implemented";
 		}
 	}
+
+	exports.DbFactory = CreateFactory;
 
 	CreateFactory.prototype.createDb = function(maps) {
 		var defer = SimplePromise.defer();
@@ -119,6 +121,6 @@ var DbFactory = (function() {
 	};
 
 	return CreateFactory;
-})();
+})(this);
 
 var ojsDb = DbFactory;

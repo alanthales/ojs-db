@@ -1,22 +1,17 @@
 {
   "name": "ojs-db",
-  "homepage": "https://github.com/alanthales/ojs-db",
+  "description": "A reactive framework to persist data in browser or anywhere",
+  "main": "build/ojs-db.js",
   "authors": [
-    "Alan Thales <alanthales@gmail.com>"
+    "Alan Thales Carvalho"
   ],
-  "description": "A reactive framework to persist data in anywhere",
-  "version": "2.0",
-  "main": "ArrayMap.js",
-  "license": "Apache License",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/alanthales/ojs-db",
   "ignore": [
     "**/.*",
     "node_modules",
     "bower_components",
-    "src",
     "test",
     "tests"
-  ],
-  "devDependencies": {
-    "uglify-js": "^1.3.5"
-  }
+  ]
 }

@@ -2,7 +2,7 @@
  * @fileoverview Simple implementation of CommonJS Promise/A.
  * @author yo_waka
  */
-var SimplePromise = (function() {
+var SimplePromise = (function(exports) {
 	'use strict';
 
 	// Use freeze if exists.
@@ -233,13 +233,14 @@ var SimplePromise = (function() {
 		return deferred;
 	}
 
-
-	/**
-	 * @return {Object} .
-	 */
-	return {
+	exports.SimplePromise = {
 		defer: defer,
 		isPromise: isPromise,
 		when: when
 	};
-})();
+
+	/**
+	 * @return {Object} .
+	 */
+	return exports.SimplePromise;
+})(this);

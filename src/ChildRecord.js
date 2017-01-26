@@ -2,7 +2,7 @@
     ChildRecord Class
     Autor: Alan Thales, 07/2016
 */
-var ChildRecord = (function() {
+var ChildRecord = (function(exports) {
     'use strict';
     
     function CreateRecord(record) {
@@ -10,6 +10,8 @@ var ChildRecord = (function() {
             return record;
         };
     }
+
+    exports.ChildRecord = CreateRecord;
     
     return CreateRecord;
-})();
+})(this);

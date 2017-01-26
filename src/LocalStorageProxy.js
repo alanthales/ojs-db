@@ -3,7 +3,7 @@
     Autor: Alan Thales, 09/2015
     Requires: ArrayMap.js, DbProxy.js
 */
-var LocalStorageProxy = (function() {
+var LocalStorageProxy = (function(exports) {
     'use strict';
 
     var _get = function(opts) {
@@ -29,6 +29,8 @@ var LocalStorageProxy = (function() {
     function CreateProxy() {
         DbProxy.apply(this, arguments);
     }
+
+    exports.LocalStorageProxy = CreateProxy;
     
     CreateProxy.prototype = Object.create(DbProxy.prototype);
 
@@ -104,4 +106,4 @@ var LocalStorageProxy = (function() {
     };
     
     return CreateProxy;
-})();
+})(this);

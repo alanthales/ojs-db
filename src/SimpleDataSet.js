@@ -3,7 +3,7 @@
 	Autor: Alan Thales, 07/2016
 	Requires: ArrayMap.js, Utils.js, ChildRecord.js, EventEmitter.js
 */
-var SimpleDataSet = (function() {
+var SimpleDataSet = (function(exports) {
 	'use strict';
 	
 	function CreateDataSet(table) {
@@ -15,6 +15,8 @@ var SimpleDataSet = (function() {
 		
 		this.table = function() { return _table; };
 	}
+
+	exports.SimpleDataSet = CreateDataSet;
 
 	CreateDataSet.prototype = Object.create(EventEmitter.prototype);
 
@@ -182,4 +184,4 @@ var SimpleDataSet = (function() {
 	};
 	
 	return CreateDataSet;
-})();
+})(this);

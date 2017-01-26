@@ -2,7 +2,7 @@
 	Util functions
 	Alan Thales, 05/2016
 */
-var OjsUtils = (function() {
+var OjsUtils = (function(exports) {
 	'use strict';
 
 	/**
@@ -62,7 +62,7 @@ var OjsUtils = (function() {
 		return output;
 	};
 	
-	return {
+	exports.OjsUtils = {
 		newId: function() {
 			var now = (new Date()).getTime();
 			if (performance && performance.now) {
@@ -119,6 +119,8 @@ var OjsUtils = (function() {
 			}
 		}
 	};
-})();
+
+	return exports.OjsUtils;
+})(this);
 
 var ojsUtils = OjsUtils;

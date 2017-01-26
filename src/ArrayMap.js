@@ -19,7 +19,7 @@
 	ArrayMap Class
 	Autor: Alan Thales, 09/2015
 */
-var ArrayMap = (function() {
+var ArrayMap = (function(exports) {
 	'use strict';
 	
 	var _recordMatch = function(record, opts) {
@@ -252,8 +252,10 @@ var ArrayMap = (function() {
 		
 		return collection;
 	}
-	
+
+	exports.ArrayMap = Collection;
+
 	Collection.prototype = Object.create(Array.prototype);
 
 	return Collection;
-})();
+})(this);
