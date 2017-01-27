@@ -105,5 +105,9 @@ var LocalStorageProxy = (function(exports) {
         }
     };
     
+    CreateProxy.prototype.clear = function(key, callback) {
+        _saveAll(key, [], callback);
+    };
+
     return CreateProxy;
 })(this);

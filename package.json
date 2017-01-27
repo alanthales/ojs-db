@@ -4,7 +4,8 @@
   "description": "A reactive framework to persist data in browser or anywhere",
   "main": "build/ojs-db.js",
   "scripts": {
-    "test": "mocha"
+    "test": "mocha",
+    "browser-test": "mocha-phantomjs test/TestRunner.html"
   },
   "repository": {
     "type": "git",
@@ -19,6 +20,7 @@
   "devDependencies": {
     "chai": "^3.5.0",
     "mocha": "^3.2.0",
+    "mocha-phantomjs": "^4.1.0",
     "uglify-js": "^2.7.5"
   }
 }

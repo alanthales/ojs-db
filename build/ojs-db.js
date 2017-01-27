@@ -465,6 +465,13 @@ var ArrayMap = function(exports) {
     }, CreateDataSet.prototype.close = function() {
         return SimpleDataSet.prototype.clear.apply(this, arguments), _pages[this.table()] = 0, 
         this._active = !1, this;
+    }, CreateDataSet.prototype.clear = function() {
+        function done(err) {
+            return err ? void defer.reject(err) : (_pages[self.table()] = 0, SimpleDataSet.prototype.clear.apply(self, arguments), 
+            void defer.resolve(self));
+        }
+        var self = this, defer = SimplePromise.defer();
+        return self.proxy().clear(self.table(), done), defer;
     }, CreateDataSet.prototype.refresh = function() {
         if (this._reOpenOnRefresh) return this._active = !1, this.open();
         var defer = SimplePromise.defer();
@@ -542,10 +549,19 @@ var ArrayMap = function(exports) {
     }, exports.DbProxies;
 }(this), DbProxy = function(exports) {
     function CreateProxy() {}
-    return exports.DbProxy = CreateProxy, CreateProxy.prototype.createDatabase = function(maps, callback) {}, 
-    CreateProxy.prototype.getRecords = function(options, callback) {}, CreateProxy.prototype.groupBy = function(key, options, groups, filters, callback) {}, 
-    CreateProxy.prototype.commit = function(key, toInsert, toUpdate, toDelete, callback) {}, 
-    CreateProxy.prototype.fetch = function(key, property, callback) {}, CreateProxy.dateParser = function(key, value) {
+    return exports.DbProxy = CreateProxy, CreateProxy.prototype.createDatabase = function(maps, callback) {
+        "function" == typeof callback && callback();
+    }, CreateProxy.prototype.getRecords = function(options, callback) {
+        "function" == typeof callback && callback(null, []);
+    }, CreateProxy.prototype.groupBy = function(key, options, groups, filters, callback) {
+        "function" == typeof callback && callback(null, []);
+    }, CreateProxy.prototype.commit = function(key, toInsert, toUpdate, toDelete, callback) {
+        "function" == typeof callback && callback();
+    }, CreateProxy.prototype.fetch = function(key, property, callback) {
+        "function" == typeof callback && callback();
+    }, CreateProxy.prototype.clear = function(key, callback) {
+        "function" == typeof callback && callback();
+    }, CreateProxy.dateParser = function(key, value) {
         var test, reISO = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*))(?:Z|(\+|-)([\d|:]*))?$/;
         return "string" == typeof value && (test = reISO.exec(value)) ? new Date(value) : value;
     }, CreateProxy;
@@ -584,15 +600,18 @@ var ArrayMap = function(exports) {
         if (0 === total) return cb();
         for (i = 0; i < toSave.length; i++) self.save(key, toSave[i], progress);
         for (i = 0; i < toDelete.length; i++) self.remove(key, toDelete[i], progress);
+    }, CreateProxy.prototype.clear = function(key, callback) {
+        _saveAll(key, [], callback);
     }, CreateProxy;
 }(this), SQLiteProxy = function(exports) {
     "use strict";
     function CreateProxy(opts) {
-        var db = null, eventName = "undefined" != typeof window.cordova ? "deviceready" : "readystatechange";
+        function init() {
+            db = window.sqlitePlugin ? window.sqlitePlugin.openDatabase(opts) : window.openDatabase(opts.name, "SQLite Database", "1.0", 5242880);
+        }
+        var db = null, cordova = "undefined" != typeof window.cordova;
         "object" == typeof opts ? opts.location = opts.location || "default" : opts.name = opts, 
-        document.addEventListener(eventName, function() {
-            "loading" != document.readyState && (db = window.sqlitePlugin ? window.sqlitePlugin.openDatabase(opts) : window.openDatabase(opts.name, "SQLite Database", "1.0", 5242880));
-        }), this.getDb = function() {
+        cordova ? document.addEventListener("deviceready", init) : init(), this.getDb = function() {
             return db;
         }, DbProxy.apply(this, arguments);
     }
@@ -804,7 +823,9 @@ var ArrayMap = function(exports) {
     var _delete = function(key, record, transaction, callback) {
         function progress() {
             total--, 0 === total && (sql = [ "DELETE FROM ", key, " WHERE id = '", id, "'" ].join(""), 
-            transaction.executeSql(sql, [], callback));
+            transaction.executeSql(sql, [], function() {
+                callback();
+            }));
         }
         var sql, prop, fdmap, id = "object" == typeof record ? record.id : record, total = 1;
         for (prop in record) fdmap = _maps[key][prop], fdmap && fdmap.hasMany && (total++, 
@@ -857,6 +878,19 @@ var ArrayMap = function(exports) {
         var cb = "function" == typeof callback ? callback : function() {}, total = dataset.data.length, self = this, i = 0;
         if (0 === total) return cb();
         for (;i < total; i++) progress(dataset.data[i], i);
+    }, CreateProxy.prototype.clear = function(key, callback) {
+        function beginTransaction(transaction) {
+            function progress() {
+                total--, 0 === total && transaction.executeSql("DELETE FROM " + key, [], function() {
+                    cb();
+                });
+            }
+            for (prop in _maps[key]) _maps[key][prop].hasMany && (total++, sql = [ "DELETE FROM ", _maps[key][prop].hasMany ].join(""), 
+            transaction.executeSql(sql, [], progress));
+            progress();
+        }
+        var sql, prop, cb = "function" == typeof callback ? callback : function() {}, total = 1;
+        this.getDb().transaction(beginTransaction, cb);
     }, CreateProxy;
 }(this), RestProxy = function(exports) {
     "use strict";

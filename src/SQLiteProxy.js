@@ -11,7 +11,7 @@ var SQLiteProxy = (function(exports) {
 	
 	function CreateProxy(opts) {
 		var db = null,
-			eventName = typeof window.cordova !== "undefined" ? "deviceready" : "readystatechange";
+			cordova = typeof window.cordova !== "undefined";
 		
 		if (typeof opts === "object") {
 			opts.location = opts.location || "default";
@@ -19,16 +19,20 @@ var SQLiteProxy = (function(exports) {
 			opts.name = opts;
 		}
 
-		document.addEventListener(eventName, function() {
-			if (document.readyState == "loading") return;
+		if (cordova) {
+			document.addEventListener('deviceready', init);
+		} else {
+			init();
+		}
 
+		function init() {
 			if (window.sqlitePlugin) {
 				db = window.sqlitePlugin.openDatabase(opts);
 			} else {
 				db = window.openDatabase(opts.name, "SQLite Database", "1.0", 5*1024*1024);
 			}
-		});
-		
+		}
+
 		this.getDb = function() { return db; };
 		
 		DbProxy.apply(this, arguments);
@@ -490,7 +494,9 @@ var SQLiteProxy = (function(exports) {
 			total--;
 			if (total === 0) {
 				sql = ["DELETE FROM ", key, " WHERE id = '", id, "'"].join("");
-				transaction.executeSql(sql, [], callback);
+				transaction.executeSql(sql, [], function() {
+					callback();
+				});
 			}
 		}
 
@@ -594,6 +600,35 @@ var SQLiteProxy = (function(exports) {
 					cb(err);
 				}
 			});
+		}
+	};
+
+	CreateProxy.prototype.clear = function(key, callback) {
+		var cb = typeof callback === "function" ? callback : function() {},
+			total = 1,
+			sql, prop;
+
+		this.getDb().transaction(beginTransaction, cb);
+
+		function beginTransaction(transaction) {
+			for (prop in _maps[key]) {
+				if (_maps[key][prop].hasMany) {
+					total++;
+					sql = ["DELETE FROM ", _maps[key][prop].hasMany].join("");
+					transaction.executeSql(sql, [], progress);
+				}
+			}
+
+			function progress() {
+				total--;
+				if (total === 0) {
+					transaction.executeSql("DELETE FROM " + key, [], function() {
+						cb();
+					});
+				}
+			}
+
+			progress();
 		}
 	};
 	

@@ -20,16 +20,42 @@ var DbProxy = (function(exports) {
 
 	exports.DbProxy = CreateProxy;
 	
-	CreateProxy.prototype.createDatabase = function(maps, callback) {};
+	CreateProxy.prototype.createDatabase = function(maps, callback) {
+        if (typeof callback === 'function') {
+            callback();
+        }
+	};
 	
-	CreateProxy.prototype.getRecords = function(options, callback) {};
+	CreateProxy.prototype.getRecords = function(options, callback) {
+        if (typeof callback === 'function') {
+            callback(null, []);
+        }
+	};
 	
-	CreateProxy.prototype.groupBy = function(key, options, groups, filters, callback) {};
+	CreateProxy.prototype.groupBy = function(key, options, groups, filters, callback) {
+        if (typeof callback === 'function') {
+            callback(null, []);
+        }
+	};
 	
-	CreateProxy.prototype.commit = function(key, toInsert, toUpdate, toDelete, callback) {};
+	CreateProxy.prototype.commit = function(key, toInsert, toUpdate, toDelete, callback) {
+        if (typeof callback === 'function') {
+            callback();
+        }
+	};
 	
-	CreateProxy.prototype.fetch = function(key, property, callback) {};
+	CreateProxy.prototype.fetch = function(key, property, callback) {
+        if (typeof callback === 'function') {
+            callback();
+        }
+	};
 	
+	CreateProxy.prototype.clear = function(key, callback) {
+        if (typeof callback === 'function') {
+            callback();
+        }
+	};
+
 	CreateProxy.dateParser = function(key, value) {
 		var reISO = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*))(?:Z|(\+|-)([\d|:]*))?$/,
 			test;

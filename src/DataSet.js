@@ -141,6 +141,25 @@ var DataSet = (function(exports) {
 		return this;
 	};
 
+	CreateDataSet.prototype.clear = function() {
+		var self = this,
+			defer = SimplePromise.defer();
+
+		self.proxy().clear(self.table(), done);
+		
+		function done(err) {
+			if (err) {
+				defer.reject(err);
+				return;
+			}
+			_pages[self.table()] = 0;
+			SimpleDataSet.prototype.clear.apply(self, arguments);
+			defer.resolve(self);
+		}
+
+		return defer;
+	};
+
 	CreateDataSet.prototype.refresh = function() {
 		if (this._reOpenOnRefresh) {
 			this._active = false;
