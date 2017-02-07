@@ -554,30 +554,30 @@ var SQLiteProxy = (function(exports) {
 			fdmap = _maps[key][property],
 			i, l, child;
 
-		if (fdmap && fdmap.hasMany) {
-			opts.key = fdmap.hasMany;
-			opts.params[fdmap.foreignKey] = record.id;
-			
-			this.getRecords(opts, function(err, results) {
-				if (err) {
-					return callback(err);
-				}
-				
-				record[property] = new SimpleDataSet(key);
-				
-				i = 0; l = results.length;
-				
-				for (; i < l; i++) {
-					child = new ChildRecord(record);
-					OjsUtils.cloneProperties(results[i], child);
-					record[property].data.push(child);
-				}
-				
-				callback();
-			});
-		} else {
-			callback();
+		if (record[property] instanceof SimpleDataSet || !fdmap || !fdmap.hasMany) {
+			return callback();
 		}
+
+		opts.key = fdmap.hasMany;
+		opts.params[fdmap.foreignKey] = record.id;
+		
+		this.getRecords(opts, function(err, results) {
+			if (err) {
+				return callback(err);
+			}
+			
+			record[property] = new SimpleDataSet(key);
+			
+			i = 0; l = results.length;
+			
+			for (; i < l; i++) {
+				child = new ChildRecord(record);
+				OjsUtils.cloneProperties(results[i], child);
+				record[property].data.push(child);
+			}
+			
+			callback();
+		});
 	};
 	
 	CreateProxy.prototype.fetch = function(key, dataset, property, callback) {
