@@ -78,7 +78,7 @@ var db = new ojsDb(DbProxies.LOCALSTORAGE);
 
 // Type 2: SQLiteProxy
 var db = new ojsDb(DbProxies.SQLITE, "DatabaseName");
-db.createDatabase(maps);
+db.createDb(maps);
 
 // Type 3: RestProxy
 var db = new ojsDb(DbProxies.RESTFUL, { url: "http://myserver" });
@@ -95,9 +95,9 @@ The dataset is the class that search , insert, remove and change records. In gen
 var db = new ojsDb(DbProxies.LOCALSTORAGE);
 
 // Creating DataSet's.
-var products = db.createDataSet("products")
-  , clients = db.createDataSet("clients")
-  , users = db.createDataSet("users");
+var products = db.dataset("products")
+  , clients = db.dataset("clients")
+  , users = db.dataset("users");
 ```
 
 ### Open a DataSet to work with
@@ -124,7 +124,7 @@ The types of data are based on proxy, then the proxy is responsible for serializ
 If the record does not contain an `id` field, **ojs-db** will automatically generated one for you. The `id` of a record, once set, can be modified at your own risk.
 
 ```javascript
-var products = db.createDataSet("products")
+var products = db.dataset("products")
   , p = { description: "Computer", value: 200.00 };
 
 products.save(p);
