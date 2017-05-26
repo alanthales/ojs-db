@@ -67,7 +67,7 @@ var DataSet = (function(exports) {
 			cb = callback && typeof callback === "function" ? callback : function() {};
 		
 		self.proxy().getRecords(opts, function(err, records) {
-			self.data.putRange(records, true);
+			self._data.putRange(records, true);
 			self._active = err ? false : true;
 			self._eof = records && records.length < (self._opts.limit || 30);
 			cb(err, records);
@@ -169,7 +169,7 @@ var DataSet = (function(exports) {
 		var defer = SimplePromise.defer();
 
 		if (this._opts.sort) {
-			this.data.orderBy(this._opts.sort);
+			this._data.orderBy(this._opts.sort);
 		}
 
 		defer.resolve(this);
@@ -180,21 +180,21 @@ var DataSet = (function(exports) {
 		if (!this._active) {
 			throw "Invalid operation on closed dataset";
 		}
-		SimpleDataSet.prototype.insert.apply(this, arguments);
+		return SimpleDataSet.prototype.insert.apply(this, arguments);
 	};
 
 	CreateDataSet.prototype.update = function(record) {
 		if (!this._active) {
 			throw "Invalid operation on closed dataset";
 		}
-		SimpleDataSet.prototype.update.apply(this, arguments);
+		return SimpleDataSet.prototype.update.apply(this, arguments);
 	};
 
 	CreateDataSet.prototype.delete = function(record) {
 		if (!this._active) {
 			throw "Invalid operation on closed dataset";
 		}
-		SimpleDataSet.prototype.delete.apply(this, arguments);
+		return SimpleDataSet.prototype.delete.apply(this, arguments);
 	};
 
 	var _filterOp = function(changes, operation) {
@@ -281,7 +281,7 @@ var DataSet = (function(exports) {
 				deleteFn;
 			
 			serverData.putRange(allData);
-			localData.putRange(self.data);
+			localData.putRange(self._data);
 
 			function deleteDiff(item) {
 				if (serverData.indexOfKey('id', item.id) < 0) {

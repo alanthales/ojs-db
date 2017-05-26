@@ -9,14 +9,15 @@ var SQLiteProxy = (function(exports) {
 	var _selectFrom = "SELECT * FROM",
 		_maps = {};
 	
-	function CreateProxy(opts) {
-		var db = null,
+	function CreateProxy(options) {
+		var db = null, opts = {},
 			cordova = typeof window.cordova !== "undefined";
 		
-		if (typeof opts === "object") {
-			opts.location = opts.location || "default";
+		if (typeof options === "object") {
+			opts.name = options.name;
+			opts.location = options.location || "default";
 		} else {
-			opts.name = opts;
+			opts.name = options;
 		}
 
 		if (cordova) {

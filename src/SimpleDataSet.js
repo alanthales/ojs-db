@@ -11,7 +11,7 @@ var SimpleDataSet = (function(exports) {
 
 		var _table = table || 'tableName';
 		this._history = [];
-		this.data = new ArrayMap();
+		this._data = new ArrayMap();
 		
 		this.table = function() { return _table; };
 	}
@@ -24,9 +24,9 @@ var SimpleDataSet = (function(exports) {
 		this._history.length = 0;
 	};
 	
-	CreateDataSet.prototype.getById = function(id) {
-		var index = this.data.indexOfKey('id', id);
-		return this.data[index];
+	CreateDataSet.prototype.get = function(id) {
+		var index = this._data.indexOfKey('id', id);
+		return this._data[index];
 	};
 
 	var _afterChange = function(operation, record) {
@@ -61,10 +61,10 @@ var SimpleDataSet = (function(exports) {
 			record.id = OjsUtils.newId();
 		}
 		
-		var index = this.data.indexOfKey('id', record.id);
+		var index = this._data.indexOfKey('id', record.id);
 		
 		if (index === -1) {
-			this.data.push(record);
+			this._data.push(record);
 			_afterChange.call(this, 'insert', record);		
 		}
 		
@@ -76,21 +76,21 @@ var SimpleDataSet = (function(exports) {
 			return this;
 		}
 		
-		var index = this.data.indexOfKey('id', record.id);
+		var index = this._data.indexOfKey('id', record.id);
 		
 		if (index === -1) {
 			return this;
 		}
 		
-		_afterChange.call(this, 'update', this.data[index]);		
-		this.data.splice(index, 1, record);
+		_afterChange.call(this, 'update', this._data[index]);		
+		this._data.splice(index, 1, record);
 
 		return this;
 	};
 
 	CreateDataSet.prototype.save = function(record) {
 		if (!record) return this;
-		if (!record.id || !this.getById(record.id)) {
+		if (!record.id || !this.get(record.id)) {
 			return this.insert(record);
 		}
 		return this.update(record);
@@ -101,11 +101,11 @@ var SimpleDataSet = (function(exports) {
 			return this;
 		}
 		
-		var index = this.data.indexOfKey('id', record.id);
+		var index = this._data.indexOfKey('id', record.id);
 		
 		if (index >= 0) {
-			_afterChange.call(this, 'delete', this.data[index]);
-			this.data.splice(index, 1);
+			_afterChange.call(this, 'delete', this._data[index]);
+			this._data.splice(index, 1);
 		}
 		
 		return this;
@@ -126,7 +126,7 @@ var SimpleDataSet = (function(exports) {
 	};
 	
 	CreateDataSet.prototype.clear = function(mustNotify) {
-		this.data.length = 0;
+		this._data.length = 0;
 		this._cleanCache();
 		if (mustNotify) {
 			this.emit(this.table(), {event: 'clear', data: []});
@@ -143,17 +143,17 @@ var SimpleDataSet = (function(exports) {
 
 		for (; i >= 0; i--) {
 			item = self._history[i];
-			index = self.data.indexOfKey('id', item.record.id);
+			index = self._data.indexOfKey('id', item.record.id);
 
 			switch (item.op) {
 				case 'insert':
-					self.data.splice(index, 1);
+					self._data.splice(index, 1);
 					break;
 				case 'update':
-					self.data.splice(index, 1, item.record);
+					self._data.splice(index, 1, item.record);
 					break;
 				case 'delete':
-					self.data.push(item.record);
+					self._data.push(item.record);
 					break;
 			}
 		}
@@ -162,20 +162,24 @@ var SimpleDataSet = (function(exports) {
 		this._history.length = 0;
 	};
 	
+	CreateDataSet.prototype.data = function() {
+		return this._data;
+	};
+
 	CreateDataSet.prototype.count = function() {
-		return this.data.length;
+		return this._data.length;
 	};
 
 	CreateDataSet.prototype.item = function(index) {
-		return this.data[index];
+		return this._data[index];
 	};
 
 	CreateDataSet.prototype.filter = function(options) {
-		return this.data.query(options);
+		return this._data.query(options);
 	};
 	
 	CreateDataSet.prototype.forEach = function(fn) {
-		this.data.forEach(fn);
+		this._data.forEach(fn);
 	};
 	
 	CreateDataSet.prototype.subscribe = function(fn) {
