@@ -64,11 +64,7 @@ var OjsUtils = (function(exports) {
 	
 	exports.OjsUtils = {
 		newId: function() {
-			var now = (new Date()).getTime();
-			if (performance && performance.now) {
-				now = parseInt(performance.now().toString().replace('.', ''));
-			}
-			return now;
+			return Date.now();
 		},
 
 		uuid: function(len) {

@@ -186,9 +186,7 @@ var ArrayMap = function(exports) {
     };
     return exports.OjsUtils = {
         newId: function() {
-            var now = new Date().getTime();
-            return performance && performance.now && (now = parseInt(performance.now().toString().replace(".", ""))), 
-            now;
+            return Date.now();
         },
         uuid: function(len) {
             return byteArrayToBase64(randomBytes(Math.ceil(Math.max(8, 2 * len)))).replace(/[+\/]/g, "").slice(0, len);
