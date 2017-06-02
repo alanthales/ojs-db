@@ -1,7 +1,7 @@
 /*
 	SimpleDataSet Class
 	Autor: Alan Thales, 07/2016
-	Requires: ArrayMap.js, Utils.js, ChildRecord.js, EventEmitter.js
+	Requires: ArrayMap.js, OjsUtils.js, ChildRecord.js, EventEmitter.js
 */
 var SimpleDataSet = (function(exports) {
 	'use strict';

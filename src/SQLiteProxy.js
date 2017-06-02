@@ -1,7 +1,7 @@
 /*
 	SQLite Proxy Class
 	Autor: Alan Thales, 09/2015
-	Requires: DbProxy.js, ArrayMap.js, Utils.js, SimpleDataSet.js, ChildRecord.js
+	Requires: DbProxy.js, ArrayMap.js, OjsUtils.js, SimpleDataSet.js, ChildRecord.js
 */
 var SQLiteProxy = (function(exports) {
 	'use strict';

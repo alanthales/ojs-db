@@ -593,8 +593,7 @@ var ArrayMap = function(exports) {
     "use strict";
     function CreateProxy(options) {
         function init() {
-            window.sqlitePlugin ? db = window.sqlitePlugin.openDatabase(opts) : (console.log(window), 
-            db = window.openDatabase(opts.name, "SQLite Database", "1.0", 5242880));
+            db = window.sqlitePlugin ? window.sqlitePlugin.openDatabase(opts) : window.openDatabase(opts.name, "SQLite Database", "1.0", 5242880);
         }
         var db = null, opts = {}, cordova = "undefined" != typeof window.cordova;
         "object" == typeof options ? (opts.name = options.name, opts.location = options.location || "default") : opts.name = options, 
