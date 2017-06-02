@@ -1,19 +1,3 @@
-/**
- * @license
- * Copyright (c) 2016 Alan Thales.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * You may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 var ArrayMap = function(exports) {
     "use strict";
     function Collection() {
@@ -210,7 +194,7 @@ var ArrayMap = function(exports) {
             for (var prop in source) source.hasOwnProperty(prop) && (dest[prop] = source[prop]);
         }
     }, exports.OjsUtils;
-}(this), ojsUtils = OjsUtils, ChildRecord = function(exports) {
+}(this), ChildRecord = function(exports) {
     "use strict";
     function CreateRecord(record) {
         this.master = function() {
@@ -309,6 +293,8 @@ var ArrayMap = function(exports) {
         isPromise: isPromise,
         when: when
     }, exports.SimplePromise;
+}(this), DbEvents = function(exports) {
+    return exports.DbEvents = new EventEmitter(), exports.DbEvents;
 }(this), SimpleDataSet = function(exports) {
     "use strict";
     function CreateDataSet(table) {
@@ -607,7 +593,8 @@ var ArrayMap = function(exports) {
     "use strict";
     function CreateProxy(options) {
         function init() {
-            db = window.sqlitePlugin ? window.sqlitePlugin.openDatabase(opts) : window.openDatabase(opts.name, "SQLite Database", "1.0", 5242880);
+            window.sqlitePlugin ? db = window.sqlitePlugin.openDatabase(opts) : (console.log(window), 
+            db = window.openDatabase(opts.name, "SQLite Database", "1.0", 5242880));
         }
         var db = null, opts = {}, cordova = "undefined" != typeof window.cordova;
         "object" == typeof options ? (opts.name = options.name, opts.location = options.location || "default") : opts.name = options, 
@@ -1054,8 +1041,6 @@ var ArrayMap = function(exports) {
         var self = this, values = _getData(key), cb = callback || function() {};
         self.sendData(key, values[Operations.Insert], values[Operations.Update], values[Operations.Delete], done);
     }, CreateSync;
-}(this), DbEvents = function(exports) {
-    return exports.DbEvents = new EventEmitter(), exports.DbEvents;
 }(this), DbFactory = function(exports) {
     "use strict";
     function CreateFactory(proxyType, opts, synchronizer) {

@@ -16,7 +16,7 @@ var ProxyBehavior = (function(exports) {
             it('should open dataset and return no data', function() {
                 dts.close();
                 return dts.open().then(function(dataset) {
-                    expect(dataset.data).to.have.lengthOf(0);
+                    expect(dataset.data()).to.have.lengthOf(0);
                     expect(dataset.active()).to.be.true;
                 });
             });
@@ -27,7 +27,7 @@ var ProxyBehavior = (function(exports) {
                 dts.save(record);
                 return dts.post().then(function(ok) {
                     expect(ok).to.equal(true);
-                    expect(dts.data).to.have.lengthOf(1);
+                    expect(dts.data()).to.have.lengthOf(1);
                 });
             });
         });
@@ -37,7 +37,7 @@ var ProxyBehavior = (function(exports) {
                 dts.delete(record);
                 return dts.post().then(function(ok) {
                     expect(ok).to.equal(true);
-                    expect(dts.data).to.have.lengthOf(0);
+                    expect(dts.data()).to.have.lengthOf(0);
                 });
             });
         });
@@ -49,7 +49,7 @@ var ProxyBehavior = (function(exports) {
                         return dataset.open();
                     })
                     .then(function() {
-                        expect(dts.data).to.have.lengthOf(0);
+                        expect(dts.data()).to.have.lengthOf(0);
                     });
             });
         });

@@ -1,7 +1,7 @@
 /*
 	DataSet Class
 	Autor: Alan Thales, 09/2015
-	Requires: SimpleDataSet.js, SimplePromise.js, DbFactory.js
+	Requires: SimpleDataSet.js, SimplePromise.js, DbEvents.js
 */
 var DataSet = (function(exports) {
 	'use strict';

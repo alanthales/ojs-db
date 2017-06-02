@@ -118,5 +118,3 @@ var OjsUtils = (function(exports) {
 
 	return exports.OjsUtils;
 })(this);
-
-var ojsUtils = OjsUtils;
