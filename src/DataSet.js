@@ -35,11 +35,11 @@ var DataSet = (function(exports) {
 	
 	CreateDataSet.prototype.emit = function(key, args) {
 		DbEvents.emit(key, args);
+		return this;
 	};
 
-	CreateDataSet.prototype.subscribe = function(fn) {
-		DbEvents.on(this.table(), fn);
-		return this;
+	CreateDataSet.prototype.on = function(key, fn) {
+		return DbEvents.on(key, fn);
 	};
 
 	CreateDataSet.prototype.sort = function(order) {

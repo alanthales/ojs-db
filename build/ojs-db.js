@@ -388,7 +388,9 @@ var ArrayMap = function(exports) {
     }, CreateDataSet.prototype.forEach = function(fn) {
         this._data.forEach(fn);
     }, CreateDataSet.prototype.subscribe = function(fn) {
-        return this.on(this.table(), fn), this;
+        return this._listener = this.on(this.table(), fn), this;
+    }, CreateDataSet.prototype.unsubscribe = function() {
+        return this._listener && this._listener.remove(), this;
     }, CreateDataSet;
 }(this), DataSet = function(exports) {
     "use strict";
@@ -407,9 +409,9 @@ var ArrayMap = function(exports) {
     var _pages = {};
     exports.DataSet = CreateDataSet, CreateDataSet.prototype = Object.create(SimpleDataSet.prototype), 
     CreateDataSet.prototype.emit = function(key, args) {
-        DbEvents.emit(key, args);
-    }, CreateDataSet.prototype.subscribe = function(fn) {
-        return DbEvents.on(this.table(), fn), this;
+        return DbEvents.emit(key, args), this;
+    }, CreateDataSet.prototype.on = function(key, fn) {
+        return DbEvents.on(key, fn);
     }, CreateDataSet.prototype.sort = function(order) {
         return this._opts.sort = order, this;
     }, CreateDataSet.prototype.limit = function(value) {

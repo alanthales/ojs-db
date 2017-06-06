@@ -183,7 +183,14 @@ var SimpleDataSet = (function(exports) {
 	};
 	
 	CreateDataSet.prototype.subscribe = function(fn) {
-		this.on(this.table(), fn);
+		this._listener = this.on(this.table(), fn);
+		return this;
+	};
+
+	CreateDataSet.prototype.unsubscribe = function() {
+		if (this._listener) {
+			this._listener.remove();
+		}
 		return this;
 	};
 	
