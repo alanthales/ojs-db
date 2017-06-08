@@ -1,6 +1,6 @@
 /*
     DbSync Abstract Class
-    Autor: Alan Thales, 03/2016
+    Alan Thales, 03/2016
     Requires: ArrayMap.js
 */
 var DbSync = (function(exports) {

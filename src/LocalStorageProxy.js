@@ -1,6 +1,6 @@
 /*
     LocalStorage Proxy Class
-    Autor: Alan Thales, 09/2015
+    Alan Thales, 09/2015
     Requires: ArrayMap.js, DbProxy.js
 */
 var LocalStorageProxy = (function(exports) {

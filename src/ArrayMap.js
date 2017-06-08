@@ -1,6 +1,6 @@
 /*
 	ArrayMap Class
-	Autor: Alan Thales, 09/2015
+	Alan Thales, 09/2015
 */
 var ArrayMap = (function(exports) {
 	'use strict';

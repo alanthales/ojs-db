@@ -1,6 +1,6 @@
 /*
     Event Emitter Class
-    Autor: Alan Thales, 12/2016
+    Alan Thales, 12/2016
 */
 var EventEmitter = (function(exports) {
     'use strict';

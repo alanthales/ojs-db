@@ -1,6 +1,6 @@
 /*
     ChildRecord Class
-    Autor: Alan Thales, 07/2016
+    Alan Thales, 07/2016
 */
 var ChildRecord = (function(exports) {
     'use strict';
