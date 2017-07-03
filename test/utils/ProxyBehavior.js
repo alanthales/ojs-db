@@ -32,6 +32,18 @@ var ProxyBehavior = (function(exports) {
             });
         });
 
+        describe('#post():update', function() {
+            it('should save changes to record and persist through proxy', function() {
+                var newR;
+                dts.save({id: 1, name: 'new test'});
+                return dts.post().then(function(ok) {
+                    expect(ok).to.equal(true);
+                    newR = dts.get(1);
+                    expect(newR.name).to.equal('new test');
+                });
+            });
+        });
+
         describe('#post():delete', function() {
             it('should delete records through proxy', function() {
                 dts.delete(record);
@@ -39,6 +51,16 @@ var ProxyBehavior = (function(exports) {
                     expect(ok).to.equal(true);
                     expect(dts.data()).to.have.lengthOf(0);
                 });
+            });
+        });
+
+        describe('#cancel()', function() {
+            it('should insert records and so cancel changes', function() {
+                dts.save(record)
+                    .save({ id: 2, name: 'new test' });
+                expect(dts.data()).to.have.lengthOf(2);
+                dts.cancel();
+                expect(dts.data()).to.have.lengthOf(0);
             });
         });
 

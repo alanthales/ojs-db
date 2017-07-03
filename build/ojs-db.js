@@ -564,7 +564,7 @@ var ArrayMap = function(exports) {
     }, _saveAll = function(key, table, callback) {
         window.localStorage[key] = JSON.stringify(table), "function" == typeof callback && callback();
     };
-    return exports.LocalStorageProxy = CreateProxy, CreateProxy.prototype = Object.create(DbProxy.prototype), 
+    exports.LocalStorageProxy = CreateProxy, CreateProxy.prototype = Object.create(DbProxy.prototype), 
     CreateProxy.prototype.getRecords = function(options, callback) {
         var table = _get(options);
         options.sort && table.orderBy(options.sort), "function" == typeof callback && callback(null, table);
@@ -572,22 +572,22 @@ var ArrayMap = function(exports) {
         var table = _get(key), results = table.query(filters);
         callback(null, results);
     }, CreateProxy.prototype.groupBy = function(key, options, groups, filters, callback) {
-        var table = _get(key);
-        callback(null, table.groupBy(options, groups, filters));
-    }, CreateProxy.prototype.save = function(key, record, callback) {
-        var table = _get(key), index = table.indexOfKey("id", record.id);
-        index === -1 ? table.push(record) : table.splice(index, 1, record), _saveAll(key, table, callback);
-    }, CreateProxy.prototype.remove = function(key, record, callback) {
-        var id = "object" == typeof record ? record.id : record, table = _get(key), index = table.indexOfKey("id", id);
-        table.splice(index, 1), _saveAll(key, table, callback);
-    }, CreateProxy.prototype.commit = function(key, toInsert, toUpdate, toDelete, callback) {
-        function progress() {
-            total--, 0 === total && cb();
-        }
-        var i, self = this, toSave = toInsert.concat(toUpdate), total = toSave.length + toDelete.length, cb = callback && "function" == typeof callback ? callback : function() {};
+        var table = _get(key), results = table.groupBy(options, groups, filters);
+        callback(null, results);
+    };
+    var _save = function(table, record) {
+        var index = table.indexOfKey("id", record.id);
+        index === -1 ? table.push(record) : table.splice(index, 1, record);
+    }, _remove = function(table, record) {
+        var id = "object" == typeof record ? record.id : record, index = table.indexOfKey("id", id);
+        table.splice(index, 1);
+    };
+    return CreateProxy.prototype.commit = function(key, toInsert, toUpdate, toDelete, callback) {
+        var i, toSave = toInsert.concat(toUpdate), total = toSave.length + toDelete.length, table = _get(key), cb = callback && "function" == typeof callback ? callback : function() {};
         if (0 === total) return cb();
-        for (i = 0; i < toSave.length; i++) self.save(key, toSave[i], progress);
-        for (i = 0; i < toDelete.length; i++) self.remove(key, toDelete[i], progress);
+        for (i = 0; i < toSave.length; i++) _save.call(this, table, toSave[i]);
+        for (i = 0; i < toDelete.length; i++) _remove.call(this, table, toDelete[i]);
+        _saveAll(key, table, cb);
     }, CreateProxy.prototype.clear = function(key, callback) {
         _saveAll(key, [], callback);
     }, CreateProxy;
