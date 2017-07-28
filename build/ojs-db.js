@@ -388,9 +388,7 @@ var ArrayMap = function(exports) {
     }, CreateDataSet.prototype.forEach = function(fn) {
         this._data.forEach(fn);
     }, CreateDataSet.prototype.subscribe = function(fn) {
-        return this._listener = this.on(this.table(), fn), this;
-    }, CreateDataSet.prototype.unsubscribe = function() {
-        return this._listener && this._listener.remove(), this;
+        return this.on(this.table(), fn);
     }, CreateDataSet;
 }(this), DataSet = function(exports) {
     "use strict";
