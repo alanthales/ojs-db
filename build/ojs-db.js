@@ -1020,13 +1020,15 @@ var ArrayMap = function(exports) {
         var key = _getTableName(tableName);
         window.localStorage[key] = JSON.stringify(values);
     }, _merge = function(arr1, arr2) {
-        for (var result = new ArrayMap(), concated = arr1.concat(arr2), i = 0, l = concated.length; i < l; i++) result.indexOfKey("id", concated[i].id) < 0 && result.put(concated[i]);
+        for (var result = new ArrayMap(), concated = arr1.concat(arr2 || []), i = 0, l = concated.length; i < l; i++) result.indexOfKey("id", concated[i].id) < 0 && result.put(concated[i]);
         return result;
     };
     return CreateSync.prototype.writeData = function(key, toInsert, toUpdate, toDelete) {
         var values = _getData(key);
-        values[Operations.Insert] = _merge(toInsert, values[Operations.Insert]), values[Operations.Update] = _merge(toUpdate, values[Operations.Update]), 
-        values[Operations.Delete] = _merge(toDelete, values[Operations.Delete]), _saveTable(key, values);
+        toInsert.length && (values[Operations.Insert] = _merge(toInsert, values[Operations.Insert])), 
+        toUpdate.length && (values[Operations.Update] = _merge(toUpdate, values[Operations.Update])), 
+        toDelete.length && (values[Operations.Delete] = _merge(toDelete, values[Operations.Delete])), 
+        _saveTable(key, values);
     }, CreateSync.prototype.cleanData = function(key) {
         _saveTable(key, {});
     }, CreateSync.prototype.sendData = function(key, toInsert, toUpdate, toDelete, callback) {
