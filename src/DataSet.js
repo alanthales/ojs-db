@@ -1,7 +1,7 @@
 /*
 	DataSet Class
 	Alan Thales, 09/2015
-	Requires: SimpleDataSet.js, SimplePromise.js, DbEvents.js
+	Requires: SimpleDataSet.js, DbEvents.js
 */
 var DataSet = (function(exports) {
 	'use strict';
@@ -79,25 +79,25 @@ var DataSet = (function(exports) {
 	
 	CreateDataSet.prototype.open = function() {
 		var opts = { key: this.table() },
-			defer = SimplePromise.defer(),
+			// defer = SimplePromise.defer(),
 			self = this;
 
-		if (self._active) {
-			defer.resolve(self);
-			return defer;
-		}
-
-		OjsUtils.cloneProperties(self._opts, opts);
-
-		_getRecords.call(self, opts, function(err, records) {
-			if (err) {
-				defer.reject(err);
+		return new Promise(function(resolve, reject) {
+			if (self._active) {
+				resolve(self);
 				return;
 			}
-			defer.resolve(self);
+
+			OjsUtils.cloneProperties(self._opts, opts);
+
+			_getRecords.call(self, opts, function(err, records) {
+				if (err) {
+					reject(err);
+					return;
+				}
+				resolve(self);
+			});
 		});
-		
-		return defer;
 	};
 	
 	CreateDataSet.prototype.next = function() {
@@ -113,25 +113,25 @@ var DataSet = (function(exports) {
 
 		var self = this,
 			skip = _pages[self.table()] * self._opts.limit,
-			opts = { key: self.table(), skip: skip },
-			defer = SimplePromise.defer();
+			opts = { key: self.table(), skip: skip };
+			// defer = SimplePromise.defer();
 
-		if (self.eof()) {
-			defer.resolve(self);
-			return defer;
-		}
-
-		OjsUtils.cloneProperties(self._opts, opts);
-
-		_getRecords.call(self, opts, function(err, results) {
-			if (err) {
-				defer.reject(err);
+		return new Promise(function(resolve, reject) {
+			if (self.eof()) {
+				resolve(self);
 				return;
 			}
-			defer.resolve(self);
+
+			OjsUtils.cloneProperties(self._opts, opts);
+
+			_getRecords.call(self, opts, function(err, results) {
+				if (err) {
+					reject(err);
+					return;
+				}
+				resolve(self);
+			});
 		});
-		
-		return defer;
 	};
 	
 	CreateDataSet.prototype.close = function() {
@@ -142,22 +142,22 @@ var DataSet = (function(exports) {
 	};
 
 	CreateDataSet.prototype.clear = function() {
-		var self = this,
-			defer = SimplePromise.defer();
+		var self = this;
+			// defer = SimplePromise.defer();
 
-		self.proxy().clear(self.table(), done);
-		
-		function done(err) {
-			if (err) {
-				defer.reject(err);
-				return;
+		return new Promise(function(resolve, reject) {
+			self.proxy().clear(self.table(), done);
+			
+			function done(err) {
+				if (err) {
+					reject(err);
+					return;
+				}
+				_pages[self.table()] = 0;
+				SimpleDataSet.prototype.clear.apply(self, arguments);
+				resolve(self);
 			}
-			_pages[self.table()] = 0;
-			SimpleDataSet.prototype.clear.apply(self, arguments);
-			defer.resolve(self);
-		}
-
-		return defer;
+		});
 	};
 
 	CreateDataSet.prototype.refresh = function() {
@@ -166,14 +166,15 @@ var DataSet = (function(exports) {
 			return this.open();
 		}
 		
-		var defer = SimplePromise.defer();
+		var self = this;
+		// var defer = SimplePromise.defer();
 
-		if (this._opts.sort) {
-			this._data.orderBy(this._opts.sort);
-		}
-
-		defer.resolve(this);
-		return defer;
+		return new Promise(function(resolve, reject) {
+			if (self._opts.sort) {
+				self._data.orderBy(self._opts.sort);
+			}
+			resolve(self);
+		});
 	};
 	
 	CreateDataSet.prototype.insert = function(record) {
@@ -216,101 +217,101 @@ var DataSet = (function(exports) {
 
 		var self = this,
 			sync = this.synchronizer(),
-			defer = SimplePromise.defer(),
+			// defer = SimplePromise.defer(),
 			toInsert, toUpdate, toDelete;
 
-		if (!self._history.length) {
-			defer.resolve(true);
-			return defer;
-		}
-		
-		toInsert = _filterOp(self._history, 'insert');
-		toUpdate = _filterOp(self._history, 'update');
-		toDelete = _filterOp(self._history, 'delete');
-		
-		self.proxy().commit(self.table(), toInsert, toUpdate, toDelete, done);
-
-		function done(err) {
-			if (err) {
-				self.cancel();
-				defer.reject(err);
+		return new Promise(function(resolve, reject) {
+			if (!self._history.length) {
+				resolve();
 				return;
 			}
 			
-			if (sync && !ignoreSync) {
-				sync.writeData(self.table(), toInsert, toUpdate, toDelete);
-			}
+			toInsert = _filterOp(self._history, 'insert');
+			toUpdate = _filterOp(self._history, 'update');
+			toDelete = _filterOp(self._history, 'delete');
 			
-			self.refresh().then(
-				function() { defer.resolve(true); },
-				function(err) { defer.reject(err); }
-			);
-			
-			self._cleanCache();
-		}
+			self.proxy().commit(self.table(), toInsert, toUpdate, toDelete, done);
 
-		return defer;
+			function done(err) {
+				if (err) {
+					self.cancel();
+					reject(err);
+					return;
+				}
+				
+				if (sync && !ignoreSync) {
+					sync.writeData(self.table(), toInsert, toUpdate, toDelete);
+				}
+				
+				self.refresh().then(
+					function() { resolve(); },
+					function(err) { reject(err); }
+				);
+				
+				self._cleanCache();
+			}
+		});
 	};
 
 	CreateDataSet.prototype.sync = function() {
 		var self = this,
-			sync = this.synchronizer(),
-			defer = SimplePromise.defer();
+			sync = this.synchronizer();
+			// defer = SimplePromise.defer();
 		
-		if (!sync) {
-			defer.resolve(self);
-			return defer;
-		}
-		
-		sync.exec(self.table(), function(err, allData, toDelete) {
-			if (err) {
-				defer.reject(err);
+		return new Promise(function(resolve, reject) {
+			if (!sync) {
+				resolve(self);
 				return;
 			}
 			
-			allData = allData || []; toDelete = toDelete || [];
-			
-			if (!allData.length && !toDelete.length) {
-				defer.resolve(self);
-				return;
-			}
-			
-			var serverData = new ArrayMap(),
-				localData = new ArrayMap(),
-				toDeleteMap = toDelete.map(function(item) { return item.id; }),
-				deleteFn;
-			
-			serverData.putRange(allData);
-			localData.putRange(self._data);
+			sync.exec(self.table(), function(err, allData, toDelete) {
+				if (err) {
+					reject(err);
+					return;
+				}
+				
+				allData = allData || []; toDelete = toDelete || [];
+				
+				if (!allData.length && !toDelete.length) {
+					resolve(self);
+					return;
+				}
+				
+				var serverData = new ArrayMap(),
+					localData = new ArrayMap(),
+					toDeleteMap = toDelete.map(function(item) { return item.id; }),
+					deleteFn;
+				
+				serverData.putRange(allData);
+				localData.putRange(self._data);
 
-			function deleteDiff(item) {
-				if (serverData.indexOfKey('id', item.id) < 0) {
-					self.delete(item);
+				function deleteDiff(item) {
+					if (serverData.indexOfKey('id', item.id) < 0) {
+						self.delete(item);
+					}
 				}
-			}
-			
-			function deleteFix(item) {
-				if (toDeleteMap.indexOf(item.id) > -1) {
-					self.delete(item);
+				
+				function deleteFix(item) {
+					if (toDeleteMap.indexOf(item.id) > -1) {
+						self.delete(item);
+					}
 				}
-			}
-			
-			deleteFn = toDelete && toDelete instanceof Array ? deleteFix : deleteDiff;
-			
-			localData.forEach(deleteFn);
-			
-			serverData.forEach(function(item) {
-				self.save(item);
-			});
-			
-			self.post(true).then(function() {
-				defer.resolve(self);
-			}, function(err) {
-				defer.reject(err);
+				
+				deleteFn = toDelete && toDelete instanceof Array ? deleteFix : deleteDiff;
+				
+				localData.forEach(deleteFn);
+				
+				serverData.forEach(function(item) {
+					self.save(item);
+				});
+				
+				self.post(true).then(function() {
+					resolve(self);
+				}, function(err) {
+					reject(err);
+				});
 			});
 		});
-
-		return defer;
 	};
 	
 	CreateDataSet.prototype.fetch = function(property) {
@@ -318,23 +319,23 @@ var DataSet = (function(exports) {
 			throw "Invalid operation on closed dataset";
 		}
 
-		var defer = SimplePromise.defer(),
-			self = this;
+		// var defer = SimplePromise.defer(),
+		var self = this;
 
-		if (!this.count()) {
-			defer.resolve(self);
-			return defer;
-		}
-
-		this.proxy().fetch(this.table(), this, property, function(err) {
-			if (err) {
-				defer.reject(err);
+		return new Promise(function(resolve, reject) {
+			if (!self.count()) {
+				resolve(self);
 				return;
 			}
-			defer.resolve(self);
-		});
 
-		return defer;
+			self.proxy().fetch(self.table(), self, property, function(err) {
+				if (err) {
+					reject(err);
+					return;
+				}
+				resolve(self);
+			});
+		});
 	};
 	
 	CreateDataSet.prototype.eof = function() {

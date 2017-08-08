@@ -18,7 +18,7 @@
 /*
 	Database Factory Main Class
 	Alan Thales, 09/2015
-	Requires: DataSet.js, SimplePromise.js, LocalStorageProxy.js, SQLiteProxy.js, RestProxy.js
+	Requires: DataSet.js, LocalStorageProxy.js, SQLiteProxy.js, RestProxy.js
 */
 var DbFactory = (function(exports) {
 	'use strict';
@@ -53,45 +53,45 @@ var DbFactory = (function(exports) {
 	exports.DbFactory = CreateFactory;
 
 	CreateFactory.prototype.createDb = function(maps) {
-		var defer = SimplePromise.defer();
+		var self = this;
 
-		this.proxy().createDatabase(maps, function(err) {
-			if (err) {
-				defer.reject(err);
-				return;
-			}
-			defer.resolve(true);
+		return new Promise(function(resolve, reject) {
+			self.proxy().createDatabase(maps, function(err) {
+				if (err) {
+					reject(err);
+					return;
+				}
+				resolve();
+			});
 		});
-
-		return defer;
 	};
 
 	CreateFactory.prototype.query = function(key, filters) {
-		var defer = SimplePromise.defer();
+		var self = this;
 
-		this.proxy().query(key, filters, function(err, records) {
-			if (err) {
-				defer.reject(err);
-				return;
-			}
-			defer.resolve(records);
+		return new Promise(function(resolve, reject) {
+			self.proxy().query(key, filters, function(err, records) {
+				if (err) {
+					reject(err);
+					return;
+				}
+				resolve(records);
+			});
 		});
-
-		return defer;
 	};
 	
 	CreateFactory.prototype.groupBy = function(key, options, groups, filters) {
-		var defer = SimplePromise.defer();
-		
-		this.proxy().groupBy(key, options, groups, filters, function(err, records) {
-			if (err) {
-				defer.reject(err);
-				return;
-			}
-			defer.resolve(records);
-		});
+		var self = this;
 
-		return defer;
+		return new Promise(function(resolve, reject) {
+			self.proxy().groupBy(key, options, groups, filters, function(err, records) {
+				if (err) {
+					reject(err);
+					return;
+				}
+				resolve(records);
+			});
+		});
 	};
 	
 	CreateFactory.prototype.dataset = function(table) {
@@ -99,17 +99,17 @@ var DbFactory = (function(exports) {
 	};
 
 	var _save = function(key, toInsert, toUpdate, toDelete) {
-		var defer = SimplePromise.defer();
+		var self = this;
 
-		this.proxy().commit(key, toInsert, toUpdate, toDelete, function(err) {
-			if (err) {
-				defer.reject(err);
-				return;
-			}
-			defer.resolve(true);
+		return new Promise(function(resolve, reject) {
+			self.proxy().commit(key, toInsert, toUpdate, toDelete, function(err) {
+				if (err) {
+					reject(err);
+					return;
+				}
+				resolve();
+			});
 		});
-
-		return defer;
 	};
 
 	CreateFactory.prototype.insert = function(key, toInsert) {

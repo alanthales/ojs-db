@@ -83,8 +83,8 @@ var DbSync = (function(exports) {
 			cb = callback || function() {};
 
 		self.sendData(
-			key, values[Operations.Insert], values[Operations.Update],
-			values[Operations.Delete], done
+			key, values[Operations.Insert] || [], values[Operations.Update] || [],
+			values[Operations.Delete] || [], done
 		);
 
 		function done(err) {

@@ -1,3 +1,261 @@
+!function e(t, n, r) {
+    function s(o, u) {
+        if (!n[o]) {
+            if (!t[o]) {
+                var a = "function" == typeof require && require;
+                if (!u && a) return a(o, !0);
+                if (i) return i(o, !0);
+                var f = new Error("Cannot find module '" + o + "'");
+                throw f.code = "MODULE_NOT_FOUND", f;
+            }
+            var l = n[o] = {
+                exports: {}
+            };
+            t[o][0].call(l.exports, function(e) {
+                var n = t[o][1][e];
+                return s(n ? n : e);
+            }, l, l.exports, e, t, n, r);
+        }
+        return n[o].exports;
+    }
+    for (var i = "function" == typeof require && require, o = 0; o < r.length; o++) s(r[o]);
+    return s;
+}({
+    1: [ function(require, module, exports) {
+        "use strict";
+        function noop() {}
+        function getThen(obj) {
+            try {
+                return obj.then;
+            } catch (ex) {
+                return LAST_ERROR = ex, IS_ERROR;
+            }
+        }
+        function tryCallOne(fn, a) {
+            try {
+                return fn(a);
+            } catch (ex) {
+                return LAST_ERROR = ex, IS_ERROR;
+            }
+        }
+        function tryCallTwo(fn, a, b) {
+            try {
+                fn(a, b);
+            } catch (ex) {
+                return LAST_ERROR = ex, IS_ERROR;
+            }
+        }
+        function Promise(fn) {
+            if ("object" != typeof this) throw new TypeError("Promises must be constructed via new");
+            if ("function" != typeof fn) throw new TypeError("not a function");
+            this._37 = 0, this._12 = null, this._59 = [], fn !== noop && doResolve(fn, this);
+        }
+        function safeThen(self, onFulfilled, onRejected) {
+            return new self.constructor(function(resolve, reject) {
+                var res = new Promise(noop);
+                res.then(resolve, reject), handle(self, new Handler(onFulfilled, onRejected, res));
+            });
+        }
+        function handle(self, deferred) {
+            for (;3 === self._37; ) self = self._12;
+            return 0 === self._37 ? void self._59.push(deferred) : void asap(function() {
+                var cb = 1 === self._37 ? deferred.onFulfilled : deferred.onRejected;
+                if (null === cb) return void (1 === self._37 ? resolve(deferred.promise, self._12) : reject(deferred.promise, self._12));
+                var ret = tryCallOne(cb, self._12);
+                ret === IS_ERROR ? reject(deferred.promise, LAST_ERROR) : resolve(deferred.promise, ret);
+            });
+        }
+        function resolve(self, newValue) {
+            if (newValue === self) return reject(self, new TypeError("A promise cannot be resolved with itself."));
+            if (newValue && ("object" == typeof newValue || "function" == typeof newValue)) {
+                var then = getThen(newValue);
+                if (then === IS_ERROR) return reject(self, LAST_ERROR);
+                if (then === self.then && newValue instanceof Promise) return self._37 = 3, self._12 = newValue, 
+                void finale(self);
+                if ("function" == typeof then) return void doResolve(then.bind(newValue), self);
+            }
+            self._37 = 1, self._12 = newValue, finale(self);
+        }
+        function reject(self, newValue) {
+            self._37 = 2, self._12 = newValue, finale(self);
+        }
+        function finale(self) {
+            for (var i = 0; i < self._59.length; i++) handle(self, self._59[i]);
+            self._59 = null;
+        }
+        function Handler(onFulfilled, onRejected, promise) {
+            this.onFulfilled = "function" == typeof onFulfilled ? onFulfilled : null, this.onRejected = "function" == typeof onRejected ? onRejected : null, 
+            this.promise = promise;
+        }
+        function doResolve(fn, promise) {
+            var done = !1, res = tryCallTwo(fn, function(value) {
+                done || (done = !0, resolve(promise, value));
+            }, function(reason) {
+                done || (done = !0, reject(promise, reason));
+            });
+            done || res !== IS_ERROR || (done = !0, reject(promise, LAST_ERROR));
+        }
+        var asap = require("asap/raw"), LAST_ERROR = null, IS_ERROR = {};
+        module.exports = Promise, Promise._99 = noop, Promise.prototype.then = function(onFulfilled, onRejected) {
+            if (this.constructor !== Promise) return safeThen(this, onFulfilled, onRejected);
+            var res = new Promise(noop);
+            return handle(this, new Handler(onFulfilled, onRejected, res)), res;
+        };
+    }, {
+        "asap/raw": 4
+    } ],
+    2: [ function(require, module, exports) {
+        "use strict";
+        function valuePromise(value) {
+            var p = new Promise(Promise._99);
+            return p._37 = 1, p._12 = value, p;
+        }
+        var Promise = require("./core.js");
+        module.exports = Promise;
+        var TRUE = valuePromise(!0), FALSE = valuePromise(!1), NULL = valuePromise(null), UNDEFINED = valuePromise(void 0), ZERO = valuePromise(0), EMPTYSTRING = valuePromise("");
+        Promise.resolve = function(value) {
+            if (value instanceof Promise) return value;
+            if (null === value) return NULL;
+            if (void 0 === value) return UNDEFINED;
+            if (value === !0) return TRUE;
+            if (value === !1) return FALSE;
+            if (0 === value) return ZERO;
+            if ("" === value) return EMPTYSTRING;
+            if ("object" == typeof value || "function" == typeof value) try {
+                var then = value.then;
+                if ("function" == typeof then) return new Promise(then.bind(value));
+            } catch (ex) {
+                return new Promise(function(resolve, reject) {
+                    reject(ex);
+                });
+            }
+            return valuePromise(value);
+        }, Promise.all = function(arr) {
+            var args = Array.prototype.slice.call(arr);
+            return new Promise(function(resolve, reject) {
+                function res(i, val) {
+                    if (val && ("object" == typeof val || "function" == typeof val)) {
+                        if (val instanceof Promise && val.then === Promise.prototype.then) {
+                            for (;3 === val._37; ) val = val._12;
+                            return 1 === val._37 ? res(i, val._12) : (2 === val._37 && reject(val._12), void val.then(function(val) {
+                                res(i, val);
+                            }, reject));
+                        }
+                        var then = val.then;
+                        if ("function" == typeof then) {
+                            var p = new Promise(then.bind(val));
+                            return void p.then(function(val) {
+                                res(i, val);
+                            }, reject);
+                        }
+                    }
+                    args[i] = val, 0 === --remaining && resolve(args);
+                }
+                if (0 === args.length) return resolve([]);
+                for (var remaining = args.length, i = 0; i < args.length; i++) res(i, args[i]);
+            });
+        }, Promise.reject = function(value) {
+            return new Promise(function(resolve, reject) {
+                reject(value);
+            });
+        }, Promise.race = function(values) {
+            return new Promise(function(resolve, reject) {
+                values.forEach(function(value) {
+                    Promise.resolve(value).then(resolve, reject);
+                });
+            });
+        }, Promise.prototype.catch = function(onRejected) {
+            return this.then(null, onRejected);
+        };
+    }, {
+        "./core.js": 1
+    } ],
+    3: [ function(require, module, exports) {
+        "use strict";
+        function throwFirstError() {
+            if (pendingErrors.length) throw pendingErrors.shift();
+        }
+        function asap(task) {
+            var rawTask;
+            rawTask = freeTasks.length ? freeTasks.pop() : new RawTask(), rawTask.task = task, 
+            rawAsap(rawTask);
+        }
+        function RawTask() {
+            this.task = null;
+        }
+        var rawAsap = require("./raw"), freeTasks = [], pendingErrors = [], requestErrorThrow = rawAsap.makeRequestCallFromTimer(throwFirstError);
+        module.exports = asap, RawTask.prototype.call = function() {
+            try {
+                this.task.call();
+            } catch (error) {
+                asap.onerror ? asap.onerror(error) : (pendingErrors.push(error), requestErrorThrow());
+            } finally {
+                this.task = null, freeTasks[freeTasks.length] = this;
+            }
+        };
+    }, {
+        "./raw": 4
+    } ],
+    4: [ function(require, module, exports) {
+        (function(global) {
+            "use strict";
+            function rawAsap(task) {
+                queue.length || (requestFlush(), flushing = !0), queue[queue.length] = task;
+            }
+            function flush() {
+                for (;index < queue.length; ) {
+                    var currentIndex = index;
+                    if (index += 1, queue[currentIndex].call(), index > capacity) {
+                        for (var scan = 0, newLength = queue.length - index; scan < newLength; scan++) queue[scan] = queue[scan + index];
+                        queue.length -= index, index = 0;
+                    }
+                }
+                queue.length = 0, index = 0, flushing = !1;
+            }
+            function makeRequestCallFromMutationObserver(callback) {
+                var toggle = 1, observer = new BrowserMutationObserver(callback), node = document.createTextNode("");
+                return observer.observe(node, {
+                    characterData: !0
+                }), function() {
+                    toggle = -toggle, node.data = toggle;
+                };
+            }
+            function makeRequestCallFromTimer(callback) {
+                return function() {
+                    function handleTimer() {
+                        clearTimeout(timeoutHandle), clearInterval(intervalHandle), callback();
+                    }
+                    var timeoutHandle = setTimeout(handleTimer, 0), intervalHandle = setInterval(handleTimer, 50);
+                };
+            }
+            module.exports = rawAsap;
+            var requestFlush, queue = [], flushing = !1, index = 0, capacity = 1024, BrowserMutationObserver = global.MutationObserver || global.WebKitMutationObserver;
+            requestFlush = "function" == typeof BrowserMutationObserver ? makeRequestCallFromMutationObserver(flush) : makeRequestCallFromTimer(flush), 
+            rawAsap.requestFlush = requestFlush, rawAsap.makeRequestCallFromTimer = makeRequestCallFromTimer;
+        }).call(this, "undefined" != typeof global ? global : "undefined" != typeof self ? self : "undefined" != typeof window ? window : {});
+    }, {} ],
+    5: [ function(require, module, exports) {
+        "function" != typeof Promise.prototype.done && (Promise.prototype.done = function(onFulfilled, onRejected) {
+            var self = arguments.length ? this.then.apply(this, arguments) : this;
+            self.then(null, function(err) {
+                setTimeout(function() {
+                    throw err;
+                }, 0);
+            });
+        });
+    }, {} ],
+    6: [ function(require, module, exports) {
+        require("asap");
+        "undefined" == typeof Promise && (Promise = require("./lib/core.js"), require("./lib/es6-extensions.js")), 
+        require("./polyfill-done.js");
+    }, {
+        "./lib/core.js": 1,
+        "./lib/es6-extensions.js": 2,
+        "./polyfill-done.js": 5,
+        asap: 3
+    } ]
+}, {}, [ 6 ]);
+
 var ArrayMap = function(exports) {
     "use strict";
     function Collection() {
@@ -225,74 +483,6 @@ var ArrayMap = function(exports) {
             item(void 0 !== args ? args : {});
         });
     }, CreateEmitter;
-}(this), SimplePromise = function(exports) {
-    "use strict";
-    function defer(opt_scope) {
-        return new Deferred(opt_scope);
-    }
-    function isPromise(arg) {
-        return arg && "function" == typeof arg.then;
-    }
-    function when(var_args) {
-        for (var deferred = new Deferred(), args = [].slice.call(arguments, 0), results = [], callback = function(value) {
-            results.push(value), args.length === results.length && deferred.resolve(results);
-        }, errback = function(error) {
-            deferred.reject(error);
-        }, i = 0, len = args.length; i < len; i++) {
-            var arg = args[i];
-            isPromise(arg) ? arg.then(callback, errback).resolve() : "function" == typeof arg ? defer().then(arg).then(callback, errback).resolve() : defer().then(function() {
-                return arg;
-            }).then(callback, errback).resolve();
-        }
-        return deferred;
-    }
-    var freeze = Object.freeze || function() {}, IPromise = function() {};
-    IPromise.prototype.resolve, IPromise.prototype.reject, IPromise.prototype.then;
-    var Deferred = function(opt_scope) {
-        this.state_ = Deferred.State.UNRESOLVED, this.chain_ = [], this.scope_ = opt_scope || null;
-    };
-    return Deferred.prototype.state_, Deferred.prototype.chain_, Deferred.prototype.scope_, 
-    Deferred.prototype.result_, Deferred.prototype.then = function(callback, errback, progback) {
-        return this.chain_.push([ callback || null, errback || null, progback || null ]), 
-        this.state_ !== Deferred.State.UNRESOLVED && this.fire_(), this;
-    }, Deferred.prototype.resolve = function(value) {
-        this.state_ = Deferred.State.RESOLVED, this.fire_(value);
-    }, Deferred.prototype.reject = function(error) {
-        this.state_ = Deferred.State.REJECTED, this.fire_(error);
-    }, Deferred.prototype.isResolved = function() {
-        return this.state_ === Deferred.State.RESOLVED;
-    }, Deferred.prototype.isRejected = function() {
-        return this.state_ === Deferred.State.REJECTED;
-    }, Deferred.prototype.next = function(callback, errback, opt_interval) {
-        var interval = opt_interval || 10, deferred = new Deferred(this);
-        return deferred.then(callback, errback), this.then(function(value) {
-            setTimeout(function() {
-                deferred.resolve(value);
-            }, interval);
-        }, function(error) {
-            setTimeout(function() {
-                deferred.reject(error);
-            }, interval);
-        }), deferred;
-    }, Deferred.prototype.fire_ = function(value) {
-        var res = "undefined" != typeof value ? value : this.result_;
-        for (this.result_ = res; this.chain_.length; ) {
-            var entry = this.chain_.shift(), fn = this.state_ === Deferred.State.REJECTED ? entry[1] : entry[0];
-            if (fn) try {
-                res = this.result_ = fn.call(this.scope_, res);
-            } catch (e) {
-                this.state_ = Deferred.State.REJECTED, res = this.result_ = e;
-            }
-        }
-    }, Deferred.State = {
-        UNRESOLVED: "unresolved",
-        RESOLVED: "resolved",
-        REJECTED: "rejected"
-    }, freeze(Deferred.State), exports.SimplePromise = {
-        defer: defer,
-        isPromise: isPromise,
-        when: when
-    }, exports.SimplePromise;
 }(this), DbEvents = function(exports) {
     return exports.DbEvents = new EventEmitter(), exports.DbEvents;
 }(this), SimpleDataSet = function(exports) {
@@ -432,37 +622,44 @@ var ArrayMap = function(exports) {
     CreateDataSet.prototype.open = function() {
         var opts = {
             key: this.table()
-        }, defer = SimplePromise.defer(), self = this;
-        return self._active ? (defer.resolve(self), defer) : (OjsUtils.cloneProperties(self._opts, opts), 
-        _getRecords.call(self, opts, function(err, records) {
-            return err ? void defer.reject(err) : void defer.resolve(self);
-        }), defer);
+        }, self = this;
+        return new Promise(function(resolve, reject) {
+            return self._active ? void resolve(self) : (OjsUtils.cloneProperties(self._opts, opts), 
+            void _getRecords.call(self, opts, function(err, records) {
+                return err ? void reject(err) : void resolve(self);
+            }));
+        });
     }, CreateDataSet.prototype.next = function() {
         if (!this._active) throw "Invalid operation on closed dataset";
         this._opts.limit && !isNaN(this._opts.limit) || (this._opts.limit = 30), _pages[this.table()] = ++_pages[this.table()];
         var self = this, skip = _pages[self.table()] * self._opts.limit, opts = {
             key: self.table(),
             skip: skip
-        }, defer = SimplePromise.defer();
-        return self.eof() ? (defer.resolve(self), defer) : (OjsUtils.cloneProperties(self._opts, opts), 
-        _getRecords.call(self, opts, function(err, results) {
-            return err ? void defer.reject(err) : void defer.resolve(self);
-        }), defer);
+        };
+        return new Promise(function(resolve, reject) {
+            return self.eof() ? void resolve(self) : (OjsUtils.cloneProperties(self._opts, opts), 
+            void _getRecords.call(self, opts, function(err, results) {
+                return err ? void reject(err) : void resolve(self);
+            }));
+        });
     }, CreateDataSet.prototype.close = function() {
         return SimpleDataSet.prototype.clear.apply(this, arguments), _pages[this.table()] = 0, 
         this._active = !1, this;
     }, CreateDataSet.prototype.clear = function() {
-        function done(err) {
-            return err ? void defer.reject(err) : (_pages[self.table()] = 0, SimpleDataSet.prototype.clear.apply(self, arguments), 
-            void defer.resolve(self));
-        }
-        var self = this, defer = SimplePromise.defer();
-        return self.proxy().clear(self.table(), done), defer;
+        var self = this;
+        return new Promise(function(resolve, reject) {
+            function done(err) {
+                return err ? void reject(err) : (_pages[self.table()] = 0, SimpleDataSet.prototype.clear.apply(self, arguments), 
+                void resolve(self));
+            }
+            self.proxy().clear(self.table(), done);
+        });
     }, CreateDataSet.prototype.refresh = function() {
         if (this._reOpenOnRefresh) return this._active = !1, this.open();
-        var defer = SimplePromise.defer();
-        return this._opts.sort && this._data.orderBy(this._opts.sort), defer.resolve(this), 
-        defer;
+        var self = this;
+        return new Promise(function(resolve, reject) {
+            self._opts.sort && self._data.orderBy(self._opts.sort), resolve(self);
+        });
     }, CreateDataSet.prototype.insert = function(record) {
         if (!this._active) throw "Invalid operation on closed dataset";
         return SimpleDataSet.prototype.insert.apply(this, arguments);
@@ -480,48 +677,53 @@ var ArrayMap = function(exports) {
         }), results;
     };
     return CreateDataSet.prototype.post = function(ignoreSync) {
-        function done(err) {
-            return err ? (self.cancel(), void defer.reject(err)) : (sync && !ignoreSync && sync.writeData(self.table(), toInsert, toUpdate, toDelete), 
-            self.refresh().then(function() {
-                defer.resolve(!0);
-            }, function(err) {
-                defer.reject(err);
-            }), void self._cleanCache());
-        }
         if (!this._active) throw "Invalid operation on closed dataset";
-        var toInsert, toUpdate, toDelete, self = this, sync = this.synchronizer(), defer = SimplePromise.defer();
-        return self._history.length ? (toInsert = _filterOp(self._history, "insert"), toUpdate = _filterOp(self._history, "update"), 
-        toDelete = _filterOp(self._history, "delete"), self.proxy().commit(self.table(), toInsert, toUpdate, toDelete, done), 
-        defer) : (defer.resolve(!0), defer);
+        var toInsert, toUpdate, toDelete, self = this, sync = this.synchronizer();
+        return new Promise(function(resolve, reject) {
+            function done(err) {
+                return err ? (self.cancel(), void reject(err)) : (sync && !ignoreSync && sync.writeData(self.table(), toInsert, toUpdate, toDelete), 
+                self.refresh().then(function() {
+                    resolve();
+                }, function(err) {
+                    reject(err);
+                }), void self._cleanCache());
+            }
+            return self._history.length ? (toInsert = _filterOp(self._history, "insert"), toUpdate = _filterOp(self._history, "update"), 
+            toDelete = _filterOp(self._history, "delete"), void self.proxy().commit(self.table(), toInsert, toUpdate, toDelete, done)) : void resolve();
+        });
     }, CreateDataSet.prototype.sync = function() {
-        var self = this, sync = this.synchronizer(), defer = SimplePromise.defer();
-        return sync ? (sync.exec(self.table(), function(err, allData, toDelete) {
-            function deleteDiff(item) {
-                serverData.indexOfKey("id", item.id) < 0 && self.delete(item);
-            }
-            function deleteFix(item) {
-                toDeleteMap.indexOf(item.id) > -1 && self.delete(item);
-            }
-            if (err) return void defer.reject(err);
-            if (allData = allData || [], toDelete = toDelete || [], !allData.length && !toDelete.length) return void defer.resolve(self);
-            var deleteFn, serverData = new ArrayMap(), localData = new ArrayMap(), toDeleteMap = toDelete.map(function(item) {
-                return item.id;
-            });
-            serverData.putRange(allData), localData.putRange(self._data), deleteFn = toDelete && toDelete instanceof Array ? deleteFix : deleteDiff, 
-            localData.forEach(deleteFn), serverData.forEach(function(item) {
-                self.save(item);
-            }), self.post(!0).then(function() {
-                defer.resolve(self);
-            }, function(err) {
-                defer.reject(err);
-            });
-        }), defer) : (defer.resolve(self), defer);
+        var self = this, sync = this.synchronizer();
+        return new Promise(function(resolve, reject) {
+            return sync ? void sync.exec(self.table(), function(err, allData, toDelete) {
+                function deleteDiff(item) {
+                    serverData.indexOfKey("id", item.id) < 0 && self.delete(item);
+                }
+                function deleteFix(item) {
+                    toDeleteMap.indexOf(item.id) > -1 && self.delete(item);
+                }
+                if (err) return void reject(err);
+                if (allData = allData || [], toDelete = toDelete || [], !allData.length && !toDelete.length) return void resolve(self);
+                var deleteFn, serverData = new ArrayMap(), localData = new ArrayMap(), toDeleteMap = toDelete.map(function(item) {
+                    return item.id;
+                });
+                serverData.putRange(allData), localData.putRange(self._data), deleteFn = toDelete && toDelete instanceof Array ? deleteFix : deleteDiff, 
+                localData.forEach(deleteFn), serverData.forEach(function(item) {
+                    self.save(item);
+                }), self.post(!0).then(function() {
+                    resolve(self);
+                }, function(err) {
+                    reject(err);
+                });
+            }) : void resolve(self);
+        });
     }, CreateDataSet.prototype.fetch = function(property) {
         if (!this._active) throw "Invalid operation on closed dataset";
-        var defer = SimplePromise.defer(), self = this;
-        return this.count() ? (this.proxy().fetch(this.table(), this, property, function(err) {
-            return err ? void defer.reject(err) : void defer.resolve(self);
-        }), defer) : (defer.resolve(self), defer);
+        var self = this;
+        return new Promise(function(resolve, reject) {
+            return self.count() ? void self.proxy().fetch(self.table(), self, property, function(err) {
+                return err ? void reject(err) : void resolve(self);
+            }) : void resolve(self);
+        });
     }, CreateDataSet.prototype.eof = function() {
         return this._eof;
     }, CreateDataSet.prototype.active = function() {
@@ -1040,7 +1242,7 @@ var ArrayMap = function(exports) {
             return err ? cb(err) : (self.cleanData(key), void self.getData(key, cb));
         }
         var self = this, values = _getData(key), cb = callback || function() {};
-        self.sendData(key, values[Operations.Insert], values[Operations.Update], values[Operations.Delete], done);
+        self.sendData(key, values[Operations.Insert] || [], values[Operations.Update] || [], values[Operations.Delete] || [], done);
     }, CreateSync;
 }(this), DbFactory = function(exports) {
     "use strict";
@@ -1069,28 +1271,36 @@ var ArrayMap = function(exports) {
         }
     }
     exports.DbFactory = CreateFactory, CreateFactory.prototype.createDb = function(maps) {
-        var defer = SimplePromise.defer();
-        return this.proxy().createDatabase(maps, function(err) {
-            return err ? void defer.reject(err) : void defer.resolve(!0);
-        }), defer;
+        var self = this;
+        return new Promise(function(resolve, reject) {
+            self.proxy().createDatabase(maps, function(err) {
+                return err ? void reject(err) : void resolve();
+            });
+        });
     }, CreateFactory.prototype.query = function(key, filters) {
-        var defer = SimplePromise.defer();
-        return this.proxy().query(key, filters, function(err, records) {
-            return err ? void defer.reject(err) : void defer.resolve(records);
-        }), defer;
+        var self = this;
+        return new Promise(function(resolve, reject) {
+            self.proxy().query(key, filters, function(err, records) {
+                return err ? void reject(err) : void resolve(records);
+            });
+        });
     }, CreateFactory.prototype.groupBy = function(key, options, groups, filters) {
-        var defer = SimplePromise.defer();
-        return this.proxy().groupBy(key, options, groups, filters, function(err, records) {
-            return err ? void defer.reject(err) : void defer.resolve(records);
-        }), defer;
+        var self = this;
+        return new Promise(function(resolve, reject) {
+            self.proxy().groupBy(key, options, groups, filters, function(err, records) {
+                return err ? void reject(err) : void resolve(records);
+            });
+        });
     }, CreateFactory.prototype.dataset = function(table) {
         return new DataSet(table, this.proxy(), this.synchronizer());
     };
     var _save = function(key, toInsert, toUpdate, toDelete) {
-        var defer = SimplePromise.defer();
-        return this.proxy().commit(key, toInsert, toUpdate, toDelete, function(err) {
-            return err ? void defer.reject(err) : void defer.resolve(!0);
-        }), defer;
+        var self = this;
+        return new Promise(function(resolve, reject) {
+            self.proxy().commit(key, toInsert, toUpdate, toDelete, function(err) {
+                return err ? void reject(err) : void resolve();
+            });
+        });
     };
     return CreateFactory.prototype.insert = function(key, toInsert) {
         var elements = toInsert instanceof Array ? toInsert : [ toInsert ];
