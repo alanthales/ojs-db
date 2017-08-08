@@ -8,7 +8,7 @@ The installation is simple, you can download and linking js files directily in y
 <script src="build/ojs-db.min.js"></script>
 ```
 
-Or use bower:
+Or use bower/npm:
 
 ```
 bower install https://github.com/alanthales/ojs-db.git --save

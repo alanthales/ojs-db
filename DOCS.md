@@ -62,7 +62,7 @@ var db = new ojsDb(DbProxies.LOCALSTORAGE);
 
 // Type 2: SQLiteProxy
 var db = new ojsDb(DbProxies.SQLITE, "DatabaseName");
-db.createDb(maps);
+db.createDb(maps).then();
 
 // Type 3: RestProxy
 var db = new ojsDb(DbProxies.RESTFUL, { url: "http://myserver" });
@@ -94,7 +94,7 @@ The DataSet's contains the methods below:
 See examples below:
 
 ```javascript
-products.limit(50).open(); // open and get the firsts 50 records.
+products.limit(50).open().then(); // open and get the firsts 50 records.
 
 clients
   .sort({ name: 'asc', age: 'desc' })
@@ -137,8 +137,8 @@ The DataSet class contains a method `filter` that works in same way of `db.query
 var results = persons.filter({ age: { $gt: 21 } });
 console.log(results); // output: [{ id: '2', name: 'Aron', age: 30 }, { id: '3', name: 'John', age: 31 }]
 
-// To get one specific record use "getById" method
-var record = persons.getById(3);
+// To get one specific record use "get" method
+var record = persons.get(3);
 ```
 
 ### Finding records directly from source
