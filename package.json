@@ -2,7 +2,7 @@
   "name": "ojs-db",
   "version": "2.0.0",
   "description": "A reactive framework to persist data in browser or anywhere",
-  "main": "build/ojs-db.js",
+  "main": "index.js",
   "scripts": {
     "test": "mocha",
     "browser-test": "mocha-phantomjs test/TestRunner.html",

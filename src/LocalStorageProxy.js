@@ -3,101 +3,116 @@
 	Alan Thales, 09/2015
 	Requires: ArrayMap.js, DbProxy.js
 */
-var LocalStorageProxy = (function(exports) {
-	'use strict';
+var LocalStorageProxy = (function() {
+  "use strict";
 
-	var _get = function(opts) {
-		var key = typeof opts === "object" ? opts.key : opts,
-			table = window.localStorage[key],
-			results = new ArrayMap();
-		if (table) {
-			results.putRange( JSON.parse(table, DbProxy.dateParser) );
-		}
-		if (results.length && opts.params) {
-			return results.query(opts.params);
-		}
-		return results;
-	};
+  var _get = function(opts) {
+    var key = typeof opts === "object" ? opts.key : opts,
+      table = window.localStorage[key],
+      results = new ArrayMap();
+    if (table) {
+      results.putRange(JSON.parse(table, DbProxy.dateParser));
+    }
+    if (results.length && opts.params) {
+      return results.query(opts.params);
+    }
+    return results;
+  };
 
-	var _saveAll = function(key, table, callback) {
-		window.localStorage[key] = JSON.stringify(table);
-		if (typeof callback === "function") {
-			callback();
-		}
-	};
-	
-	function CreateProxy() {
-		DbProxy.apply(this, arguments);
-	}
+  var _saveAll = function(key, table, callback) {
+    window.localStorage[key] = JSON.stringify(table);
+    if (typeof callback === "function") {
+      callback();
+    }
+  };
 
-	exports.LocalStorageProxy = CreateProxy;
-	
-	CreateProxy.prototype = Object.create(DbProxy.prototype);
+  function CreateProxy() {
+    DbProxy.apply(this, arguments);
+  }
 
-	CreateProxy.prototype.getRecords = function(options, callback) {
-		var table = _get(options);
+  CreateProxy.prototype = Object.create(DbProxy.prototype);
 
-		if (options.sort) {
-			table.orderBy(options.sort);
-		}
+  CreateProxy.prototype.getRecords = function(options, callback) {
+    var table = _get(options);
 
-		if (typeof callback === "function") {
-			callback( null, table );
-		}
-	};
-	
-	CreateProxy.prototype.query = function(key, filters, callback) {
-		var table = _get(key),
-			results = table.query(filters);        
-		callback( null, results );
-	};
-	
-	CreateProxy.prototype.groupBy = function(key, options, groups, filters, callback) {
-		var table = _get(key),
-			results = table.groupBy(options, groups, filters);        
-		callback( null, results );
-	};
-	
-	var _save = function(table, record) {
-		var index = table.indexOfKey("id", record.id);
-		if (index === -1) {
-			table.push(record);
-		} else {
-			table.splice(index, 1, record);
-		}
-	};
+    if (options.sort) {
+      table.orderBy(options.sort);
+    }
 
-	var _remove = function(table, record) {
-		var id = typeof record === "object" ? record.id : record,
-			index = table.indexOfKey("id", id);
-		table.splice(index, 1);
-	};
+    if (typeof callback === "function") {
+      callback(null, table);
+    }
+  };
 
-	CreateProxy.prototype.commit = function(key, toInsert, toUpdate, toDelete, callback) {
-		var toSave = toInsert.concat(toUpdate),
-			total = toSave.length + toDelete.length,
-			table = _get(key),
-			cb = callback && typeof callback === "function" ? callback : function() {},
-			i;
+  CreateProxy.prototype.query = function(key, filters, callback) {
+    var table = _get(key),
+      results = table.query(filters);
+    callback(null, results);
+  };
 
-		if (total === 0) {
-			return cb();
-		}
+  CreateProxy.prototype.groupBy = function(
+    key,
+    options,
+    groups,
+    filters,
+    callback
+  ) {
+    var table = _get(key),
+      results = table.groupBy(options, groups, filters);
+    callback(null, results);
+  };
 
-		for (i = 0; i < toSave.length; i++) {
-			_save.call(this, table, toSave[i]);
-		}
+  var _save = function(table, record) {
+    var index = table.indexOfKey("id", record.id);
+    if (index === -1) {
+      table.push(record);
+    } else {
+      table.splice(index, 1, record);
+    }
+  };
 
-		for (i = 0; i < toDelete.length; i++) {
-			_remove.call(this, table, toDelete[i]);
-		}
+  var _remove = function(table, record) {
+    var id = typeof record === "object" ? record.id : record,
+      index = table.indexOfKey("id", id);
+    table.splice(index, 1);
+  };
 
-		_saveAll(key, table, cb);
-	};
-	
-	CreateProxy.prototype.clear = function(key, callback) {
-		_saveAll(key, [], callback);
-	};
+  CreateProxy.prototype.commit = function(
+    key,
+    toInsert,
+    toUpdate,
+    toDelete,
+    callback
+  ) {
+    var toSave = toInsert.concat(toUpdate),
+      total = toSave.length + toDelete.length,
+      table = _get(key),
+      cb =
+        callback && typeof callback === "function" ? callback : function() {},
+      i;
 
-	return CreateProxy;
-})(this);
+    if (total === 0) {
+      return cb();
+    }
+
+    for (i = 0; i < toSave.length; i++) {
+      _save.call(this, table, toSave[i]);
+    }
+
+    for (i = 0; i < toDelete.length; i++) {
+      _remove.call(this, table, toDelete[i]);
+    }
+
+    _saveAll(key, table, cb);
+  };
+
+  CreateProxy.prototype.clear = function(key, callback) {
+    _saveAll(key, [], callback);
+  };
+
+  return CreateProxy;
+})();
+
+if (typeof module === "object" && module.exports) {
+  module.exports.LocalStorageProxy = LocalStorageProxy;
+}

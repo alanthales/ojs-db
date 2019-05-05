@@ -3,195 +3,220 @@
 	Alan Thales, 07/2016
 	Requires: ArrayMap.js, OjsUtils.js, ChildRecord.js, EventEmitter.js
 */
-var SimpleDataSet = (function(exports) {
-	'use strict';
-	
-	function CreateDataSet(table) {
-		EventEmitter.apply(this);
+var SimpleDataSet = (function() {
+  "use strict";
 
-		var _table = table || 'tableName';
-		this._history = [];
-		this._data = new ArrayMap();
-		
-		this.table = function() { return _table; };
-	}
+  function CreateDataSet(table) {
+    EventEmitter.apply(this);
 
-	exports.SimpleDataSet = CreateDataSet;
+    var _table = table || "tableName";
+    this._history = [];
+    this._data = new ArrayMap();
 
-	CreateDataSet.prototype = Object.create(EventEmitter.prototype);
+    this.table = function() {
+      return _table;
+    };
+  }
 
-	CreateDataSet.prototype._cleanCache = function() {
-		this._history.length = 0;
-	};
-	
-	CreateDataSet.prototype.get = function(id) {
-		var index = this._data.indexOfKey('id', id);
-		return this._data[index];
-	};
+  CreateDataSet.prototype = Object.create(EventEmitter.prototype);
 
-	var _afterChange = function(operation, record) {
-		var change = {
-			op: operation,
-			record: OjsUtils.cloneObject( record )
-		};
+  CreateDataSet.prototype._cleanCache = function() {
+    this._history.length = 0;
+  };
 
-		var idx, exists;
+  CreateDataSet.prototype.get = function(id) {
+    var index = this._data.indexOfKey("id", id);
+    return this.item(index);
+  };
 
-		exists = this._history.some(function(item, index) {
-			idx = index;
-			return item.op === operation && item.record.id === record.id;
-		});
+  var _beforeChange = function(change) {
+    var idx, exists;
 
-		if (exists) {
-			this._history.splice(idx, 1, change);
-			return;
-		}
-		
-		this._history.push(change);
-		this.emit(this.table(), {event: operation, data: record});
+    exists = this._history.some(function(item, index) {
+      idx = index;
+      return item.op === change.op && item.record.id === change.record.id;
+    });
 
-		if (record instanceof ChildRecord) {
-			var table = [this.table(), '.child'].join('');
-			DbEvents.emit(table, {event: operation, data: record});
-		}
-	};
+    if (exists) {
+      this._history.splice(idx, 1, change);
+      return;
+    }
 
-	CreateDataSet.prototype.insert = function(record) {
-		if (!record.id) {
-			record.id = OjsUtils.newId();
-		}
-		
-		var index = this._data.indexOfKey('id', record.id);
-		
-		if (index === -1) {
-			this._data.push(record);
-			_afterChange.call(this, 'insert', record);		
-		}
-		
-		return this;
-	};
+    this._history.push(change);
+  };
 
-	CreateDataSet.prototype.update = function(record) {
-		if (!record.id) {
-			return this;
-		}
-		
-		var index = this._data.indexOfKey('id', record.id);
-		
-		if (index === -1) {
-			return this;
-		}
-		
-		_afterChange.call(this, 'update', this._data[index]);		
-		this._data.splice(index, 1, record);
+  var _afterChange = function(change) {
+    this.emit(this.table(), { event: change.op, data: change.record });
 
-		return this;
-	};
+    if (change.record instanceof ChildRecord) {
+      var table = [this.table(), ".child"].join("");
+      this.emit(table, { event: change.op, data: change.record });
+    }
+  };
 
-	CreateDataSet.prototype.save = function(record) {
-		if (!record) return this;
-		if (!record.id || !this.get(record.id)) {
-			return this.insert(record);
-		}
-		return this.update(record);
-	};
-	
-	CreateDataSet.prototype.delete = function(record) {
-		if (!record.id) {
-			return this;
-		}
-		
-		var index = this._data.indexOfKey('id', record.id);
-		
-		if (index >= 0) {
-			_afterChange.call(this, 'delete', this._data[index]);
-			this._data.splice(index, 1);
-		}
-		
-		return this;
-	};
+  CreateDataSet.prototype.insert = function(record) {
+    if (!record.id) {
+      record.id = OjsUtils.newId();
+    }
 
-	CreateDataSet.prototype.insertAll = function(records) {
-		var self = this;
-		
-		if (!(records instanceof Array)) {
-			return self;
-		}
-		
-		records.forEach(function(record) {
-			self.insert(record);
-		});
+    var index = this._data.indexOfKey("id", record.id),
+      change;
 
-		return self;
-	};
-	
-	CreateDataSet.prototype.clear = function(mustNotify) {
-		this._data.length = 0;
-		this._cleanCache();
-		if (mustNotify) {
-			this.emit(this.table(), {event: 'clear', data: []});
-		}
-		return this;
-	};
-	
-	CreateDataSet.prototype.cancel = function() {
-		if (!this._history.length) return;
+    if (index === -1) {
+      change = {
+        op: "insert",
+        record: OjsUtils.cloneObject(record)
+      };
 
-		var self = this,
-			i = self._history.length - 1,
-			item, index;
+      _beforeChange.call(this, change);
+      this._data.push(record);
+      _afterChange.call(this, change);
+    }
 
-		for (; i >= 0; i--) {
-			item = self._history[i];
-			index = self._data.indexOfKey('id', item.record.id);
+    return this;
+  };
 
-			switch (item.op) {
-				case 'insert':
-					self._data.splice(index, 1);
-					break;
-				case 'update':
-					self._data.splice(index, 1, item.record);
-					break;
-				case 'delete':
-					self._data.push(item.record);
-					break;
-			}
-		}
-		
-		this.emit(this.table(), {event: 'cancel', data: this._history});
-		this._history.length = 0;
-	};
-	
-	CreateDataSet.prototype.data = function() {
-		return this._data;
-	};
+  CreateDataSet.prototype.update = function(record) {
+    if (!record.id) {
+      return this;
+    }
 
-	CreateDataSet.prototype.count = function() {
-		return this._data.length;
-	};
+    var index = this._data.indexOfKey("id", record.id),
+      change;
 
-	CreateDataSet.prototype.item = function(index) {
-		return this._data[index];
-	};
+    if (index === -1) {
+      return this;
+    }
 
-	CreateDataSet.prototype.filter = function(options) {
-		return this._data.query(options);
-	};
-	
-	CreateDataSet.prototype.forEach = function(fn) {
-		this._data.forEach(fn);
-	};
-	
-	CreateDataSet.prototype.subscribe = function(fn) {
-		return this.on(this.table(), fn);
-	};
+    change = {
+      op: "update",
+      record: OjsUtils.cloneObject(record)
+    };
 
-	// CreateDataSet.prototype.unsubscribe = function() {
-	// 	if (this._listener) {
-	// 		this._listener.remove();
-	// 	}
-	// 	return this;
-	// };
-	
-	return CreateDataSet;
-})(this);
+    _beforeChange.call(this, change);
+    this._data.splice(index, 1, record);
+    _afterChange.call(this, change);
+
+    return this;
+  };
+
+  CreateDataSet.prototype.save = function(record) {
+    if (!record) return this;
+    if (!record.id || !this.get(record.id)) {
+      return this.insert(record);
+    }
+    return this.update(record);
+  };
+
+  CreateDataSet.prototype.delete = function(record) {
+    if (!record || !record.id) {
+      return this;
+    }
+
+    var index = this._data.indexOfKey("id", record.id),
+      change;
+
+    if (index >= 0) {
+      change = {
+        op: "delete",
+        record: OjsUtils.cloneObject(record)
+      };
+
+      _beforeChange.call(this, change);
+      this._data.splice(index, 1);
+      _afterChange.call(this, change);
+    }
+
+    return this;
+  };
+
+  CreateDataSet.prototype.insertAll = function(records) {
+    var self = this;
+
+    if (!(records instanceof Array)) {
+      return self;
+    }
+
+    records.forEach(function(record) {
+      self.insert(record);
+    });
+
+    return self;
+  };
+
+  CreateDataSet.prototype.clear = function(mustNotify) {
+    this._data.length = 0;
+    this._cleanCache();
+    if (mustNotify) {
+      this.emit(this.table(), { event: "clear", data: [] });
+    }
+    return this;
+  };
+
+  CreateDataSet.prototype.cancel = function() {
+    if (!this._history.length) return this;
+
+    var i = this._history.length - 1,
+      item,
+      index;
+
+    for (; i >= 0; i--) {
+      item = this._history[i];
+      index = this._data.indexOfKey("id", item.record.id);
+
+      switch (item.op) {
+        case "insert":
+          this._data.splice(index, 1);
+          break;
+        case "update":
+          this._data.splice(index, 1, item.record);
+          break;
+        case "delete":
+          this._data.push(item.record);
+          break;
+      }
+    }
+
+    this.emit(this.table(), { event: "cancel", data: this._history });
+    this._history.length = 0;
+    return this;
+  };
+
+  CreateDataSet.prototype.data = function() {
+    return this._data.slice();
+  };
+
+  CreateDataSet.prototype.count = function() {
+    return this._data.length;
+  };
+
+  CreateDataSet.prototype.item = function(index) {
+    var record = this._data[index];
+    return OjsUtils.cloneObject(record);
+  };
+
+  CreateDataSet.prototype.filter = function(options) {
+    return this._data.query(options);
+  };
+
+  CreateDataSet.prototype.forEach = function(fn) {
+    this._data.forEach(fn);
+  };
+
+  CreateDataSet.prototype.subscribe = function(fn) {
+    return (this._token = this.on(this.table(), fn));
+  };
+
+  CreateDataSet.prototype.unsubscribe = function(subscription) {
+    if (subscription && typeof subscription.remove === "function") {
+      subscription.remove();
+    }
+    return this;
+  };
+
+  return CreateDataSet;
+})();
+
+if (typeof module === "object" && module.exports) {
+  module.exports.SimpleDataSet = SimpleDataSet;
+}

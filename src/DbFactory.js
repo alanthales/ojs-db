@@ -20,114 +20,122 @@
 	Alan Thales, 09/2015
 	Requires: DataSet.js, LocalStorageProxy.js, SQLiteProxy.js, RestProxy.js
 */
-var DbFactory = (function(exports) {
-	'use strict';
+var DbFactory = (function() {
+  "use strict";
 
-	function CreateFactory(proxyType, opts, synchronizer) {
-		var _synchronizer = synchronizer,
-			_proxy;
+  function CreateFactory(proxyType, opts, synchronizer) {
+    var _synchronizer = synchronizer,
+      _proxy;
 
-		this.proxy = function() { return _proxy; };
-		this.synchronizer = function() { return _synchronizer; };
-		
-		if (proxyType && typeof proxyType === "object") {
-			_proxy = proxyType;
-			return;
-		}
-		
-		switch(proxyType) {
-			case 0:
-				_proxy = new LocalStorageProxy();
-				break;
-			case 1:
-				_proxy = new SQLiteProxy(opts);
-				break;
-			case 2:
-				_proxy = new RestProxy(opts);
-				break;
-			default:
-				throw "Proxy not implemented";
-		}
-	}
+    this.proxy = function() {
+      return _proxy;
+    };
+    this.synchronizer = function() {
+      return _synchronizer;
+    };
 
-	exports.DbFactory = CreateFactory;
+    if (proxyType && typeof proxyType === "object") {
+      _proxy = proxyType;
+      return;
+    }
 
-	CreateFactory.prototype.createDb = function(maps) {
-		var self = this;
+    switch (proxyType) {
+      case 0:
+        _proxy = new LocalStorageProxy();
+        break;
+      case 1:
+        _proxy = new SQLiteProxy(opts);
+        break;
+      case 2:
+        _proxy = new RestProxy(opts);
+        break;
+      default:
+        throw "Proxy not implemented";
+    }
+  }
 
-		return new Promise(function(resolve, reject) {
-			self.proxy().createDatabase(maps, function(err) {
-				if (err) {
-					reject(err);
-					return;
-				}
-				resolve();
-			});
-		});
-	};
+  CreateFactory.prototype.createDb = function(maps) {
+    var self = this;
 
-	CreateFactory.prototype.query = function(key, filters) {
-		var self = this;
+    return new Promise(function(resolve, reject) {
+      self.proxy().createDatabase(maps, function(err) {
+        if (err) {
+          reject(err);
+          return;
+        }
+        resolve();
+      });
+    });
+  };
 
-		return new Promise(function(resolve, reject) {
-			self.proxy().query(key, filters, function(err, records) {
-				if (err) {
-					reject(err);
-					return;
-				}
-				resolve(records);
-			});
-		});
-	};
-	
-	CreateFactory.prototype.groupBy = function(key, options, groups, filters) {
-		var self = this;
+  CreateFactory.prototype.query = function(key, filters) {
+    var self = this;
 
-		return new Promise(function(resolve, reject) {
-			self.proxy().groupBy(key, options, groups, filters, function(err, records) {
-				if (err) {
-					reject(err);
-					return;
-				}
-				resolve(records);
-			});
-		});
-	};
-	
-	CreateFactory.prototype.dataset = function(table) {
-		return new DataSet(table, this.proxy(), this.synchronizer());
-	};
+    return new Promise(function(resolve, reject) {
+      self.proxy().query(key, filters, function(err, records) {
+        if (err) {
+          reject(err);
+          return;
+        }
+        resolve(records);
+      });
+    });
+  };
 
-	var _save = function(key, toInsert, toUpdate, toDelete) {
-		var self = this;
+  CreateFactory.prototype.groupBy = function(key, options, groups, filters) {
+    var self = this;
 
-		return new Promise(function(resolve, reject) {
-			self.proxy().commit(key, toInsert, toUpdate, toDelete, function(err) {
-				if (err) {
-					reject(err);
-					return;
-				}
-				resolve();
-			});
-		});
-	};
+    return new Promise(function(resolve, reject) {
+      self
+        .proxy()
+        .groupBy(key, options, groups, filters, function(err, records) {
+          if (err) {
+            reject(err);
+            return;
+          }
+          resolve(records);
+        });
+    });
+  };
 
-	CreateFactory.prototype.insert = function(key, toInsert) {
-		var elements = toInsert instanceof Array ? toInsert : [toInsert];
-		return _save.call(this, key, elements, [], []);
-	};
+  CreateFactory.prototype.dataset = function(table) {
+    return new DataSet(table, this.proxy(), this.synchronizer());
+  };
 
-	CreateFactory.prototype.update = function(key, toUpdate) {
-		var elements = toUpdate instanceof Array ? toUpdate : [toUpdate];
-		return _save.call(this, key, [], elements, []);
-	};
+  var _save = function(key, toInsert, toUpdate, toDelete) {
+    var self = this;
 
-	CreateFactory.prototype.delete = function(key, toDelete) {
-		var elements = toDelete instanceof Array ? toDelete : [toDelete];
-		return _save.call(this, key, [], [], elements);
-	};
+    return new Promise(function(resolve, reject) {
+      self.proxy().commit(key, toInsert, toUpdate, toDelete, function(err) {
+        if (err) {
+          reject(err);
+          return;
+        }
+        resolve();
+      });
+    });
+  };
 
-	return CreateFactory;
-})(this);
+  CreateFactory.prototype.insert = function(key, toInsert) {
+    var elements = toInsert instanceof Array ? toInsert : [toInsert];
+    return _save.call(this, key, elements, [], []);
+  };
+
+  CreateFactory.prototype.update = function(key, toUpdate) {
+    var elements = toUpdate instanceof Array ? toUpdate : [toUpdate];
+    return _save.call(this, key, [], elements, []);
+  };
+
+  CreateFactory.prototype.delete = function(key, toDelete) {
+    var elements = toDelete instanceof Array ? toDelete : [toDelete];
+    return _save.call(this, key, [], [], elements);
+  };
+
+  return CreateFactory;
+})();
 
 var ojsDb = DbFactory;
+
+if (typeof module === "object" && module.exports) {
+  module.exports.DbFactory = DbFactory;
+}

@@ -3,7 +3,10 @@
 	Alan Thales, 01/2017
 	Require: EventEmitter.js
 */
-var DbEvents = (function(exports) {
-	exports.DbEvents = new EventEmitter();
-	return exports.DbEvents;
-})(this);
+var DbEvents = (function() {
+  return new EventEmitter();
+})();
+
+if (typeof module === "object" && module.exports) {
+  module.exports.DbEvents = DbEvents;
+}

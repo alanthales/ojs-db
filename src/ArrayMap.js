@@ -2,243 +2,271 @@
 	ArrayMap Class
 	Alan Thales, 09/2015
 */
-var ArrayMap = (function(exports) {
-	'use strict';
-	
-	var _recordMatch = function(record, opts) {
-		var matched = true,
-			field, prop, str;
+var ArrayMap = (function() {
+  "use strict";
 
-		for (field in opts) {
-			if (!matched) {
-				break;
-			}
+  var _recordMatch = function(record, opts) {
+    var matched = true,
+      field,
+      prop,
+      str;
 
-			if (typeof opts[field] !== "object") {
-				matched = record[field] == opts[field];
-				continue;
-			}
+    for (field in opts) {
+      if (!matched) {
+        break;
+      }
 
-			str = record[field].toString();
+      if (typeof opts[field] !== "object") {
+        matched = record[field] == opts[field];
+        continue;
+      }
 
-			for (prop in opts[field]) {
-				switch(prop) {
-					case "$gt":
-						matched = record[field] > opts[field][prop];
-						break;
-					case "$gte":
-						matched = record[field] >= opts[field][prop];
-						break;
-					case "$lt":
-						matched = record[field] < opts[field][prop];
-						break;
-					case "$lte":
-						matched = record[field] <= opts[field][prop];
-						break;
-					case "$not":
-						matched = record[field] != opts[field][prop];
-						break;
-					case "$start":
-						matched = str.lastIndexOf(opts[field][prop], 0) === 0;
-						break;
-					case "$end":
-						matched = str.indexOf(opts[field][prop], str.length - opts[field][prop].length) !== -1;
-						break;
-					case "$contain":
-						matched = str.indexOf(opts[field][prop]) > -1;
-						break;
-					case "$in":
-						matched = opts[field][prop].indexOf(record[field]) > -1;
-						break;
-					default:
-						matched = false;
-				}
+      str = record[field].toString();
 
-				if (!matched) {
-					break;
-				}
-			}
-		}
+      for (prop in opts[field]) {
+        switch (prop) {
+          case "$gt":
+            matched = record[field] > opts[field][prop];
+            break;
+          case "$gte":
+            matched = record[field] >= opts[field][prop];
+            break;
+          case "$lt":
+            matched = record[field] < opts[field][prop];
+            break;
+          case "$lte":
+            matched = record[field] <= opts[field][prop];
+            break;
+          case "$not":
+            matched = record[field] != opts[field][prop];
+            break;
+          case "$start":
+            matched = str.lastIndexOf(opts[field][prop], 0) === 0;
+            break;
+          case "$end":
+            matched =
+              str.indexOf(
+                opts[field][prop],
+                str.length - opts[field][prop].length
+              ) !== -1;
+            break;
+          case "$contain":
+            matched = str.indexOf(opts[field][prop]) > -1;
+            break;
+          case "$in":
+            matched = opts[field][prop].indexOf(record[field]) > -1;
+            break;
+          default:
+            matched = false;
+        }
 
-		return matched;
-	};
-	
-	var _aggregate = function(array, options, obj) {
-		var opts = options && options instanceof Array ? options : [options],
-			value = obj || {},
-			prop, field, alias;
-	
-		opts.forEach(function(opt) { 
-			for (prop in opt) break;
-			
-			field = opt[prop];
-			alias = opt.alias || field;
-			
-			switch(prop) {
-				case "$max":
-					array.sort(function(a, b){return b[field] - a[field];});
-					value[alias] = array[0][field];
-					break;
-				case "$min":
-					array.sort(function(a, b){return a[field] - b[field];});
-					value[alias] = array[0][field];
-					break;
-				case "$sum":
-					value[alias] = array.map(function(item) {return item[field];}).reduce(function(previous, current) {
-						return parseFloat(previous) + parseFloat(current);
-					}, 0);
-					break;
-				case "$avg":
-					value[alias] = array.map(function(item) {return item[field];}).reduce(function(previous, current) {
-						return parseFloat(previous) + parseFloat(current);
-					}, 0);
-					value[alias] /= array.length;
-					break;
-				case "$count":
-					value[alias] = array.length;
-					break;
-			}
-		});
+        if (!matched) {
+          break;
+        }
+      }
+    }
 
-		return value;
-	};
-	
-	function Collection() {
-		var collection = [];
+    return matched;
+  };
 
-		collection = (Array.apply( collection, arguments ) || collection);
+  var _aggregate = function(array, options, obj) {
+    var opts = options && options instanceof Array ? options : [options],
+      value = obj || {},
+      prop,
+      field,
+      alias;
 
-		collection.__proto__ = Collection.prototype;
+    opts.forEach(function(opt) {
+      for (prop in opt) break;
 
-		collection.mapTable = function(key) {
-			return this.map(function(item) {
-				return item[key];
-			});
-		};
+      field = opt[prop];
+      alias = opt.alias || field;
 
-		collection.indexOfKey = function(key, value) {
-			return this.mapTable(key).indexOf(value);
-		};
+      switch (prop) {
+        case "$max":
+          array.sort(function(a, b) {
+            return b[field] - a[field];
+          });
+          value[alias] = array[0][field];
+          break;
+        case "$min":
+          array.sort(function(a, b) {
+            return a[field] - b[field];
+          });
+          value[alias] = array[0][field];
+          break;
+        case "$sum":
+          value[alias] = array
+            .map(function(item) {
+              return item[field];
+            })
+            .reduce(function(previous, current) {
+              return parseFloat(previous) + parseFloat(current);
+            }, 0);
+          break;
+        case "$avg":
+          value[alias] = array
+            .map(function(item) {
+              return item[field];
+            })
+            .reduce(function(previous, current) {
+              return parseFloat(previous) + parseFloat(current);
+            }, 0);
+          value[alias] /= array.length;
+          break;
+        case "$count":
+          value[alias] = array.length;
+          break;
+      }
+    });
 
-		collection.put = function(obj, index) {
-			var i = index || this.length;
-			this[i] = obj;
-		};
+    return value;
+  };
 
-		collection.putRange = function(arr, tail) {
-			var pos = tail && typeof tail === "boolean" ? this.length : 0,
-				l, i;
+  function Collection() {
+    var collection = [];
 
-			if (!arr) { return; }
+    collection = Array.apply(collection, arguments) || collection;
 
-			if (!(arr instanceof Array)) {
-				arr = [arr];
-			}
+    collection.__proto__ = Collection.prototype;
 
-			i = 0; l = arr.length;
+    collection.mapTable = function(key) {
+      return this.map(function(item) {
+        return item[key];
+      });
+    };
 
-			for (; i < l; i++) {
-				this.put(arr[i], pos+i);
-			}
-		};
+    collection.indexOfKey = function(key, value) {
+      return this.mapTable(key).indexOf(value);
+    };
 
-		collection.query = function(filters) {
-			var self = this,
-				opts = filters && typeof filters === "object" ? filters : { },
-				results = new Collection(),
-				queryFn = function(record) {
-					return _recordMatch.call(self, record, opts);
-				},
-				fn = filters && typeof filters === "function" ? filters : queryFn;
+    collection.put = function(obj, index) {
+      var i = index || this.length;
+      this[i] = obj;
+    };
 
-			results.putRange( self.filter(fn) );
+    collection.putRange = function(arr, tail) {
+      var pos = tail && typeof tail === "boolean" ? this.length : 0,
+        l,
+        i;
 
-			return results;
-		};
-		
-		collection.orderBy = function(sorters) {
-			var opts = sorters && typeof sorters === "object" ? sorters : { },
-				field;
-			
-			var ascSort = function(fieldA, fieldB) {
-				if (typeof fieldA === "string") {
-					return fieldA.localeCompare(fieldB);
-				}
-				return (fieldA > fieldB) - (fieldA < fieldB);
-			};
-			
-			var descSort = function(fieldA, fieldB) {
-				if (typeof fieldB === "string") {
-					return fieldB.localeCompare(fieldA);
-				}
-				return (fieldB > fieldA) - (fieldB < fieldA);
-			};
-			
-			this.sort(function(a,b) {
-				var result = 0;
-				
-				for (field in opts) {
-					if (a[field] == b[field]) {
-						result = 0;
-						continue;
-					}
-					
-					if (opts[field] === 'desc') {
-						result = descSort(a[field], b[field]);
-					} else {
-						result = ascSort(a[field], b[field]);
-					}
-					
-					break;
-				}
-				
-				return result;
-			});
-			
-			return this;
-		};
-		
-		collection.groupBy = function(options, groups, filters) {
-			var self = this,
-				results = new Collection(),
-				flts = filters && typeof filters === "object" ? filters : { },
-				l = groups.length,
-				grouped = {},
-				group, g, i;
+      if (!arr) {
+        return;
+      }
 
-			self.forEach(function(item) {
-				if (!_recordMatch.call(self, item, flts)) {
-					return;
-				}
-				g = {};
-				for (i = 0; i < l; i++) {
-					g[groups[i]] = item[groups[i]];
-				}
-				group = JSON.stringify( g );
-				grouped[group] = grouped[group] || [];
-				grouped[group].push( item );
-			});
+      if (!(arr instanceof Array)) {
+        arr = [arr];
+      }
 
-			results.putRange(
-				Object.keys(grouped).map(function(item) {
-					g = JSON.parse( item );
-					return _aggregate(grouped[item], options, g);
-				})
-			);
-			
-			return results;
-		};
-		
-		collection.compute = function(options) {
-			return _aggregate(this, options);
-		};
-		
-		return collection;
-	}
+      i = 0;
+      l = arr.length;
 
-	exports.ArrayMap = Collection;
+      for (; i < l; i++) {
+        this.put(arr[i], pos + i);
+      }
+    };
 
-	Collection.prototype = Object.create(Array.prototype);
+    collection.query = function(filters) {
+      var self = this,
+        opts = filters && typeof filters === "object" ? filters : {},
+        results = new Collection(),
+        queryFn = function(record) {
+          return _recordMatch.call(self, record, opts);
+        },
+        fn = filters && typeof filters === "function" ? filters : queryFn;
 
-	return Collection;
-})(this);
+      results.putRange(self.filter(fn));
+
+      return results;
+    };
+
+    collection.orderBy = function(sorters) {
+      var opts = sorters && typeof sorters === "object" ? sorters : {},
+        field;
+
+      var ascSort = function(fieldA, fieldB) {
+        if (typeof fieldA === "string") {
+          return fieldA.localeCompare(fieldB);
+        }
+        return (fieldA > fieldB) - (fieldA < fieldB);
+      };
+
+      var descSort = function(fieldA, fieldB) {
+        if (typeof fieldB === "string") {
+          return fieldB.localeCompare(fieldA);
+        }
+        return (fieldB > fieldA) - (fieldB < fieldA);
+      };
+
+      this.sort(function(a, b) {
+        var result = 0;
+
+        for (field in opts) {
+          if (a[field] == b[field]) {
+            result = 0;
+            continue;
+          }
+
+          if (opts[field] === "desc") {
+            result = descSort(a[field], b[field]);
+          } else {
+            result = ascSort(a[field], b[field]);
+          }
+
+          break;
+        }
+
+        return result;
+      });
+
+      return this;
+    };
+
+    collection.groupBy = function(options, groups, filters) {
+      var self = this,
+        results = new Collection(),
+        flts = filters && typeof filters === "object" ? filters : {},
+        l = groups.length,
+        grouped = {},
+        group,
+        g,
+        i;
+
+      self.forEach(function(item) {
+        if (!_recordMatch.call(self, item, flts)) {
+          return;
+        }
+        g = {};
+        for (i = 0; i < l; i++) {
+          g[groups[i]] = item[groups[i]];
+        }
+        group = JSON.stringify(g);
+        grouped[group] = grouped[group] || [];
+        grouped[group].push(item);
+      });
+
+      results.putRange(
+        Object.keys(grouped).map(function(item) {
+          g = JSON.parse(item);
+          return _aggregate(grouped[item], options, g);
+        })
+      );
+
+      return results;
+    };
+
+    collection.compute = function(options) {
+      return _aggregate(this, options);
+    };
+
+    return collection;
+  }
+
+  Collection.prototype = Object.create(Array.prototype);
+
+  return Collection;
+})();
+
+if (typeof module === "object" && module.exports) {
+  module.exports.ArrayMap = ArrayMap;
+}
