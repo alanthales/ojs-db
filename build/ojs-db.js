@@ -530,7 +530,7 @@ var SimpleDataSet = function() {
             data: change.record
         }), change.record instanceof ChildRecord) {
             var table = [ this.table(), ".child" ].join("");
-            this.emit(table, {
+            DbEvents.emit(table, {
                 event: change.op,
                 data: change.record
             });
@@ -603,7 +603,7 @@ var SimpleDataSet = function() {
     }, CreateDataSet.prototype.forEach = function(fn) {
         this._data.forEach(fn);
     }, CreateDataSet.prototype.subscribe = function(fn) {
-        return this._token = this.on(this.table(), fn);
+        return this.on(this.table(), fn);
     }, CreateDataSet.prototype.unsubscribe = function(subscription) {
         return subscription && "function" == typeof subscription.remove && subscription.remove(), 
         this;
@@ -618,7 +618,12 @@ var DataSet = function() {
         SimpleDataSet.apply(this, [ table ]), _pages[table] = 0, this._opts = {}, this._eof = !0, 
         this._active = !1;
         var childTable = [ table, ".child" ].join(""), self = this;
-        this.on(childTable, function(args) {
+        DbEvents.on(table, function(args) {
+            if ("key" === args.event) {
+                var index = self._data.indexOfKey("id", args.data.oldId), record = self._data[index];
+                record.id = args.data.newId;
+            }
+        }), DbEvents.on(childTable, function(args) {
             self.save(args.data.master());
         }), this.proxy = function() {
             return proxy;
@@ -702,11 +707,7 @@ var DataSet = function() {
         return new Promise(function(resolve, reject) {
             function done(err) {
                 return err ? (self.cancel(), void reject(err)) : (sync && !ignoreSync && sync.writeData(self.table(), toInsert, toUpdate, toDelete), 
-                self.refresh().then(function() {
-                    resolve();
-                }, function(err) {
-                    reject(err);
-                }), void self._cleanCache());
+                self.refresh().then(resolve, reject), void self._cleanCache());
             }
             return self._history.length ? (toInsert = _filterOp(self._history, "insert"), toUpdate = _filterOp(self._history, "update"), 
             toDelete = _filterOp(self._history, "delete"), void self.proxy().commit(self.table(), toInsert, toUpdate, toDelete, done)) : void resolve();
@@ -1156,9 +1157,9 @@ var RestProxy = function() {
             table.putRange(JSON.parse(xhr.responseText, DbProxy.dateParser)), success(table);
         }, error);
     }, _save = function(method, key, record, success, error) {
-        var url = this.config.url + "/" + key, config = {};
+        var url = this.config.url + "/" + key, id = record.id, config = {};
         "POST" === method && this.autoPK && delete record.id, "PUT" === method && (url += "/" + record.id), 
-        config.data = this.serialize(record), this.config.headers && (config.headers = this.config.headers), 
+        config.data = this.serialize(record), record.id = id, this.config.headers && (config.headers = this.config.headers), 
         _httpRequest(url, method, config, success, error);
     }, _proxyError = function(xhr) {
         var res;
@@ -1197,7 +1198,13 @@ var RestProxy = function() {
         function progress(record, index) {
             _save.call(self, "POST", key, record, function(xhr) {
                 var created = JSON.parse(xhr.responseText);
-                self.autoPK && created.id && (records.id = created.id), index === l - 1 && callback(null, xhr);
+                self.autoPK && created.id && DbEvents.emit(key, {
+                    event: "key",
+                    data: {
+                        oldId: record.id,
+                        newId: created.id
+                    }
+                }), index === l - 1 && callback(null, xhr);
             }, function(xhr) {
                 callback(_proxyError(xhr));
             });

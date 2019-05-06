@@ -50,7 +50,7 @@ var SimpleDataSet = (function() {
 
     if (change.record instanceof ChildRecord) {
       var table = [this.table(), ".child"].join("");
-      this.emit(table, { event: change.op, data: change.record });
+      DbEvents.emit(table, { event: change.op, data: change.record });
     }
   };
 
@@ -204,7 +204,7 @@ var SimpleDataSet = (function() {
   };
 
   CreateDataSet.prototype.subscribe = function(fn) {
-    return (this._token = this.on(this.table(), fn));
+    return this.on(this.table(), fn);
   };
 
   CreateDataSet.prototype.unsubscribe = function(subscription) {

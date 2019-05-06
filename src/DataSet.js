@@ -21,7 +21,15 @@ var DataSet = (function() {
     var childTable = [table, ".child"].join(""),
       self = this;
 
-    this.on(childTable, function(args) {
+    DbEvents.on(table, function(args) {
+      if (args.event === "key") {
+        var index = self._data.indexOfKey("id", args.data.oldId),
+          record = self._data[index];
+        record.id = args.data.newId;
+      }
+    });
+
+    DbEvents.on(childTable, function(args) {
       self.save(args.data.master());
     });
 
@@ -249,15 +257,7 @@ var DataSet = (function() {
           sync.writeData(self.table(), toInsert, toUpdate, toDelete);
         }
 
-        self.refresh().then(
-          function() {
-            resolve();
-          },
-          function(err) {
-            reject(err);
-          }
-        );
-
+        self.refresh().then(resolve, reject);
         self._cleanCache();
       }
     });

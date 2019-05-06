@@ -91,6 +91,7 @@ var RestProxy = (function() {
 
   var _save = function(method, key, record, success, error) {
     var url = this.config.url + "/" + key,
+      id = record.id,
       config = {};
 
     if (method === "POST" && this.autoPK) {
@@ -102,6 +103,7 @@ var RestProxy = (function() {
     }
 
     config.data = this.serialize(record);
+    record.id = id;
 
     if (this.config.headers) {
       config.headers = this.config.headers;
@@ -205,7 +207,10 @@ var RestProxy = (function() {
           var created = JSON.parse(xhr.responseText);
 
           if (self.autoPK && created.id) {
-            records.id = created.id;
+            DbEvents.emit(key, {
+              event: "key",
+              data: { oldId: record.id, newId: created.id }
+            });
           }
 
           if (index === l - 1) {
