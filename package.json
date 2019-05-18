@@ -1,0 +1,30 @@
+{
+  "name": "ojs-db",
+  "version": "2.0.0",
+  "description": "A reactive framework to persist data in browser or anywhere",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha",
+    "browser-test": "mocha-phantomjs test/TestRunner.html",
+    "clean": "rm -r build && mkdir build",
+    "minify": "uglifyjs src/PromisePolyfill.js src/ArrayMap.js src/OjsUtils.js src/ChildRecord.js src/EventEmitter.js src/DbEvents.js src/SimpleDataSet.js src/DataSet.js src/DbProxies.js src/DbProxy.js src/LocalStorageProxy.js src/SQLiteProxy.js src/RestProxy.js src/IndexedDbProxy.js src/WebSocketProxy.js src/DbSync.js src/DbFactory.js -o build/ojs-db.min.js -m -c --comments",
+    "build": "uglifyjs src/PromisePolyfill.js src/ArrayMap.js src/OjsUtils.js src/ChildRecord.js src/EventEmitter.js src/DbEvents.js src/SimpleDataSet.js src/DataSet.js src/DbProxies.js src/DbProxy.js src/LocalStorageProxy.js src/SQLiteProxy.js src/RestProxy.js src/IndexedDbProxy.js src/WebSocketProxy.js src/DbSync.js src/DbFactory.js -o build/ojs-db.js -b -c --comments",
+    "postbuild": "npm run minify --silent"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alanthales/ojs-db.git"
+  },
+  "author": "Alan Thales Carvalho",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/alanthales/ojs-db/issues"
+  },
+  "homepage": "https://github.com/alanthales/ojs-db#readme",
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "mocha": "^3.2.0",
+    "mocha-phantomjs": "^4.1.0",
+    "uglify-js": "^2.7.5"
+  }
+}

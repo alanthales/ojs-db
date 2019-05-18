@@ -1,0 +1,4 @@
+node_modules
+test
+make.bat
+npm-debug.log

@@ -1,47 +1,77 @@
 /*
-    Proxy Enums
-    Alan Thales, 09/2015
-*/
-var DbProxies = (function() {
-    return {
-        LOCALSTORAGE: 0,
-        SQLITE: 1,
-        RESTFUL: 2
-    }
-})();
-
-
-/*
-    DbProxy Parent Class
-    Autor: Alan Thales, 09/2015
+	DbProxy Parent Class
+	Alan Thales, 09/2015
 */
 var DbProxy = (function() {
-    function CreateProxy() {
-        this.mappings = {};
+  "use strict";
+
+  function CreateProxy() {}
+
+  CreateProxy.prototype.createDatabase = function(maps, callback) {
+    if (typeof callback === "function") {
+      callback();
     }
-    
-    CreateProxy.prototype.createDatabase = function(maps, callback) {
-        this.mappings = maps;
+  };
+
+  CreateProxy.prototype.getRecords = function(options, callback) {
+    if (typeof callback === "function") {
+      callback(null, []);
     }
-    
-    CreateProxy.prototype.getRecords = function(options, callback) {}
-    
-    CreateProxy.prototype.commit = function(key, toInsert, toUpdate, toDelete, callback) {}
-    
-    CreateProxy.prototype.fetch = function(key, property, callback) {}
-    
-    CreateProxy.dateParser = function(key, value) {
-        var reISO = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*))(?:Z|(\+|-)([\d|:]*))?$/,
-            test;
-        
-        if (typeof value === 'string') {
-            test = reISO.exec(value);
-            if (test)
-                return new Date(value);
-        }
-        
-        return value;
+  };
+
+  CreateProxy.prototype.groupBy = function(
+    key,
+    options,
+    groups,
+    filters,
+    callback
+  ) {
+    if (typeof callback === "function") {
+      callback(null, []);
     }
-    
-    return CreateProxy;
+  };
+
+  CreateProxy.prototype.commit = function(
+    key,
+    toInsert,
+    toUpdate,
+    toDelete,
+    callback
+  ) {
+    if (typeof callback === "function") {
+      callback();
+    }
+  };
+
+  CreateProxy.prototype.fetch = function(key, property, callback) {
+    if (typeof callback === "function") {
+      callback();
+    }
+  };
+
+  CreateProxy.prototype.clear = function(key, callback) {
+    if (typeof callback === "function") {
+      callback();
+    }
+  };
+
+  CreateProxy.dateParser = function(key, value) {
+    var reISO = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*))(?:Z|(\+|-)([\d|:]*))?$/,
+      test;
+
+    if (typeof value === "string") {
+      test = reISO.exec(value);
+      if (test) {
+        return new Date(value);
+      }
+    }
+
+    return value;
+  };
+
+  return CreateProxy;
 })();
+
+if (typeof module === "object" && module.exports) {
+  module.exports.DbProxy = DbProxy;
+}
