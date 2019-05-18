@@ -9,19 +9,14 @@ var SQLiteProxy = (function() {
   var _selectFrom = "SELECT * FROM",
     _maps = {};
 
-  function CreateProxy(options) {
-    var db = null,
-      opts = {},
-      cordova = typeof window.cordova !== "undefined";
+  function CreateProxy(opts) {
+    var db = null;
 
-    if (typeof options === "object") {
-      opts.name = options.name;
-      opts.location = options.location || "default";
-    } else {
-      opts.name = options;
+    if (!!opts.schema) {
+      _maps = opts.schema;
     }
 
-    if (cordova) {
+    if (typeof window.cordova !== "undefined") {
       document.addEventListener("deviceready", init);
     } else {
       init();
@@ -34,7 +29,7 @@ var SQLiteProxy = (function() {
         db = window.openDatabase(
           opts.name,
           "SQLite Database",
-          "1.0",
+          opts.version || "1.0",
           5 * 1024 * 1024
         );
       }
@@ -49,18 +44,14 @@ var SQLiteProxy = (function() {
 
   CreateProxy.prototype = Object.create(DbProxy.prototype);
 
-  CreateProxy.prototype.createDatabase = function(maps, callback) {
-    var self = this;
-
-    _maps = OjsUtils.cloneObject(maps);
+  CreateProxy.prototype.createDatabase = function(callback) {
+    var self = this,
+      cb =
+        callback && typeof callback === "function" ? callback : function() {};
 
     self.getDb().transaction(
       function(tx) {
-        var cb =
-            callback && typeof callback === "function"
-              ? callback
-              : function() {},
-          total = Object.keys(_maps).length,
+        var total = Object.keys(_maps).length,
           fields,
           field,
           table,

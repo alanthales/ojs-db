@@ -13,7 +13,7 @@
             };
             t[o][0].call(l.exports, function(e) {
                 var n = t[o][1][e];
-                return s(n ? n : e);
+                return s(n || e);
             }, l, l.exports, e, t, n, r);
         }
         return n[o].exports;
@@ -58,7 +58,8 @@
         }
         function handle(self, deferred) {
             for (;3 === self._37; ) self = self._12;
-            return 0 === self._37 ? void self._59.push(deferred) : void asap(function() {
+            if (0 === self._37) return void self._59.push(deferred);
+            asap(function() {
                 var cb = 1 === self._37 ? deferred.onFulfilled : deferred.onRejected;
                 if (null === cb) return void (1 === self._37 ? resolve(deferred.promise, self._12) : reject(deferred.promise, self._12));
                 var ret = tryCallOne(cb, self._12);
@@ -117,8 +118,8 @@
             if (value instanceof Promise) return value;
             if (null === value) return NULL;
             if (void 0 === value) return UNDEFINED;
-            if (value === !0) return TRUE;
-            if (value === !1) return FALSE;
+            if (!0 === value) return TRUE;
+            if (!1 === value) return FALSE;
             if (0 === value) return ZERO;
             if ("" === value) return EMPTYSTRING;
             if ("object" == typeof value || "function" == typeof value) try {
@@ -143,13 +144,12 @@
                         }
                         var then = val.then;
                         if ("function" == typeof then) {
-                            var p = new Promise(then.bind(val));
-                            return void p.then(function(val) {
+                            return void new Promise(then.bind(val)).then(function(val) {
                                 res(i, val);
                             }, reject);
                         }
                     }
-                    args[i] = val, 0 === --remaining && resolve(args);
+                    args[i] = val, 0 == --remaining && resolve(args);
                 }
                 if (0 === args.length) return resolve([]);
                 for (var remaining = args.length, i = 0; i < args.length; i++) res(i, args[i]);
@@ -212,14 +212,6 @@
                 }
                 queue.length = 0, index = 0, flushing = !1;
             }
-            function makeRequestCallFromMutationObserver(callback) {
-                var toggle = 1, observer = new BrowserMutationObserver(callback), node = document.createTextNode("");
-                return observer.observe(node, {
-                    characterData: !0
-                }), function() {
-                    toggle = -toggle, node.data = toggle;
-                };
-            }
             function makeRequestCallFromTimer(callback) {
                 return function() {
                     function handleTimer() {
@@ -230,14 +222,20 @@
             }
             module.exports = rawAsap;
             var requestFlush, queue = [], flushing = !1, index = 0, capacity = 1024, BrowserMutationObserver = global.MutationObserver || global.WebKitMutationObserver;
-            requestFlush = "function" == typeof BrowserMutationObserver ? makeRequestCallFromMutationObserver(flush) : makeRequestCallFromTimer(flush), 
-            rawAsap.requestFlush = requestFlush, rawAsap.makeRequestCallFromTimer = makeRequestCallFromTimer;
+            requestFlush = "function" == typeof BrowserMutationObserver ? function(callback) {
+                var toggle = 1, observer = new BrowserMutationObserver(callback), node = document.createTextNode("");
+                return observer.observe(node, {
+                    characterData: !0
+                }), function() {
+                    toggle = -toggle, node.data = toggle;
+                };
+            }(flush) : makeRequestCallFromTimer(flush), rawAsap.requestFlush = requestFlush, 
+            rawAsap.makeRequestCallFromTimer = makeRequestCallFromTimer;
         }).call(this, "undefined" != typeof global ? global : "undefined" != typeof self ? self : "undefined" != typeof window ? window : {});
     }, {} ],
     5: [ function(require, module, exports) {
         "function" != typeof Promise.prototype.done && (Promise.prototype.done = function(onFulfilled, onRejected) {
-            var self = arguments.length ? this.then.apply(this, arguments) : this;
-            self.then(null, function(err) {
+            (arguments.length ? this.then.apply(this, arguments) : this).then(null, function(err) {
                 setTimeout(function() {
                     throw err;
                 }, 0);
@@ -268,8 +266,7 @@ var ArrayMap = function() {
         }, collection.indexOfKey = function(key, value) {
             return this.mapTable(key).indexOf(value);
         }, collection.put = function(obj, index) {
-            var i = index || this.length;
-            this[i] = obj;
+            this[index || this.length] = obj;
         }, collection.putRange = function(arr, tail) {
             var l, i, pos = tail && "boolean" == typeof tail ? this.length : 0;
             if (arr) for (arr instanceof Array || (arr = [ arr ]), i = 0, l = arr.length; i < l; i++) this.put(arr[i], pos + i);
@@ -342,7 +339,7 @@ var ArrayMap = function() {
                         break;
 
                       case "$end":
-                        matched = str.indexOf(opts[field][prop], str.length - opts[field][prop].length) !== -1;
+                        matched = -1 !== str.indexOf(opts[field][prop], str.length - opts[field][prop].length);
                         break;
 
                       case "$contain":
@@ -407,16 +404,15 @@ var ArrayMap = function() {
 var OjsUtils = function() {
     "use strict";
     var randomBytes = function(size) {
-        for (var r, bytes = new Array(size), i = 0; i < size; i++) 0 === (3 & i) && (r = 4294967296 * Math.random()), 
+        for (var r, bytes = new Array(size), i = 0; i < size; i++) 0 == (3 & i) && (r = 4294967296 * Math.random()), 
         bytes[i] = r >>> ((3 & i) << 3) & 255;
         return bytes;
     }, byteArrayToBase64 = function(uint8) {
-        function tripletToBase64(num) {
-            return lookup[num >> 18 & 63] + lookup[num >> 12 & 63] + lookup[num >> 6 & 63] + lookup[63 & num];
-        }
         var temp, length, i, lookup = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", extraBytes = uint8.length % 3, output = "";
         for (i = 0, length = uint8.length - extraBytes; i < length; i += 3) temp = (uint8[i] << 16) + (uint8[i + 1] << 8) + uint8[i + 2], 
-        output += tripletToBase64(temp);
+        output += function(num) {
+            return lookup[num >> 18 & 63] + lookup[num >> 12 & 63] + lookup[num >> 6 & 63] + lookup[63 & num];
+        }(temp);
         switch (extraBytes) {
           case 1:
             temp = uint8[uint8.length - 1], output += lookup[temp >> 2], output += lookup[temp << 4 & 63], 
@@ -520,10 +516,11 @@ var SimpleDataSet = function() {
         return this.item(index);
     };
     var _beforeChange = function(change) {
-        var idx, exists;
-        return (exists = this._history.some(function(item, index) {
+        var idx;
+        if (this._history.some(function(item, index) {
             return idx = index, item.op === change.op && item.record.id === change.record.id;
-        })) ? void this._history.splice(idx, 1, change) : void this._history.push(change);
+        })) return void this._history.splice(idx, 1, change);
+        this._history.push(change);
     }, _afterChange = function(change) {
         if (this.emit(this.table(), {
             event: change.op,
@@ -539,7 +536,7 @@ var SimpleDataSet = function() {
     return CreateDataSet.prototype.insert = function(record) {
         record.id || (record.id = OjsUtils.newId());
         var change, index = this._data.indexOfKey("id", record.id);
-        return index === -1 && (change = {
+        return -1 === index && (change = {
             op: "insert",
             record: OjsUtils.cloneObject(record)
         }, _beforeChange.call(this, change), this._data.push(record), _afterChange.call(this, change)), 
@@ -547,7 +544,7 @@ var SimpleDataSet = function() {
     }, CreateDataSet.prototype.update = function(record) {
         if (!record.id) return this;
         var change, index = this._data.indexOfKey("id", record.id);
-        return index === -1 ? this : (change = {
+        return -1 === index ? this : (change = {
             op: "update",
             record: OjsUtils.cloneObject(record)
         }, _beforeChange.call(this, change), this._data.splice(index, 1, record), _afterChange.call(this, change), 
@@ -620,8 +617,8 @@ var DataSet = function() {
         var childTable = [ table, ".child" ].join(""), self = this;
         DbEvents.on(table, function(args) {
             if ("key" === args.event) {
-                var index = self._data.indexOfKey("id", args.data.oldId), record = self._data[index];
-                record.id = args.data.newId;
+                var index = self._data.indexOfKey("id", args.data.oldId);
+                self._data[index].id = args.data.newId;
             }
         }), DbEvents.on(childTable, function(args) {
             self.save(args.data.master());
@@ -652,7 +649,8 @@ var DataSet = function() {
         }, self = this;
         return new Promise(function(resolve, reject) {
             OjsUtils.cloneProperties(self._opts, opts), _getRecords.call(self, opts, function(err, records) {
-                return err ? void reject(err) : void resolve(records);
+                if (err) return void reject(err);
+                resolve(records);
             });
         });
     }, CreateDataSet.prototype.next = function() {
@@ -663,10 +661,11 @@ var DataSet = function() {
             skip: skip
         };
         return new Promise(function(resolve, reject) {
-            return self.eof() ? void resolve(self.data()) : (OjsUtils.cloneProperties(self._opts, opts), 
-            void _getRecords.call(self, opts, function(err, results) {
-                return err ? void reject(err) : void resolve(results);
-            }));
+            if (self.eof()) return void resolve(self.data());
+            OjsUtils.cloneProperties(self._opts, opts), _getRecords.call(self, opts, function(err, results) {
+                if (err) return void reject(err);
+                resolve(results);
+            });
         });
     }, CreateDataSet.prototype.close = function() {
         return SimpleDataSet.prototype.clear.apply(this, arguments), _pages[this.table()] = 0, 
@@ -675,8 +674,9 @@ var DataSet = function() {
         var self = this;
         return new Promise(function(resolve, reject) {
             function done(err) {
-                return err ? void reject(err) : (_pages[self.table()] = 0, SimpleDataSet.prototype.clear.apply(self, arguments), 
-                void resolve());
+                if (err) return void reject(err);
+                _pages[self.table()] = 0, SimpleDataSet.prototype.clear.apply(self, arguments), 
+                resolve();
             }
             self.proxy().clear(self.table(), done);
         });
@@ -706,16 +706,19 @@ var DataSet = function() {
         var toInsert, toUpdate, toDelete, self = this, sync = this.synchronizer();
         return new Promise(function(resolve, reject) {
             function done(err) {
-                return err ? (self.cancel(), void reject(err)) : (sync && !ignoreSync && sync.writeData(self.table(), toInsert, toUpdate, toDelete), 
-                self.refresh().then(resolve, reject), void self._cleanCache());
+                if (err) return self.cancel(), void reject(err);
+                sync && !ignoreSync && sync.writeData(self.table(), toInsert, toUpdate, toDelete), 
+                self.refresh().then(resolve, reject), self._cleanCache();
             }
-            return self._history.length ? (toInsert = _filterOp(self._history, "insert"), toUpdate = _filterOp(self._history, "update"), 
-            toDelete = _filterOp(self._history, "delete"), void self.proxy().commit(self.table(), toInsert, toUpdate, toDelete, done)) : void resolve();
+            if (!self._history.length) return void resolve();
+            toInsert = _filterOp(self._history, "insert"), toUpdate = _filterOp(self._history, "update"), 
+            toDelete = _filterOp(self._history, "delete"), self.proxy().commit(self.table(), toInsert, toUpdate, toDelete, done);
         });
     }, CreateDataSet.prototype.sync = function() {
         var self = this, sync = this.synchronizer();
         return new Promise(function(resolve, reject) {
-            return sync ? void sync.exec(self.table(), function(err, allData, toDelete) {
+            if (!sync) return void resolve();
+            sync.exec(self.table(), function(err, allData, toDelete) {
                 function deleteDiff(item) {
                     serverData.indexOfKey("id", item.id) < 0 && self.delete(item);
                 }
@@ -735,15 +738,17 @@ var DataSet = function() {
                 }, function(err) {
                     reject(err);
                 });
-            }) : void resolve();
+            });
         });
     }, CreateDataSet.prototype.fetch = function(property) {
         if (!this._active) throw "Invalid operation on closed dataset";
         var self = this;
         return new Promise(function(resolve, reject) {
-            return self.count() ? void self.proxy().fetch(self.table(), self, property, function(err) {
-                return err ? void reject(err) : void resolve();
-            }) : void resolve();
+            if (!self.count()) return void resolve();
+            self.proxy().fetch(self.table(), self, property, function(err) {
+                if (err) return void reject(err);
+                resolve();
+            });
         });
     }, CreateDataSet.prototype.eof = function() {
         return this._eof;
@@ -758,7 +763,9 @@ var DbProxies = function() {
     return {
         LOCALSTORAGE: 0,
         SQLITE: 1,
-        RESTFUL: 2
+        RESTFUL: 2,
+        INDEXEDDB: 3,
+        WEBSOCKET: 4
     };
 }();
 
@@ -780,8 +787,8 @@ var DbProxy = function() {
     }, CreateProxy.prototype.clear = function(key, callback) {
         "function" == typeof callback && callback();
     }, CreateProxy.dateParser = function(key, value) {
-        var test, reISO = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*))(?:Z|(\+|-)([\d|:]*))?$/;
-        return "string" == typeof value && (test = reISO.exec(value)) ? new Date(value) : value;
+        var reISO = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*))(?:Z|(\+|-)([\d|:]*))?$/;
+        return "string" == typeof value && reISO.exec(value) ? new Date(value) : value;
     }, CreateProxy;
 }();
 
@@ -802,15 +809,13 @@ var LocalStorageProxy = function() {
         var table = _get(options);
         options.sort && table.orderBy(options.sort), "function" == typeof callback && callback(null, table);
     }, CreateProxy.prototype.query = function(key, filters, callback) {
-        var table = _get(key), results = table.query(filters);
-        callback(null, results);
+        callback(null, _get(key).query(filters));
     }, CreateProxy.prototype.groupBy = function(key, options, groups, filters, callback) {
-        var table = _get(key), results = table.groupBy(options, groups, filters);
-        callback(null, results);
+        callback(null, _get(key).groupBy(options, groups, filters));
     };
     var _save = function(table, record) {
         var index = table.indexOfKey("id", record.id);
-        index === -1 ? table.push(record) : table.splice(index, 1, record);
+        -1 === index ? table.push(record) : table.splice(index, 1, record);
     }, _remove = function(table, record) {
         var id = "object" == typeof record ? record.id : record, index = table.indexOfKey("id", id);
         table.splice(index, 1);
@@ -830,24 +835,24 @@ var LocalStorageProxy = function() {
 
 var SQLiteProxy = function() {
     "use strict";
-    function CreateProxy(options) {
+    function CreateProxy(opts) {
         function init() {
-            db = window.sqlitePlugin ? window.sqlitePlugin.openDatabase(opts) : window.openDatabase(opts.name, "SQLite Database", "1.0", 5242880);
+            db = window.sqlitePlugin ? window.sqlitePlugin.openDatabase(opts) : window.openDatabase(opts.name, "SQLite Database", opts.version || "1.0", 5242880);
         }
-        var db = null, opts = {}, cordova = "undefined" != typeof window.cordova;
-        "object" == typeof options ? (opts.name = options.name, opts.location = options.location || "default") : opts.name = options, 
-        cordova ? document.addEventListener("deviceready", init) : init(), this.getDb = function() {
+        var db = null;
+        opts.schema && (_maps = opts.schema), void 0 !== window.cordova ? document.addEventListener("deviceready", init) : init(), 
+        this.getDb = function() {
             return db;
         }, DbProxy.apply(this, arguments);
     }
-    var _selectFrom = "SELECT * FROM", _maps = {};
-    CreateProxy.prototype = Object.create(DbProxy.prototype), CreateProxy.prototype.createDatabase = function(maps, callback) {
-        var self = this;
-        _maps = OjsUtils.cloneObject(maps), self.getDb().transaction(function(tx) {
+    var _maps = {};
+    CreateProxy.prototype = Object.create(DbProxy.prototype), CreateProxy.prototype.createDatabase = function(callback) {
+        var self = this, cb = callback && "function" == typeof callback ? callback : function() {};
+        self.getDb().transaction(function(tx) {
             function progress() {
-                total--, 0 === total && cb();
+                0 === --total && cb();
             }
-            var fields, field, table, prop, sql, cb = callback && "function" == typeof callback ? callback : function() {}, total = Object.keys(_maps).length;
+            var fields, field, table, prop, sql, total = Object.keys(_maps).length;
             for (table in _maps) {
                 fields = "";
                 for (prop in _maps[table]) field = _maps[table][prop], field.hasMany || (field.hasOne && (field.type = _maps[field.hasOne].id.type), 
@@ -885,12 +890,12 @@ var SQLiteProxy = function() {
     CreateProxy.prototype.getRecords = function(options, callback) {
         var p, self = this, key = options && options.key ? options.key : options, sortBy = options && options.sort ? _orderBy(options.sort) : "", where = "WHERE ", sql = [];
         if ("object" == typeof options) {
-            if (sql = [ _selectFrom, options.key ], options.params) {
+            if (sql = [ "SELECT * FROM", options.key ], options.params) {
                 for (p in options.params) where += p + " = '" + options.params[p] + "'";
                 sql.push(where);
             }
             sql.push(sortBy), options.skip && sql.push("OFFSET " + options.skip), options.limit && sql.push("LIMIT " + options.limit);
-        } else sql = [ _selectFrom, options ];
+        } else sql = [ "SELECT * FROM", options ];
         self.getDb().transaction(function(tx) {
             _select(key, sql.join(" "), [], tx, callback);
         });
@@ -958,11 +963,11 @@ var SQLiteProxy = function() {
               case "$count":
                 sql += [ "COUNT(", field, ")", " AS ", alias ].join("") + ", ";
             }
-        }), "" === sql ? [ _selectFrom, key ].join(" ") : (sql = sql.trim().slice(0, -1), 
+        }), "" === sql ? [ "SELECT * FROM", key ].join(" ") : (sql = sql.trim().slice(0, -1), 
         sql = [ "SELECT", groupBy, sql, "FROM", key, where ].join(" "), "" === groupBy ? sql : sql + " GROUP BY " + groupBy.trim().slice(0, -1));
     };
     CreateProxy.prototype.query = function(key, filters, callback) {
-        var self = this, opts = filters && "object" == typeof filters ? filters : {}, select = [ _selectFrom, key ].join(" "), sql = filters && "function" == typeof filters ? filters() : _formatSql(select, opts);
+        var self = this, opts = filters && "object" == typeof filters ? filters : {}, select = [ "SELECT * FROM", key ].join(" "), sql = filters && "function" == typeof filters ? filters() : _formatSql(select, opts);
         self.getDb().transaction(function(tx) {
             _select(key, sql, [], tx, callback);
         });
@@ -986,21 +991,20 @@ var SQLiteProxy = function() {
                 self.delete(fdmap.hasMany, deleteds, transaction, done);
             }
             var prop, fdmap, items, inserteds = new ArrayMap(), updateds = new ArrayMap(), deleteds = new ArrayMap();
-            for (prop in record) fdmap = _maps[key][prop], fdmap && fdmap.hasMany && (items = record[prop], 
-            items instanceof SimpleDataSet && (total++, inserteds.putRange(items._inserteds), 
-            updateds.putRange(items._updateds), deleteds.putRange(items._deleteds), items._cleanCache(), 
-            self.insert(fdmap.hasMany, inserteds, transaction, updateFn)));
+            for (prop in record) (fdmap = _maps[key][prop]) && fdmap.hasMany && (items = record[prop]) instanceof SimpleDataSet && (total++, 
+            inserteds.putRange(items._inserteds), updateds.putRange(items._updateds), deleteds.putRange(items._deleteds), 
+            items._cleanCache(), self.insert(fdmap.hasMany, inserteds, transaction, updateFn));
             done();
         }
         function done() {
-            total--, 0 === total && callback();
+            0 === --total && callback();
         }
         var self = this, total = 1;
         operationFn(key, record, transaction, saveChildren);
     }, _getInsertSql = function(key, record) {
         var prop, sql, value, fdmap, params = [], fields = "", values = "";
-        for (prop in _maps[key]) fdmap = _maps[key][prop], fdmap && !fdmap.hasMany && (value = _formatValue(key, prop, record), 
-        void 0 !== value && (params.push(value), fields += prop + ",", values += "?,"));
+        for (prop in _maps[key]) (fdmap = _maps[key][prop]) && !fdmap.hasMany && void 0 !== (value = _formatValue(key, prop, record)) && (params.push(value), 
+        fields += prop + ",", values += "?,");
         return fields = fields.substr(0, fields.length - 1), values = values.substr(0, values.length - 1), 
         sql = [ "INSERT INTO", key, "(", fields, ") VALUES (", values, ")" ].join(" "), 
         {
@@ -1012,14 +1016,13 @@ var SQLiteProxy = function() {
         transaction.executeSql(obj.sql, obj.params, callback);
     };
     CreateProxy.prototype.insert = function(key, records, transaction, callback) {
-        function progress(record, index) {
+        var self = this, l = records.length, i = 0;
+        if (0 === l) return callback();
+        for (;i < l; i++) !function(record, index) {
             _save.call(self, key, record, transaction, _insert, function() {
                 index === l - 1 && callback();
             });
-        }
-        var self = this, l = records.length, i = 0;
-        if (0 === l) return callback();
-        for (;i < l; i++) progress(records[i], i);
+        }(records[i], i);
     };
     var _getUpdateSql = function(key, record) {
         var sql, prop, value, fdmap, params = [], where = "id = '" + record.id + "'", sets = "";
@@ -1035,37 +1038,34 @@ var SQLiteProxy = function() {
         transaction.executeSql(obj.sql, obj.params, callback);
     };
     CreateProxy.prototype.update = function(key, records, transaction, callback) {
-        function progress(record, index) {
+        var self = this, l = records.length, i = 0;
+        if (0 === l) return callback();
+        for (;i < l; i++) !function(record, index) {
             _save.call(self, key, record, transaction, _update, function() {
                 index === l - 1 && callback();
             });
-        }
-        var self = this, l = records.length, i = 0;
-        if (0 === l) return callback();
-        for (;i < l; i++) progress(records[i], i);
+        }(records[i], i);
     };
     var _delete = function(key, record, transaction, callback) {
         function progress() {
-            total--, 0 === total && (sql = [ "DELETE FROM ", key, " WHERE id = '", id, "'" ].join(""), 
+            0 === --total && (sql = [ "DELETE FROM ", key, " WHERE id = '", id, "'" ].join(""), 
             transaction.executeSql(sql, [], function() {
                 callback();
             }));
         }
         var sql, prop, fdmap, id = "object" == typeof record ? record.id : record, total = 1;
-        for (prop in record) fdmap = _maps[key][prop], fdmap && fdmap.hasMany && (total++, 
-        sql = [ "DELETE FROM ", fdmap.hasMany, " WHERE ", fdmap.foreignKey, " = '", id, "'" ].join(""), 
+        for (prop in record) (fdmap = _maps[key][prop]) && fdmap.hasMany && (total++, sql = [ "DELETE FROM ", fdmap.hasMany, " WHERE ", fdmap.foreignKey, " = '", id, "'" ].join(""), 
         transaction.executeSql(sql, [], progress), record[prop] instanceof SimpleDataSet && record[prop].clear());
         progress();
     };
     CreateProxy.prototype.delete = function(key, records, transaction, callback) {
-        function progress(record, index) {
+        var self = this, l = records.length, i = 0;
+        if (0 === l) return callback();
+        for (;i < l; i++) !function(record, index) {
             _delete.call(self, key, record, transaction, function() {
                 index === l - 1 && callback();
             });
-        }
-        var self = this, l = records.length, i = 0;
-        if (0 === l) return callback();
-        for (;i < l; i++) progress(records[i], i);
+        }(records[i], i);
     }, CreateProxy.prototype.commit = function(key, toInsert, toUpdate, toDelete, callback) {
         function beginTransaction(tx) {
             function updateFn() {
@@ -1077,35 +1077,35 @@ var SQLiteProxy = function() {
             self.insert(key, toInsert, tx, updateFn);
         }
         var self = this, cb = callback && "function" == typeof callback ? callback : function() {};
-        return toInsert.length || toUpdate.length || toDelete.length ? void self.getDb().transaction(beginTransaction, function(err) {
+        if (!toInsert.length && !toUpdate.length && !toDelete.length) return cb();
+        self.getDb().transaction(beginTransaction, function(err) {
             console.error(err.message), cb(err);
-        }) : cb();
+        });
     };
     var _fetch = function(key, record, property, callback) {
         var i, l, child, opts = {
             params: {}
         }, fdmap = _maps[key][property];
-        return record[property] instanceof SimpleDataSet || !fdmap || !fdmap.hasMany ? callback() : (opts.key = fdmap.hasMany, 
-        opts.params[fdmap.foreignKey] = record.id, void this.getRecords(opts, function(err, results) {
+        if (record[property] instanceof SimpleDataSet || !fdmap || !fdmap.hasMany) return callback();
+        opts.key = fdmap.hasMany, opts.params[fdmap.foreignKey] = record.id, this.getRecords(opts, function(err, results) {
             if (err) return callback(err);
             for (record[property] = new SimpleDataSet(key), i = 0, l = results.length; i < l; i++) child = new ChildRecord(record), 
             OjsUtils.cloneProperties(results[i], child), record[property].data.push(child);
             callback();
-        }));
+        });
     };
     return CreateProxy.prototype.fetch = function(key, dataset, property, callback) {
-        function progress(record, index) {
+        var cb = "function" == typeof callback ? callback : function() {}, total = dataset.data.length, self = this, i = 0;
+        if (0 === total) return cb();
+        for (;i < total; i++) !function(record, index) {
             _fetch.call(self, key, record, property, function(err) {
                 index === total - 1 && cb(err);
             });
-        }
-        var cb = "function" == typeof callback ? callback : function() {}, total = dataset.data.length, self = this, i = 0;
-        if (0 === total) return cb();
-        for (;i < total; i++) progress(dataset.data[i], i);
+        }(dataset.data[i], i);
     }, CreateProxy.prototype.clear = function(key, callback) {
         function beginTransaction(transaction) {
             function progress() {
-                total--, 0 === total && transaction.executeSql("DELETE FROM " + key, [], function() {
+                0 === --total && transaction.executeSql("DELETE FROM " + key, [], function() {
                     cb();
                 });
             }
@@ -1129,8 +1129,7 @@ var RestProxy = function() {
     var _defSerialize = function(obj) {
         return JSON.stringify(obj);
     }, _getHeader = function(obj) {
-        var header = "function" == typeof obj ? obj() : obj;
-        return header;
+        return "function" == typeof obj ? obj() : obj;
     }, _httpRequest = function(url, method, config, success, error) {
         var callback, prop, params, http = new XMLHttpRequest();
         if (http.open(method, url, !0), http.onreadystatechange = function() {
@@ -1179,11 +1178,10 @@ var RestProxy = function() {
             callback(_proxyError(xhr), []);
         });
     }, CreateProxy.prototype.query = function(key, filters, callback) {
-        var opts = {
+        _get.call(this, {
             key: key,
             params: filters
-        };
-        _get.call(this, opts, function(data) {
+        }, function(data) {
             callback(null, data);
         }, function(xhr) {
             callback(_proxyError(xhr), []);
@@ -1195,7 +1193,9 @@ var RestProxy = function() {
             callback(null, results);
         });
     }, CreateProxy.prototype.insert = function(key, records, callback) {
-        function progress(record, index) {
+        var self = this, l = records.length, i = 0;
+        if (0 === l) return callback();
+        for (;i < l; i++) !function(record, index) {
             _save.call(self, "POST", key, record, function(xhr) {
                 var created = JSON.parse(xhr.responseText);
                 self.autoPK && created.id && DbEvents.emit(key, {
@@ -1208,46 +1208,224 @@ var RestProxy = function() {
             }, function(xhr) {
                 callback(_proxyError(xhr));
             });
-        }
+        }(records[i], i);
+    }, CreateProxy.prototype.update = function(key, records, callback) {
         var self = this, l = records.length, i = 0;
         if (0 === l) return callback();
-        for (;i < l; i++) progress(records[i], i);
-    }, CreateProxy.prototype.update = function(key, records, callback) {
-        function progress(record, index) {
+        for (;i < l; i++) !function(record, index) {
             _save.call(self, "PUT", key, record, function(xhr) {
                 index === l - 1 && callback(null, xhr);
             }, function(xhr) {
                 callback(_proxyError(xhr));
             });
-        }
-        var self = this, l = records.length, i = 0;
-        if (0 === l) return callback();
-        for (;i < l; i++) progress(records[i], i);
+        }(records[i], i);
     }, CreateProxy.prototype.delete = function(key, records, callback) {
-        function progress(record, index) {
+        var baseurl = this.config.url + "/" + key + "/", config = {}, l = records.length, i = 0;
+        if (0 === l) return callback();
+        for (this.config.headers && (config.headers = this.config.headers); i < l; i++) !function(record, index) {
             var url = baseurl + record.id;
             _httpRequest(url, "DELETE", config, function(xhr) {
                 index === l - 1 && callback(null, xhr);
             }, function(xhr) {
                 callback(_proxyError(xhr));
             });
-        }
-        var baseurl = this.config.url + "/" + key + "/", config = {}, l = records.length, i = 0;
-        if (0 === l) return callback();
-        for (this.config.headers && (config.headers = this.config.headers); i < l; i++) progress(records[i], i);
+        }(records[i], i);
     }, CreateProxy.prototype.commit = function(key, toInsert, toUpdate, toDelete, callback) {
         function updateFn(err) {
-            return err ? cb(err) : void self.update(key, toUpdate, deleteFn);
+            if (err) return cb(err);
+            self.update(key, toUpdate, deleteFn);
         }
         function deleteFn(err) {
-            return err ? cb(err) : void self.delete(key, toDelete, cb);
+            if (err) return cb(err);
+            self.delete(key, toDelete, cb);
         }
         var self = this, total = toInsert.length + toUpdate.length + toDelete.length, cb = callback && "function" == typeof callback ? callback : function() {};
-        return 0 === total ? cb() : void self.insert(key, toInsert, updateFn);
+        if (0 === total) return cb();
+        self.insert(key, toInsert, updateFn);
     }, CreateProxy;
 }();
 
 "object" == typeof module && module.exports && (module.exports.RestProxy = RestProxy);
+
+var IndexedDbProxy = function() {
+    "use strict";
+    function CreateProxy(config) {
+        _config = config, window.indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB, 
+        window.IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction || window.msIDBTransaction, 
+        window.IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange, 
+        DbProxy.apply(this, arguments);
+    }
+    var _config, _db = null;
+    CreateProxy.prototype = Object.create(DbProxy.prototype), CreateProxy.prototype.createDatabase = function(callback) {
+        var request = window.indexedDB.open(_config.name, _config.version), cb = callback;
+        request.onerror = function(e) {
+            cb(e.target);
+        }, request.onsuccess = function(e) {
+            _db = request.result, cb();
+        }, request.onupgradeneeded = function(e) {
+            var table, prop, field, db = e.target.result, schema = _config.schema;
+            for (table in schema) {
+                var store = db.createObjectStore(table, {
+                    keyPath: "id"
+                });
+                for (prop in schema[table]) field = schema[table][prop], store.createIndex(prop, prop, {
+                    unique: !!field.unique
+                });
+            }
+        };
+    }, CreateProxy.prototype.getRecords = function(options, callback) {
+        var store = _db.transaction([ options.key ]).objectStore(options.key), request = store.openCursor(), opt = options, cb = callback;
+        request.onsuccess = function(e) {
+            var cursor = e.target.result, result = new ArrayMap();
+            if (cursor) return result.put(cursor.value), void cursor.continue();
+            opt.sort && result.orderBy(opt.sort), cb(null, result);
+        }, request.onerror = function(e) {
+            cb(e.target);
+        };
+    }, CreateProxy.prototype.query = function(key, filters, callback) {
+        var opts = {
+            key: key
+        }, cb = callback;
+        this.getRecords(opts, function(err, records) {
+            if (err) return void cb(err);
+            cb(null, records.query(filters));
+        });
+    }, CreateProxy.prototype.groupBy = function(key, options, groups, filters, callback) {
+        var opts = {
+            key: key
+        }, cb = callback;
+        this.getRecords(opts, function(err, records) {
+            if (err) return void cb(err);
+            cb(null, records.groupBy(options, groups, filters));
+        });
+    };
+    var _save = function(key, records, callback, operationFn) {
+        var transaction = _db.transaction([ key ], "readwrite"), store = transaction.objectStore(key), cb = callback;
+        records.foreach(function(item) {
+            operationFn(store, item);
+        }), transaction.onsuccess = function(e) {
+            cb();
+        }, transaction.onerror = function(e) {
+            cb(e.target);
+        };
+    };
+    return CreateProxy.prototype.commit = function(key, toInsert, toUpdate, toDelete, callback) {
+        function updateFn(err) {
+            if (err) return cb(err);
+            _save.call(self, key, toUpdate, deleteFn, function(store, item) {
+                store.put(item);
+            });
+        }
+        function deleteFn(err) {
+            if (err) return cb(err);
+            _save.call(self, key, toDelete, cb, function(store, item) {
+                store.delete(item.id);
+            });
+        }
+        var self = this, total = toInsert.length + toUpdate.length + toDelete.length, cb = callback && "function" == typeof callback ? callback : function() {};
+        if (0 === total) return cb();
+        _save.call(self, key, toInsert, updateFn, function(store, item) {
+            store.add(item);
+        });
+    }, CreateProxy.prototype.clear = function(key, callback) {
+        var request, store = _db.transaction([ key ], "readwrite").objectStore(key), cb = callback;
+        request = store.clear(), request.onsuccess = function(e) {
+            cb();
+        }, request.onerror = function(e) {
+            cb(e.target);
+        };
+    }, CreateProxy;
+}();
+
+"object" == typeof module && module.exports && (module.exports.IndexedDbProxy = IndexedDbProxy);
+
+var WebSocketProxy = function() {
+    "use strict";
+    function CreateProxy(config) {
+        this.config = config, this.connected = !1, _socket = new WebSocket(config.url), 
+        _socket.onopen = _onOpen.bind(this), _socket.onclose = _onClose.bind(this), _socket.onmessage = _onMessage.bind(this), 
+        _socket.onerror = _onError.bind(this), DbProxy.apply(this, arguments);
+    }
+    var _socket, _stack = new ArrayMap(), _onOpen = function() {
+        this.connected = !0;
+    }, _onClose = function() {
+        this.connected = !1;
+    }, _onError = function(e) {
+        var err = e ? JSON.stringify(e) : {
+            message: "Socket Error"
+        };
+        throw JSON.stringify(err);
+    }, _onMessage = function(e) {
+        var message = JSON.parse(e, DbProxy.dateParser), key = message.event + message.model;
+        _dispatch(key, message.data);
+    }, _sendMessage = function(message, callback) {
+        var key = message.event + message.model;
+        _stack.put({
+            key: key,
+            callback: callback
+        }), _socket.send(JSON.stringify(message));
+    }, _dispatch = function(key, data) {
+        var index = _stack.indexOfKey("key", key);
+        _stack[index].callback(null, data), _stack.splice(index, 1);
+    };
+    return CreateProxy.prototype = Object.create(DbProxy.prototype), CreateProxy.prototype.getRecords = function(options, callback) {
+        if (!this.connected) throw "Socket is not connected";
+        var message, opt = Object.assign({}, options);
+        delete opt.key, message = {
+            event: "READ",
+            model: options.key,
+            data: opt
+        }, _sendMessage(message, callback);
+    }, CreateProxy.prototype.query = function(key, filters, callback) {
+        if (!this.connected) throw "Socket is not connected";
+        _sendMessage({
+            event: "READ",
+            model: key,
+            data: filters
+        }, callback);
+    }, CreateProxy.prototype.groupBy = function(key, filters, options, groups, callback) {
+        this.query(key, filters, function(err, data) {
+            if (err) return void callback(err);
+            var results = data.groupBy(options, groups, {});
+            callback(null, results);
+        });
+    }, CreateProxy.prototype.insert = function(key, records, callback) {
+        if (!this.connected) throw "Socket is not connected";
+        _sendMessage({
+            event: "CREATE",
+            model: key,
+            data: records
+        }, callback);
+    }, CreateProxy.prototype.update = function(key, records, callback) {
+        if (!this.connected) throw "Socket is not connected";
+        _sendMessage({
+            event: "UPDATE",
+            model: key,
+            data: records
+        }, callback);
+    }, CreateProxy.prototype.delete = function(key, records, callback) {
+        if (!this.connected) throw "Socket is not connected";
+        _sendMessage({
+            event: "DELETE",
+            model: key,
+            data: records
+        }, callback);
+    }, CreateProxy.prototype.commit = function(key, toInsert, toUpdate, toDelete, callback) {
+        function updateFn(err) {
+            if (err) return cb(err);
+            self.update(key, toUpdate, deleteFn);
+        }
+        function deleteFn(err) {
+            if (err) return cb(err);
+            self.delete(key, toDelete, cb);
+        }
+        var self = this, total = toInsert.length + toUpdate.length + toDelete.length, cb = callback && "function" == typeof callback ? callback : function() {};
+        if (0 === total) return cb();
+        self.insert(key, toInsert, updateFn);
+    }, CreateProxy;
+}();
+
+"object" == typeof module && module.exports && (module.exports.WebSocketProxy = WebSocketProxy);
 
 var DbSync = function() {
     "use strict";
@@ -1282,7 +1460,8 @@ var DbSync = function() {
         "function" == typeof callback && callback(null, [], []);
     }, CreateSync.prototype.exec = function(key, callback) {
         function done(err) {
-            return err ? cb(err) : (self.cleanData(key), void self.getData(key, cb));
+            if (err) return cb(err);
+            self.cleanData(key), self.getData(key, cb);
         }
         var self = this, values = _getData(key), cb = callback || function() {};
         self.sendData(key, values[Operations.Insert] || [], values[Operations.Update] || [], values[Operations.Delete] || [], done);
@@ -1329,29 +1508,40 @@ var DbFactory = function() {
             _proxy = new RestProxy(opts);
             break;
 
+          case 3:
+            _proxy = new IndexedDbProxy(opts);
+            break;
+
+          case 4:
+            _proxy = new WebSocketProxy(opts);
+            break;
+
           default:
             throw "Proxy not implemented";
         }
     }
-    CreateFactory.prototype.createDb = function(maps) {
+    CreateFactory.prototype.createDb = function() {
         var self = this;
         return new Promise(function(resolve, reject) {
-            self.proxy().createDatabase(maps, function(err) {
-                return err ? void reject(err) : void resolve();
+            self.proxy().createDatabase(function(err) {
+                if (err) return void reject(err);
+                resolve();
             });
         });
     }, CreateFactory.prototype.query = function(key, filters) {
         var self = this;
         return new Promise(function(resolve, reject) {
             self.proxy().query(key, filters, function(err, records) {
-                return err ? void reject(err) : void resolve(records);
+                if (err) return void reject(err);
+                resolve(records);
             });
         });
     }, CreateFactory.prototype.groupBy = function(key, options, groups, filters) {
         var self = this;
         return new Promise(function(resolve, reject) {
             self.proxy().groupBy(key, options, groups, filters, function(err, records) {
-                return err ? void reject(err) : void resolve(records);
+                if (err) return void reject(err);
+                resolve(records);
             });
         });
     }, CreateFactory.prototype.dataset = function(table) {
@@ -1361,7 +1551,8 @@ var DbFactory = function() {
         var self = this;
         return new Promise(function(resolve, reject) {
             self.proxy().commit(key, toInsert, toUpdate, toDelete, function(err) {
-                return err ? void reject(err) : void resolve();
+                if (err) return void reject(err);
+                resolve();
             });
         });
     };

@@ -30,6 +30,7 @@ var DbFactory = (function() {
     this.proxy = function() {
       return _proxy;
     };
+
     this.synchronizer = function() {
       return _synchronizer;
     };
@@ -49,16 +50,22 @@ var DbFactory = (function() {
       case 2:
         _proxy = new RestProxy(opts);
         break;
+      case 3:
+        _proxy = new IndexedDbProxy(opts);
+        break;
+      case 4:
+        _proxy = new WebSocketProxy(opts);
+        break;
       default:
         throw "Proxy not implemented";
     }
   }
 
-  CreateFactory.prototype.createDb = function(maps) {
+  CreateFactory.prototype.createDb = function() {
     var self = this;
 
     return new Promise(function(resolve, reject) {
-      self.proxy().createDatabase(maps, function(err) {
+      self.proxy().createDatabase(function(err) {
         if (err) {
           reject(err);
           return;

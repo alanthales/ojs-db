@@ -1,24 +1,28 @@
 <html>
-    <head>
-        <title> ojs-db Tests </title>
-        <link rel="stylesheet" href="../node_modules/mocha/mocha.css" />
-    </head>
-    <body>
-        <div id="mocha"></div>
-        <script src="../node_modules/mocha/mocha.js"></script>
-        <script src="../node_modules/chai/chai.js"></script>
-        <script>
-            mocha.ui('bdd'); 
-            mocha.reporter('html');
-            var expect = chai.expect;
-        </script>
-        <script src="../build/ojs-db.js"></script>
-        <script src="utils/ProxyBehavior.js"></script>
-        <script src="browser/LocalStorage.js"></script>
-        <script src="browser/SQLite.js"></script>
-        <script>
-            if (window.mochaPhantomJS) { mochaPhantomJS.run(); }
-            else { mocha.run(); }
-        </script>
-    </body>
+  <head>
+    <title>ojs-db Tests</title>
+    <link rel="stylesheet" href="../node_modules/mocha/mocha.css" />
+  </head>
+  <body>
+    <div id="mocha"></div>
+    <script src="../node_modules/mocha/mocha.js"></script>
+    <script src="../node_modules/chai/chai.js"></script>
+    <script>
+      mocha.ui("bdd");
+      mocha.reporter("html");
+      var expect = chai.expect;
+    </script>
+    <script src="../build/ojs-db.js"></script>
+    <script src="utils/ProxyBehavior.js"></script>
+    <script src="browser/LocalStorage.js"></script>
+    <script src="browser/SQLite.js"></script>
+    <script src="browser/IndexedDb.js"></script>
+    <script>
+      if (window.mochaPhantomJS) {
+        mochaPhantomJS.run();
+      } else {
+        mocha.run();
+      }
+    </script>
+  </body>
 </html>
